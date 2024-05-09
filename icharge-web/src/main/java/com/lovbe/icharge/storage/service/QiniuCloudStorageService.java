@@ -1,25 +1,30 @@
-package com.lovbe.icharge.config;
+package com.lovbe.icharge.storage.service;
 
+
+import cn.hutool.core.io.IoUtil;
+import com.lovbe.icharge.storage.config.OssStorageConfig;
+import com.lovbe.icharge.storage.exception.StorageException;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
 import com.qiniu.storage.Configuration;
+import com.qiniu.storage.Region;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.util.Auth;
 
 import java.io.InputStream;
 
 /**
- * 七牛云存储
- *
- * @author smalljop
+ * @description: 七牛云存储
+ * @author: Lvhl
+ * @date: 2024/5/9 13:09
  */
 public class QiniuCloudStorageService extends OssStorageService {
     private final UploadManager uploadManager;
     private final Auth auth;
     private final Configuration cfg;
 
-    QiniuCloudStorageService(OssStorageConfig config) {
+    public QiniuCloudStorageService(OssStorageConfig config) {
         this.config = config;
         cfg = new Configuration(Region.autoRegion());
         uploadManager = new UploadManager(cfg);
@@ -52,13 +57,6 @@ public class QiniuCloudStorageService extends OssStorageService {
     public InputStream downloadFile(String path) {
         return super.download(path);
     }
-
-//    @Override
-//    public InputStream download(String path) {
-//        final ByteArrayOutputStream output = new ByteArrayOutputStream();
-//        HttpUtil.download(com.smalljop.manage.platform.com.tduck.cloud.wx.mp.config.getDomain() + "/" + path, output, false);
-//        return new ByteArrayInputStream(output.toByteArray());
-//    }
 
     @Override
     public void delete(String path) {
