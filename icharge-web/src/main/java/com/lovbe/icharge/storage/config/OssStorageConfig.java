@@ -33,12 +33,12 @@ public class OssStorageConfig {
     /**
      * accessKeyId
      */
-    private String accessKeyId;
+    private String accessKey;
 
     /**
      * accessKeySecret
      */
-    private String accessKeySecret;
+    private String secretKey;
 
 
     /**

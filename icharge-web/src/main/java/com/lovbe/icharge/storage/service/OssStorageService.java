@@ -3,6 +3,7 @@ package com.lovbe.icharge.storage.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.lovbe.icharge.storage.config.OssStorageConfig;
+import com.qiniu.common.QiniuException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,6 +61,13 @@ public abstract class OssStorageService {
         HttpUtil.download(url, output, false);
         return new ByteArrayInputStream(output.toByteArray());
     }
+
+    /**
+     * 获取公开路径
+     * @param path
+     * @return
+     */
+    public abstract String getPublicUrl(String path);
 
     /**
      * 删除文件

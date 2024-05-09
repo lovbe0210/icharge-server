@@ -6,13 +6,12 @@ import com.lovbe.icharge.storage.config.OssStorageConfig;
 import com.lovbe.icharge.storage.exception.StorageException;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
-import com.qiniu.storage.BucketManager;
-import com.qiniu.storage.Configuration;
-import com.qiniu.storage.Region;
-import com.qiniu.storage.UploadManager;
+import com.qiniu.storage.*;
 import com.qiniu.util.Auth;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * @description: 七牛云存储
@@ -28,7 +27,7 @@ public class QiniuCloudStorageService extends OssStorageService {
         this.config = config;
         cfg = new Configuration(Region.autoRegion());
         uploadManager = new UploadManager(cfg);
-        auth = Auth.create(config.getAccessKeyId(), config.getAccessKeySecret());
+        auth = Auth.create(config.getAccessKey(), config.getSecretKey());
 
     }
 
@@ -55,7 +54,24 @@ public class QiniuCloudStorageService extends OssStorageService {
 
     @Override
     public InputStream downloadFile(String path) {
-        return super.download(path);
+        String downloadUrl = getPublicUrl(path);
+        return super.download(downloadUrl);
+    }
+
+    @Override
+    public String getPublicUrl(String path) {
+        DownloadUrl url = new DownloadUrl(config.getEndpoint(), true, path);
+        // 带有效期
+        long expireInSeconds = 60;//1小时，可以自定义链接过期时间
+        long deadline = System.currentTimeMillis()/1000 + expireInSeconds;
+        String urlString = null;
+        try {
+            urlString = url.buildURL(auth, deadline);
+        } catch (QiniuException e) {
+            throw new RuntimeException(e);
+        }
+        return urlString;
+//        return config.getEndpoint() + downloadUrl;
     }
 
     @Override
