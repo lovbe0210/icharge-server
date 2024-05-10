@@ -10,8 +10,6 @@ import com.qiniu.storage.*;
 import com.qiniu.util.Auth;
 
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 /**
  * @description: 七牛云存储
@@ -42,7 +40,7 @@ public class QiniuCloudStorageService extends OssStorageService {
     public String upload(byte[] data, String path) {
         try {
             String token = auth.uploadToken(config.getBucketName());
-            Response res = uploadManager.put(data, fullPath(path), token);
+            Response res = uploadManager.put(data, path, token);
             if (!res.isOK()) {
                 throw new RuntimeException("上传七牛出错：" + res);
             }
@@ -61,8 +59,8 @@ public class QiniuCloudStorageService extends OssStorageService {
     @Override
     public String getPublicUrl(String path) {
         DownloadUrl url = new DownloadUrl(config.getEndpoint(), true, path);
-        // 带有效期
-        long expireInSeconds = 60;//1小时，可以自定义链接过期时间
+        // 带有效期 24小时，可以自定义链接过期时间
+        long expireInSeconds = 60 * 60 * 24 ;
         long deadline = System.currentTimeMillis()/1000 + expireInSeconds;
         String urlString = null;
         try {
@@ -71,7 +69,6 @@ public class QiniuCloudStorageService extends OssStorageService {
             throw new RuntimeException(e);
         }
         return urlString;
-//        return config.getEndpoint() + downloadUrl;
     }
 
     @Override
