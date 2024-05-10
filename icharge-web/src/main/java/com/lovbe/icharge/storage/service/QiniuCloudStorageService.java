@@ -47,7 +47,7 @@ public class QiniuCloudStorageService extends OssStorageService {
         } catch (Exception e) {
             throw new StorageException("上传文件失败，请核对七牛配置信息", e);
         }
-        return getUrl(path);
+        return fullPath(path);
     }
 
     @Override
@@ -60,7 +60,8 @@ public class QiniuCloudStorageService extends OssStorageService {
     public String getPublicUrl(String path) {
         DownloadUrl url = new DownloadUrl(config.getEndpoint(), true, path);
         // 带有效期 24小时，可以自定义链接过期时间
-        long expireInSeconds = 60 * 60 * 24 ;
+//        long expireInSeconds = 60 * 60 * 24 ;
+        long expireInSeconds = 60;
         long deadline = System.currentTimeMillis()/1000 + expireInSeconds;
         String urlString = null;
         try {

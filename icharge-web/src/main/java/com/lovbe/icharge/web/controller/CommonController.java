@@ -2,6 +2,7 @@ package com.lovbe.icharge.web.controller;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
+import com.lovbe.icharge.common.model.ResponseBean;
 import com.lovbe.icharge.storage.config.OssStorageFactory;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,8 +14,8 @@ import java.io.IOException;
 @RestController
 public class CommonController {
 
-    @PostMapping("/test/upload")
-    public String upload(@RequestParam("file") MultipartFile file) {
+    @PostMapping("/common/upload")
+    public ResponseBean upload(@RequestParam("file") MultipartFile file) {
         String fileUrl;
         try {
             String idStr = IdUtil.getSnowflakeNextIdStr();
@@ -23,11 +24,7 @@ public class CommonController {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return fileUrl;
-    }
-
-    @PostMapping("/test/getFile")
-    public String getFile(@RequestParam("path") String path) {
-        return OssStorageFactory.getStorageService().getPublicUrl(path);
+        String publicUrl = OssStorageFactory.getStorageService().getPublicUrl(fileUrl);
+        return ResponseBean.ok(publicUrl);
     }
 }
