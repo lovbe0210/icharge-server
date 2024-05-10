@@ -4,6 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.lovbe.icharge.storage.config.OssStorageConfig;
 import com.qiniu.common.QiniuException;
+import org.apache.catalina.util.StringUtil;
+import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -82,9 +84,10 @@ public abstract class OssStorageService {
      * @param filePath 文件1
      */
     public String fullPath(String filePath) {
-        filePath = StrUtil.addPrefixIfNot(filePath, "/");
-        String prefixPath = StrUtil.emptyToDefault(config.getPrefixPath(), StrUtil.EMPTY);
-        return prefixPath + filePath;
+        if(StringUtils.hasLength(config.getPrefixPath())) {
+            filePath = config.getPrefixPath() + StrUtil.addPrefixIfNot(filePath, "/");
+        }
+        return filePath;
     }
 
     /**

@@ -1,10 +1,16 @@
 server:
   port: 10211
+  servlet:
+    context-path: /icharge
+
 
 spring:
   application:
     name: icharge-web
-
+  servlet:
+    multipart:
+      max-request-size: 10MB
+      max-file-size: 10MB
 
 oss:
   # oss类型，目前支持：阿里云(0) 七牛云(1) 又拍云(2) 本地存储(3) 通用S3协议 (4)
