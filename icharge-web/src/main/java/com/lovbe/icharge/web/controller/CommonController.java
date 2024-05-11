@@ -2,11 +2,12 @@ package com.lovbe.icharge.web.controller;
 
 import com.lovbe.icharge.common.model.ResponseBean;
 import com.lovbe.icharge.common.service.CommonService;
-import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
 
 @RestController
 public class CommonController {

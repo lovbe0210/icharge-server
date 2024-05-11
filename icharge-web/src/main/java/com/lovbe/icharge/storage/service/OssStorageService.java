@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.lovbe.icharge.storage.config.OssStorageConfig;
 import com.qiniu.common.QiniuException;
-import org.apache.catalina.util.StringUtil;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;

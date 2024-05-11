@@ -16,6 +16,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <lombok.version>1.18.24</lombok.version>
+        <disruptor.version>3.4.2</disruptor.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 <!--        <spring.boot.version>3.2.5</spring.boot.version>-->
         <spring.boot.version>2.7.8</spring.boot.version>
@@ -32,17 +33,22 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter</artifactId>
                 <version>${spring.boot.version}</version>
-                <!--<exclusions>
+                <exclusions>
                     <exclusion>
                         <artifactId>spring-boot-starter-logging</artifactId>
                         <groupId>org.springframework.boot</groupId>
                     </exclusion>
-                </exclusions>-->
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-log4j2</artifactId>
                 <version>${spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>${disruptor.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
