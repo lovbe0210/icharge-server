@@ -9,8 +9,8 @@
     <description>it充电站后端服务</description>
     <packaging>pom</packaging>
     <properties>
-        <java.version>1.8</java.version>
-<!--        <java.version>17</java.version>-->
+<!--        <java.version>1.8</java.version>-->
+        <java.version>17</java.version>
         <revision>1.0</revision>
         <skipTests>true</skipTests>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -18,8 +18,8 @@
         <lombok.version>1.18.24</lombok.version>
         <disruptor.version>3.4.2</disruptor.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-<!--        <spring.boot.version>3.2.5</spring.boot.version>-->
-        <spring.boot.version>2.7.8</spring.boot.version>
+        <spring.boot.version>3.2.5</spring.boot.version>
+<!--        <spring.boot.version>2.7.8</spring.boot.version>-->
     </properties>
 
 
