@@ -4,6 +4,7 @@ import com.lovbe.icharge.storage.config.OssStorageConfig;
 import com.lovbe.icharge.storage.config.OssStorageFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 @SpringBootApplication
 public class IchargeWebApplication {

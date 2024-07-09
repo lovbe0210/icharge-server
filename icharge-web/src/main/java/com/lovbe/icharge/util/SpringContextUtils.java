@@ -1,4 +1,4 @@
-package com.lovbe.icharge.common.util;
+package com.lovbe.icharge.util;
 
 
 import cn.hutool.extra.spring.SpringUtil;

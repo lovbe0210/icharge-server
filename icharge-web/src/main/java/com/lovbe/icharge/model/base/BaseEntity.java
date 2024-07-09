@@ -1,4 +1,4 @@
-package com.lovbe.icharge.common.entity;
+package com.lovbe.icharge.model.base;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

@@ -1,4 +1,4 @@
-package com.lovbe.icharge.common.model;
+package com.lovbe.icharge.model.base;
 
 import lombok.Getter;
 

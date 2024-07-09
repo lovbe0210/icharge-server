@@ -1,6 +1,6 @@
-package com.lovbe.icharge.web.controller;
+package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.model.ResponseBean;
+import com.lovbe.icharge.model.base.ResponseBean;
 import com.lovbe.icharge.common.service.CommonService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;

@@ -1,7 +1,7 @@
 package com.lovbe.icharge.storage.config;
 
 
-import com.lovbe.icharge.common.util.SpringContextUtils;
+import com.lovbe.icharge.util.SpringContextUtils;
 import com.lovbe.icharge.storage.enums.OssTypeEnum;
 import com.lovbe.icharge.storage.service.OssStorageService;
 import com.lovbe.icharge.storage.service.QiniuCloudStorageService;
