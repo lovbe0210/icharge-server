@@ -9,17 +9,12 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>icharge-storage</artifactId>
-    <name>icharge-storage</name>
-    <description>文件存储服务</description>
-    <packaging>jar</packaging>
+    <artifactId>icharge-sso</artifactId>
+    <name>icharge-sso</name>
+    <description>单点登录服务</description>
 
 
     <dependencies>
-        <dependency>
-            <groupId>com.qiniu</groupId>
-            <artifactId>qiniu-java-sdk</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.lovbe.icharge</groupId>
             <artifactId>icharge-common</artifactId>
@@ -27,5 +22,4 @@
         </dependency>
 
     </dependencies>
-
 </project>

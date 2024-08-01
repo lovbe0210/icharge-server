@@ -3,6 +3,7 @@ package com.lovbe.icharge.storage.config;
 
 import com.lovbe.icharge.common.util.SpringContextUtils;
 import com.lovbe.icharge.storage.enums.OssTypeEnum;
+import com.lovbe.icharge.storage.service.LocalStorageService;
 import com.lovbe.icharge.storage.service.OssStorageService;
 import com.lovbe.icharge.storage.service.QiniuCloudStorageService;
 import lombok.Getter;
@@ -33,14 +34,14 @@ public final class OssStorageFactory {
         }
         if (config.getOssType() == OssTypeEnum.QINIU) {
             storageService = new QiniuCloudStorageService(config);
+        } else if (config.getOssType() == OssTypeEnum.LOCAL) {
+            storageService = new LocalStorageService(config);
         }
         /*
        else if (config.getOssType() == OssTypeEnum.ALIYUN) {
             storageService = new AliyunOssStorageService(config);
         } else if (config.getOssType() == OssTypeEnum.UPYUN) {
             storageService = new UpyunStorageService(config);
-        } else if (config.getOssType() == OssTypeEnum.LOCAL) {
-            storageService = new LocalStorageService(config);
         } else if (config.getOssType() == OssTypeEnum.S3) {
             storageService = new S3StorageService(config);
         }*/
