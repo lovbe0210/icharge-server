@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class IchargeSocialApplication {
+public class IchargeAuthApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(IchargeSocialApplication.class, args);
+        SpringApplication.run(IchargeAuthApplication.class, args);
     }
 
 }

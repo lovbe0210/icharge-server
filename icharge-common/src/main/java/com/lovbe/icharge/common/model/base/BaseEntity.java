@@ -1,5 +1,7 @@
 package com.lovbe.icharge.common.model.base;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldNameConstants;
@@ -22,18 +24,18 @@ public class BaseEntity<T> {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
-    private String id;
+    private String uid;
 
     /**
      * 创建时间
      **/
-//    @TableField(fill = FieldFill.INSERT)
+    @TableField(fill = FieldFill.INSERT)
     protected LocalDateTime createTime;
 
     /**
      * 更新时间
      **/
-//    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     protected LocalDateTime updateTime;
 
 }

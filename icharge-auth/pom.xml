@@ -9,9 +9,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>icharge-sso</artifactId>
-    <name>icharge-sso</name>
-    <description>单点登录服务</description>
+    <artifactId>icharge-auth</artifactId>
+    <name>icharge-auth</name>
+    <description>登陆认证服务</description>
 
 
     <dependencies>
@@ -19,6 +19,10 @@
             <groupId>com.lovbe.icharge</groupId>
             <artifactId>icharge-common</artifactId>
             <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
 
     </dependencies>
