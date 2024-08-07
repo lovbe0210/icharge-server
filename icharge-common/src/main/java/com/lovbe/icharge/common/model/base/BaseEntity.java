@@ -27,6 +27,11 @@ public class BaseEntity<T> {
     private String uid;
 
     /**
+     * 数据状态
+     */
+    private String status;
+
+    /**
      * 创建时间
      **/
     @TableField(fill = FieldFill.INSERT)

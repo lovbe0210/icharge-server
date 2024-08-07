@@ -14,6 +14,7 @@ import javax.validation.constraints.NotEmpty;
 public class BaseRequest<T> {
     private String userId;
     private String version;
+
     @NotEmpty(message = "参数不得为空")
     private T data;
 }
