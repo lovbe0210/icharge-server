@@ -1,8 +1,10 @@
 package com.lovbe.icharge.service.feign;
 
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.entity.UserInfo;
+import com.lovbe.icharge.common.model.entity.LoginUser;
 
 public interface UserService {
-    public ResponseBean<UserInfo> createUserIfAbsent(String mobile, String userIp);
+    ResponseBean<LoginUser> createUserIfAbsent(String mobile, String userIp);
+
+    ResponseBean<LoginUser> getLoginUserByMobile(String mobile);
 }

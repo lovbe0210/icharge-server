@@ -1,7 +1,7 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.entity.dto.code.AuthCodeReqDTO;
+import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;
 
 /**
  * @description: 验证码相关接口

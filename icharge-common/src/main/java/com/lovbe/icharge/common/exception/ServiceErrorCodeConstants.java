@@ -13,8 +13,8 @@ public interface ServiceErrorCodeConstants {
     ErrorCode USER_MOBILE_USED = new ErrorCode(100403, "修改手机失败，该手机号({})已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100404, "用户积分余额不足");
 
-    // ========== AUTH 模块 1-004-003-000 ==========
-    ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(1_004_003_000, "登录失败，账号密码不正确");
+    // ========== AUTH 模块 1005 ==========
+    ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(100501, "登录失败，账号密码不正确");
     ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(1_004_003_001, "登录失败，账号被禁用");
     ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(1_004_003_005, "登录失败，解析不到三方登录信息");
     ErrorCode AUTH_MOBILE_USED = new ErrorCode(1_004_003_007, "手机号已经被使用");

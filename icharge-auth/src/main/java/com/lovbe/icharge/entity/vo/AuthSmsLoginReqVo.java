@@ -13,13 +13,13 @@ import javax.validation.constraints.Pattern;
  * @date: 2024/8/7 13:37
  */
 @Data
-public class AuthMobileCodeLoginReqVo {
+public class AuthSmsLoginReqVo {
     @NotEmpty(message = "手机号不能为空")
     @Mobile
     private String mobile;
 
-    @NotEmpty(message = "手机验证码不能为空")
-    @Length(min = 6, max = 6, message = "手机验证码长度为 6 位")
-    @Pattern(regexp = "^[0-9]+$", message = "手机验证码必须都是数字")
+    @NotEmpty(message = "验证码不能为空")
+    @Length(min = 6, max = 6, message = "验证码长度为 6 位")
+    @Pattern(regexp = "^[0-9]+$", message = "验证码必须都是数字")
     private String code;
 }

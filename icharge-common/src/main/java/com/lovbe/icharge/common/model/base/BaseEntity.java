@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldNameConstants;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Data
 @FieldNameConstants
 @EqualsAndHashCode(callSuper = false)
-public class BaseEntity<T> {
+public class BaseEntity<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -24,7 +25,7 @@ public class BaseEntity<T> {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
-    private String uid;
+    private Integer uid;
 
     /**
      * 数据状态

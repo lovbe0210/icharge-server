@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity.dto.code;
+package com.lovbe.icharge.entity.dto;
 
 
 import com.lovbe.icharge.enums.CodeSceneEnum;
