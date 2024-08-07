@@ -7,12 +7,12 @@ import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
 import com.lovbe.icharge.service.AuthService;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
 
 /**
  * @description: 权限认证

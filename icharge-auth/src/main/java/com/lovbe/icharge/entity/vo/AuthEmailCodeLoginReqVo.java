@@ -17,7 +17,7 @@ import javax.validation.constraints.Pattern;
 public class AuthEmailCodeLoginReqVo {
     @NotEmpty(message = "邮箱不能为空")
     @Email
-    private String mobile;
+    private String email;
 
     @NotEmpty(message = "验证码不能为空")
     @Length(min = 6, max = 6, message = "验证码长度为 6 位")
