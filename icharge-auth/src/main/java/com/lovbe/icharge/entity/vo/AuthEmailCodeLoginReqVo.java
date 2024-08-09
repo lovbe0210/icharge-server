@@ -1,12 +1,11 @@
 package com.lovbe.icharge.entity.vo;
 
-import com.lovbe.icharge.common.validation.Mobile;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
 
 /**
  * @description: 邮箱验证码登录

@@ -6,7 +6,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 
 @FeignClient(name = "user-service", fallback = Exception.class)
 public interface UserService {
-    @RequestMapper("/createUserIfAbsent")
     ResponseBean<LoginUser> createUserIfAbsent(String mobile, Integer loginType, String userIp);
 
     ResponseBean<LoginUser> getLoginUserByMobile(String mobile);

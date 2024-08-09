@@ -1,9 +1,9 @@
 package com.lovbe.icharge.common.model.base;
 
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
 
 /**
  * @description: 入参基类

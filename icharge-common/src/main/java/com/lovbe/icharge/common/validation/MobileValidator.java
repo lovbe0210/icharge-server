@@ -2,10 +2,8 @@ package com.lovbe.icharge.common.validation;
 
 import cn.hutool.core.util.StrUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
-import org.springframework.util.StringUtils;
-
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 /**
  * @description: 手机号校验逻辑

@@ -1,9 +1,9 @@
 package com.lovbe.icharge.entity.vo;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
 
 /**
  * @description: 邮箱密码登录
