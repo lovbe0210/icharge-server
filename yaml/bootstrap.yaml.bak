@@ -1,0 +1,24 @@
+server:
+  port: 10212
+spring:
+  application:
+    name: icharge-auth
+  cloud:
+    nacos:
+      server-addr: 2607:fcd0:100:000e:0000:0000:aacd:74ba:38838
+      config:
+#        import-check:
+#          enabled: false
+#        server-addr: [2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838
+#        server-addr: 45.12.52.97:38838
+        namespace: 059a88cd-8bda-46ce-9e69-dfc3c541014a
+        encode: UTF-8
+        file-extension: yaml
+        shared-configs:
+          - data-id: common.yaml
+            refresh: true
+      discovery:
+        server-addr: ${spring.cloud.nacos.config.server-addr}
+        namespace: ${spring.cloud.nacos.config.namespace}
+        ip: 2409:8a62:4fe:fec0:fdce:7f8f:40fc:5a12
+

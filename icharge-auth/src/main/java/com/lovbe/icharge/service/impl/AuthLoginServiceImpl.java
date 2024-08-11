@@ -6,7 +6,6 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.common.model.entity.UserInfo;
 import com.lovbe.icharge.common.util.FeignRequestUtils;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;

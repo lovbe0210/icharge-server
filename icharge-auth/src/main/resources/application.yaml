@@ -1,45 +1,28 @@
 server:
   port: 10212
-  servlet:
-    context-path: /icharge
 
 spring:
   application:
     name: icharge-auth
-  servlet:
-    multipart:
-      max-request-size: 10MB
-      max-file-size: 10MB
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://1.94.18.45:9527/icharge?useSSL=false&useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&allowMultiQueries=true&allowPublicKeyRetrieval=true
-    username: root
-    password: yan51121
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 15
-      auto-commit: true
-      idle-timeout: 30000
-      pool-name: DatebookHikariCP
-      max-lifetime: 1800000
-      connection-test-query: SELECT 1 FROM DUAL
-
-
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-  type-aliases-package: com.lovbe.icharge.*.entity
-
-oss:
-  # oss类型，目前支持：阿里云(0) 七牛云(1) 又拍云(2) 本地存储(3) 通用S3协议 (4)
-  ossType: 1
-  accessKey: eNmxT0s01OOlBmM7gwSufviBOs0ndxW7JbPU-odP
-  secretKey: ER7CH9EfPNVFIPn2N7QS3kVpvToDuN9swyZ0oxDR
-  endpoint: sd839j9oj.hd-bkt.clouddn.com
-  bucketName: icharges
-
-global:
-  param:
-    # 雪花Id机器码
-    snowflakeId: 2
+  cloud:
+    nacos:
+      server-addr: "[2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838"
+      config:
+        server-addr: "[2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838"
+        namespace: 059a88cd-8bda-46ce-9e69-dfc3c541014a
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        username: test
+        password: yan51121
+  #        import-check:
+#          enabled: false
+      discovery:
+        group: DEFAULT_GROUP
+        username: test
+        password: yan51121
+        namespace: 059a88cd-8bda-46ce-9e69-dfc3c541014a
+      username: test
+      password: yan51121
+  config:
+    import:
+      - optional:nacos:icharge-auth.yaml?refreshEnabled=true
