@@ -9,6 +9,7 @@ import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author: Lvhl
  * @date: 2024/8/2 15:21
  */
-@RequestMapping("/auth")
+@RequestMapping("/api")
 @RestController
 public class AuthController {
     @Resource
@@ -32,7 +33,7 @@ public class AuthController {
      * @param reqVo
      * @return ResponseBean
      */
-    @RequestMapping("/sms/login")
+    @PostMapping("/sms/login")
     public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo) {
         return ResponseBean.ok(authService.smsLogin(reqVo));
     }

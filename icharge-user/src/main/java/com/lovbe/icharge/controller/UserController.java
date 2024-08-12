@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     @PostMapping("/user/createUserIfAbsent")
     public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody AuthUserDTO authUserDTO) {
-        return null;
+        return ResponseBean.ok(new LoginUser());
     }
 
     @PostMapping("/getUser/mobile")
