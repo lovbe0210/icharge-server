@@ -1,22 +1,21 @@
 package com.lovbe.icharge.service.feign;
 
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
 
-@Component
-//@FeignClient(fallback = Exception.class)
-public class UserService {
-    public ResponseBean<LoginUser> createUserIfAbsent(String mobile, Integer loginType, String userIp){
-        return null;
-    };
+@FeignClient(name = "icharge-user", fallback = UserServiceFeignFallback.class)
+public interface UserService {
 
-    public ResponseBean<LoginUser> getLoginUserByMobile(String mobile) {
-        return null;
-    };
+    @PostMapping("/api/user/createUserIfAbsent")
+    ResponseBean<LoginUser> createUserIfAbsent(AuthUserDTO authUserDTO);
 
-    public ResponseBean<LoginUser> getLoginUserByEmail(String email) {
-        return null;
-    };
+    @PostMapping("/api/getUser/mobile")
+    ResponseBean<LoginUser> getLoginUserByMobile(AuthUserDTO authUserDTO);
+
+    @PostMapping("/api//getUser/email")
+    ResponseBean<LoginUser> getLoginUserByEmail(AuthUserDTO authUserDTO);
 }

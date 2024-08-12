@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodeConstants;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.util.FeignRequestUtils;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
@@ -39,15 +40,19 @@ public class AuthLoginServiceImpl implements AuthService {
         String userIp = ServletUtils.getClientIP();
         AuthSmsLoginReqVo data = reqVo.getData();
         codeService.useSmsCode(new AuthCodeReqDTO()
-                                    .setMobile(data.getMobile())
-                                    .setCode(data.getCode())
-                                    .setScene(CodeSceneEnum.MOBILE_LOGIN)
-                                    .setUsedIp(userIp));
+                .setMobile(data.getMobile())
+                .setCode(data.getCode())
+                .setScene(CodeSceneEnum.MOBILE_LOGIN)
+                .setUsedIp(userIp));
 
         // 获得获得注册用户
-        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(data.getMobile(), LoginLogTypeEnum.LOGIN_SMS_CODE.getType(), userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(
+                new AuthUserDTO()
+                        .setMobile(data.getMobile())
+                        .setLoginType(LoginLogTypeEnum.LOGIN_SMS_CODE.getType())
+                        .setUserIp(userIp));
         if (!FeignRequestUtils.checkResp(userInfoResp)) {
-           throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
+            throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
         }
         LoginUser user = userInfoResp.getData();
 
@@ -81,7 +86,11 @@ public class AuthLoginServiceImpl implements AuthService {
                 .setUsedIp(userIp));
 
         // 获得注册用户
-        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(data.getEmail(), LoginLogTypeEnum.LOGIN_EMAIL_CODE.getType(), userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(
+                new AuthUserDTO()
+                        .setEmail(data.getEmail())
+                        .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_CODE.getType())
+                        .setUserIp(userIp));
         if (!FeignRequestUtils.checkResp(userInfoResp)) {
             throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
         }
@@ -126,6 +135,7 @@ public class AuthLoginServiceImpl implements AuthService {
 
     /**
      * 使用手机号密码登录
+     *
      * @param mobile
      * @param password
      * @return
@@ -133,7 +143,7 @@ public class AuthLoginServiceImpl implements AuthService {
     private LoginUser login0(String mobile, String password) {
         final LoginLogTypeEnum logTypeEnum = LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD;
         // 校验账号是否存在
-        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByMobile(mobile);
+        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByMobile(new AuthUserDTO().setMobile(mobile));
         if (!FeignRequestUtils.checkResp(userInfoResp)) {
             throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
         }
@@ -154,13 +164,14 @@ public class AuthLoginServiceImpl implements AuthService {
 
     /**
      * 使用邮箱密码登录
+     *
      * @param email
      * @param password
      * @return
      */
     private LoginUser login1(String email, String password) {
         // 校验账号是否存在
-        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByEmail(email);
+        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByEmail(new AuthUserDTO().setEmail(email));
         if (!FeignRequestUtils.checkResp(userInfoResp)) {
             throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
         }

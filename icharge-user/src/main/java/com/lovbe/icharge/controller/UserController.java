@@ -1,8 +1,9 @@
 package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.vo.UserInfoVo;
+import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.entity.LoginUser;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,9 +12,20 @@ import org.springframework.web.bind.annotation.RestController;
  * @author: Lvhl
  * @date: 2024/7/9 11:33
  */
-@RestController
+@RestController("/api")
 public class UserController {
-    public ResponseBean createUser(@RequestBody BaseRequest<UserInfoVo> userInfo) {
-        return ResponseBean.ok();
+    @PostMapping("/user/createUserIfAbsent")
+    public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody AuthUserDTO authUserDTO) {
+        return null;
+    }
+
+    @PostMapping("/getUser/mobile")
+    public ResponseBean<LoginUser> getLoginUserByMobile(@RequestBody AuthUserDTO authUserDTO) {
+        return null;
+    }
+
+    @PostMapping("/getUser/email")
+    public ResponseBean<LoginUser> getLoginUserByEmail(@RequestBody AuthUserDTO authUserDTO) {
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 package com.lovbe.icharge.common.model.base;
 
+import com.lovbe.icharge.common.exception.ErrorCode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -23,6 +24,13 @@ public class ResponseBean<T> {
         this.result = result;
         this.message = message;
         this.data = data;
+    }
+
+    public ResponseBean(ErrorCode errorCode) {
+        this.result = false;
+        this.code = errorCode.getCode();
+        this.message = errorCode.getMsg();
+        this.data = null;
     }
 
     public static ResponseBean ok() {
