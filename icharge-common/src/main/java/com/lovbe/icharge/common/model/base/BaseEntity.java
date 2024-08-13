@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
 
 import java.io.Serializable;
@@ -15,8 +16,7 @@ import java.time.LocalDateTime;
  * @date: 2024/5/10 18:54
  */
 @Data
-@FieldNameConstants
-@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
 public class BaseEntity<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -25,7 +25,7 @@ public class BaseEntity<T> implements Serializable {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
-    private Integer uid;
+    private Long uid;
 
     /**
      * 数据状态

@@ -3,6 +3,9 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.service.UserService;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,19 +15,23 @@ import org.springframework.web.bind.annotation.RestController;
  * @author: Lvhl
  * @date: 2024/7/9 11:33
  */
-@RestController("/api")
+@RestController
 public class UserController {
-    @PostMapping("/user/createUserIfAbsent")
-    public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody AuthUserDTO authUserDTO) {
-        return ResponseBean.ok(new LoginUser());
+    @Resource
+    private UserService userService;
+
+
+    @PostMapping("/createUserIfAbsent")
+    public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody @Valid AuthUserDTO authUserDTO) {
+        return ResponseBean.ok(userService.createUserIfAbsent(authUserDTO));
     }
 
-    @PostMapping("/getUser/mobile")
+    @PostMapping("getUser/byMobile")
     public ResponseBean<LoginUser> getLoginUserByMobile(@RequestBody AuthUserDTO authUserDTO) {
         return null;
     }
 
-    @PostMapping("/getUser/email")
+    @PostMapping("/getUser/byEmail")
     public ResponseBean<LoginUser> getLoginUserByEmail(@RequestBody AuthUserDTO authUserDTO) {
         return null;
     }

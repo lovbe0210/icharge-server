@@ -12,9 +12,9 @@ public interface UserService {
     @PostMapping("/api/user/createUserIfAbsent")
     ResponseBean<LoginUser> createUserIfAbsent(AuthUserDTO authUserDTO);
 
-    @PostMapping("/api/getUser/mobile")
+    @PostMapping("/api/user/getUser/byMobile")
     ResponseBean<LoginUser> getLoginUserByMobile(AuthUserDTO authUserDTO);
 
-    @PostMapping("/api//getUser/email")
+    @PostMapping("/api/user/getUser/byEmail")
     ResponseBean<LoginUser> getLoginUserByEmail(AuthUserDTO authUserDTO);
 }

@@ -1,4 +1,4 @@
-package com.lovbe.icharge.enums;
+package com.lovbe.icharge.common.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

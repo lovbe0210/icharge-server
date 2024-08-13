@@ -16,7 +16,7 @@ import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
 import com.lovbe.icharge.entity.vo.resp.AuthLoginRespVo;
 import com.lovbe.icharge.enums.CodeSceneEnum;
-import com.lovbe.icharge.enums.LoginLogTypeEnum;
+import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
 import com.lovbe.icharge.enums.LoginResultEnum;
 import com.lovbe.icharge.service.AuthCodeService;
 import com.lovbe.icharge.service.AuthService;
@@ -114,7 +114,7 @@ public class AuthLoginServiceImpl implements AuthService {
         return createTokenAfterLoginSuccess(user.getUid(), data.getMobile(), LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD);
     }
 
-    private AuthLoginRespVo createTokenAfterLoginSuccess(Integer userId, String mobileOrEmail, LoginLogTypeEnum logType) {
+    private AuthLoginRespVo createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
         createLoginLog(userId, mobileOrEmail, logType, LoginResultEnum.SUCCESS);
         // 创建 Token 令牌
 
@@ -122,7 +122,7 @@ public class AuthLoginServiceImpl implements AuthService {
         return AuthLoginRespVo.builder().accessToken("").build();
     }
 
-    private void createLoginLog(Integer uid, String mobile, LoginLogTypeEnum logTypeEnum, LoginResultEnum loginResultEnum) {
+    private void createLoginLog(Long uid, String mobile, LoginLogTypeEnum logTypeEnum, LoginResultEnum loginResultEnum) {
         // 插入登陆日志 TODO
         String userIp = ServletUtils.getClientIP();
         log.info("[Login] - userId: {}, LoginLogType：{}, userIp: {}", uid, loginResultEnum, userIp);

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author: Lvhl
  * @date: 2024/8/2 15:21
  */
-@RequestMapping("/api")
+@RequestMapping
 @RestController
 public class AuthController {
     @Resource
