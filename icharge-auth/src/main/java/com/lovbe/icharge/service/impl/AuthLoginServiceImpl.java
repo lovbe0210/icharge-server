@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service.impl;
 
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.exception.GlobalErrorCodeConstants;
 import com.lovbe.icharge.common.exception.ServiceErrorCodeConstants;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
@@ -24,6 +25,7 @@ import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 
 @Slf4j
@@ -45,33 +47,29 @@ public class AuthLoginServiceImpl implements AuthService {
                 .setScene(CodeSceneEnum.MOBILE_LOGIN)
                 .setUsedIp(userIp));
 
-        // 获得获得注册用户
+        // 获取用户信息
         ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(
                 new AuthUserDTO()
                         .setMobile(data.getMobile())
                         .setLoginType(LoginLogTypeEnum.LOGIN_SMS_CODE.getType())
                         .setUserIp(userIp));
-        if (!FeignRequestUtils.checkResp(userInfoResp)) {
-            throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        LoginUser user = userInfoResp.getData();
-
-        // 校验是否禁用
-        if (!CommonStatusEnum.isNormal(user.getStatus())) {
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_USER_DISABLED);
-        }
-
-        // 创建 Token 令牌，记录登录日志
-        return createTokenAfterLoginSuccess(user.getUid(), data.getMobile(), LoginLogTypeEnum.LOGIN_SMS_CODE);
+        // 生成token信息
+        return getAuthLoginRespVo(userInfoResp, data.getMobile(), null, LoginLogTypeEnum.LOGIN_SMS_CODE);
     }
 
     @Override
     public AuthLoginRespVo mobileLogin(BaseRequest<AuthMobileLoginReqVo> reqVo) {
         // 使用手机 + 密码，进行登录。
         AuthMobileLoginReqVo data = reqVo.getData();
-        LoginUser user = login0(data.getMobile(), data.getPassword());
-        // 创建 Token 令牌，记录登录日志
-        return createTokenAfterLoginSuccess(user.getUid(), data.getMobile(), LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD);
+        String userIp = ServletUtils.getClientIP();
+        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(
+                new AuthUserDTO()
+                        .setMobile(data.getMobile())
+                        .setLoginType(LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.getType())
+                        .setUserIp(userIp)
+        );
+        // 生成token信息
+        return getAuthLoginRespVo(userInfoResp, data.getMobile(), data.getPassword(), LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD);
     }
 
     @Override
@@ -91,102 +89,112 @@ public class AuthLoginServiceImpl implements AuthService {
                         .setEmail(data.getEmail())
                         .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_CODE.getType())
                         .setUserIp(userIp));
-        if (!FeignRequestUtils.checkResp(userInfoResp)) {
-            throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        LoginUser user = userInfoResp.getData();
-
-        // 校验是否禁用
-        if (!CommonStatusEnum.isNormal(user.getStatus())) {
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_USER_DISABLED);
-        }
-
-        // 创建 Token 令牌，记录登录日志
-        return createTokenAfterLoginSuccess(user.getUid(), data.getEmail(), LoginLogTypeEnum.LOGIN_SMS_CODE);
+        return getAuthLoginRespVo(userInfoResp, data.getEmail(), null, LoginLogTypeEnum.LOGIN_EMAIL_CODE);
     }
+
 
     @Override
     public AuthLoginRespVo emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo) {
         // 使用邮箱 + 密码，进行登录。
         AuthEmailLoginReqVo data = reqVo.getData();
-        LoginUser user = login1(data.getMobile(), data.getPassword());
-        // 创建 Token 令牌，记录登录日志
-        return createTokenAfterLoginSuccess(user.getUid(), data.getMobile(), LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD);
-    }
-
-    private AuthLoginRespVo createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
-        createLoginLog(userId, mobileOrEmail, logType, LoginResultEnum.SUCCESS);
-        // 创建 Token 令牌
-
-        // 构建返回结果
-        return AuthLoginRespVo.builder().accessToken("").build();
-    }
-
-    private void createLoginLog(Long uid, String mobile, LoginLogTypeEnum logTypeEnum, LoginResultEnum loginResultEnum) {
-        // 插入登陆日志 TODO
         String userIp = ServletUtils.getClientIP();
-        log.info("[Login] - userId: {}, LoginLogType：{}, userIp: {}", uid, loginResultEnum, userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(
+                new AuthUserDTO()
+                        .setEmail(data.getEmail())
+                        .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.getType())
+                        .setUserIp(userIp)
+        );
+        // 创建 Token 令牌，记录登录日志
+        return getAuthLoginRespVo(userInfoResp, data.getEmail(), data.getPassword(), LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD);
     }
 
-    private boolean isPasswordMatch(String dataPassword, String password) {
 
+    /**
+     * @description 校验用户身份信息， 生成认证登录信息
+     * @param[1] userInfoResp
+     * @param[2] loginPayload
+     * @param[3] password
+     * @param[4] logType
+     * @return AuthLoginRespVo
+     * @author lovbe0210
+     * @date 2024/8/14 22:40
+     */
+    private AuthLoginRespVo getAuthLoginRespVo(ResponseBean<LoginUser> userInfoResp,
+                                               String loginPayload,
+                                               String password,
+                                               LoginLogTypeEnum logType) {
+        if (userInfoResp == null || !userInfoResp.isResult()) {
+            throw new ServiceException(GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR);
+        }
+
+        LoginUser user = userInfoResp.getData();
+        if (user == null) {
+            throw new ServiceException(
+                    LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.equals(logType) ? ServiceErrorCodeConstants.USER_MOBILE_NOT_EXISTS
+                            : LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.equals(logType) ? ServiceErrorCodeConstants.USER_EMAIL_NOT_EXISTS
+                            : ServiceErrorCodeConstants.AUTH_FAILED);
+        }
+
+        // 校验是否禁用
+        if (!CommonStatusEnum.isNormal(user.getStatus())) {
+            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_USER_DISABLED);
+        }
+
+        // 校验密码是否正确
+        if (StringUtils.hasLength(password) && !isPasswordMatch(user.getPassword(), password)) {
+            recordLoginLog(user.getUid(), loginPayload, logType, LoginResultEnum.BAD_CREDENTIALS);
+            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS);
+        }
+
+        // 创建 Token 令牌，记录登录日志
+        return createTokenAfterLoginSuccess(user.getUid(), loginPayload, logType);
+    }
+
+    /**
+     * @description 账号密码校验，需要先解密，然后加密进行对比
+     * @param[1] dataPassword
+     * @param[2] password
+     * @return boolean
+     * @author lovbe0210
+     * @date 2024/8/14 22:44
+     */
+    private boolean isPasswordMatch(String dataPassword, String password) {
+        // TODO
         return false;
     }
 
     /**
-     * 使用手机号密码登录
-     *
-     * @param mobile
-     * @param password
-     * @return
+     * @description 登录成功，生成token信息
+     * @param[1] userId
+     * @param[2] mobileOrEmail
+     * @param[3] logType
+     * @return AuthLoginRespVo
+     * @author lovbe0210
+     * @date 2024/8/14 22:46
      */
-    private LoginUser login0(String mobile, String password) {
-        final LoginLogTypeEnum logTypeEnum = LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD;
-        // 校验账号是否存在
-        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByMobile(new AuthUserDTO().setMobile(mobile));
-        if (!FeignRequestUtils.checkResp(userInfoResp)) {
-            throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        LoginUser user = userInfoResp.getData();
+    private AuthLoginRespVo createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
+        recordLoginLog(userId, mobileOrEmail, logType, LoginResultEnum.SUCCESS);
+        // 创建 Token 令牌
 
-        // 校验是否禁用
-        if (!CommonStatusEnum.isNormal(user.getStatus())) {
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_USER_DISABLED);
-        }
-
-        // 校验密码是否正确
-        if (!isPasswordMatch(user.getPassword(), password)) {
-            createLoginLog(user.getUid(), mobile, logTypeEnum, LoginResultEnum.BAD_CREDENTIALS);
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS);
-        }
-        return user;
+        // 构建返回结果
+        return AuthLoginRespVo.builder()
+                .accessToken("")
+                .userId(userId)
+                .build();
     }
 
     /**
-     * 使用邮箱密码登录
-     *
-     * @param email
-     * @param password
-     * @return
+     * @description 记录登录日志
+     * @param[1] uid
+     * @param[2] mobile
+     * @param[3] logTypeEnum
+     * @param[4] loginResultEnum
+     * @author lovbe0210
+     * @date 2024/8/14 22:47
      */
-    private LoginUser login1(String email, String password) {
-        // 校验账号是否存在
-        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByEmail(new AuthUserDTO().setEmail(email));
-        if (!FeignRequestUtils.checkResp(userInfoResp)) {
-            throw new ServiceException(ServiceErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        LoginUser user = userInfoResp.getData();
-
-        // 校验是否禁用
-        if (!CommonStatusEnum.isNormal(user.getStatus())) {
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_USER_DISABLED);
-        }
-
-        // 校验密码是否正确
-        if (!isPasswordMatch(user.getPassword(), password)) {
-            createLoginLog(user.getUid(), email, LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD, LoginResultEnum.BAD_CREDENTIALS);
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS);
-        }
-        return user;
+    private void recordLoginLog(Long uid, String mobile, LoginLogTypeEnum logTypeEnum, LoginResultEnum loginResultEnum) {
+        // 插入登陆日志 TODO
+        String userIp = ServletUtils.getClientIP();
+        log.info("[Login] - userId: {}, LoginLogType：{}, userIp: {}", uid, loginResultEnum, userIp);
     }
 }

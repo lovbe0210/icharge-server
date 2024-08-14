@@ -17,4 +17,13 @@ public interface UserService {
      * @date: 2024/8/13 22:37
      */
     LoginUser createUserIfAbsent(AuthUserDTO authUserDTO);
+
+    /**
+     * @description 根据登录方式获取用户账号信息
+     * @param[1] authUserDTO
+     * @return LoginUser
+     * @author lovbe0210
+     * @date 2024/8/14 23:01
+     */
+    LoginUser getLoginUserByPayload(AuthUserDTO authUserDTO);
 }

@@ -2,6 +2,7 @@ package com.lovbe.icharge.common.model.base;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -25,6 +26,7 @@ public class BaseEntity<T> implements Serializable {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
+    @TableId
     private Long uid;
 
     /**

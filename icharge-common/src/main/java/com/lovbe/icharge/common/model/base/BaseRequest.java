@@ -1,6 +1,7 @@
 package com.lovbe.icharge.common.model.base;
 
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class BaseRequest<T> {
     private String userId;
     private String version;
 
+    @Valid
     @NotNull(message = "参数不得为空")
     private T data;
 }

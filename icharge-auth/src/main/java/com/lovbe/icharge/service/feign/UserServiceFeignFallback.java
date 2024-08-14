@@ -15,12 +15,7 @@ public class UserServiceFeignFallback extends BaseFallback implements UserServic
     }
 
     @Override
-    public ResponseBean<LoginUser> getLoginUserByMobile(AuthUserDTO authUserDTO) {
-        return getFallBack();
-    }
-
-    @Override
-    public ResponseBean<LoginUser> getLoginUserByEmail(AuthUserDTO authUserDTO) {
+    public ResponseBean<LoginUser> getLoginUserByPayload(AuthUserDTO authUserDTO) {
         return getFallBack();
     }
 }

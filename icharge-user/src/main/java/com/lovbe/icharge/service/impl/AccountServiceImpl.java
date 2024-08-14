@@ -22,7 +22,9 @@ public class AccountServiceImpl implements AccountService {
     public AccountDo getAccountInfo(AuthUserDTO authUserDTO) {
         return accountMapper.selectOne(new LambdaQueryWrapper<AccountDo>()
                 .eq(AccountDo::getStatus, "A")
+                .eq(LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.getType() == authUserDTO.getLoginType(), AccountDo::getMobile, authUserDTO.getMobile())
                 .eq(LoginLogTypeEnum.LOGIN_SMS_CODE.getType() == authUserDTO.getLoginType(), AccountDo::getMobile, authUserDTO.getMobile())
+                .eq(LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.getType() == authUserDTO.getLoginType(), AccountDo::getEmail, authUserDTO.getEmail())
                 .eq(LoginLogTypeEnum.LOGIN_EMAIL_CODE.getType() == authUserDTO.getLoginType(), AccountDo::getEmail, authUserDTO.getEmail())
         );
     }
@@ -30,5 +32,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void createAccount(AccountDo account) {
         accountMapper.insert(account);
+    }
+
+    @Override
+    public void updateAccount(AccountDo account) {
+        accountMapper.updateById(account);
     }
 }

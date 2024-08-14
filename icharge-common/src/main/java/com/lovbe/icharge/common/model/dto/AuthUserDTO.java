@@ -26,4 +26,6 @@ public class AuthUserDTO {
     private Integer loginType;
     @NotBlank(message = "登录Ip不得为空")
     private String userIp;
+    private String loginAgent;
+    private String loginOs;
 }

@@ -1,7 +1,7 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.validation.Mobile;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -11,10 +11,10 @@ import lombok.Data;
  */
 @Data
 public class AuthMobileLoginReqVo {
-    @NotEmpty(message = "手机号不能为空")
+    @NotBlank(message = "手机号不能为空")
     @Mobile
     private String mobile;
 
-    @NotEmpty(message = "密码不能为空")
+    @NotBlank(message = "密码不能为空")
     private String password;
 }

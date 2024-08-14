@@ -26,7 +26,7 @@ public interface GlobalErrorCodeConstants {
 
     // ========== 服务端错误段 ==========
 
-    ErrorCode INTERNAL_SERVER_ERROR = new ErrorCode(500, "系统异常");
+    ErrorCode INTERNAL_SERVER_ERROR = new ErrorCode(500, "系统异常,请稍后再试");
     ErrorCode NOT_IMPLEMENTED = new ErrorCode(501, "功能未实现/未开启");
     ErrorCode ERROR_CONFIGURATION = new ErrorCode(502, "错误的配置项");
 

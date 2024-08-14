@@ -27,4 +27,13 @@ public interface AccountService {
      * @date: 2024/8/14 0:00
      */
     void createAccount(AccountDo account);
+
+    /**
+     * @description: 升级账号信息
+     * @param: AccountDo
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/8/14 20:54
+     */
+    void updateAccount(AccountDo account);
 }

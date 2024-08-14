@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @TableName(value = "p_account")
@@ -15,7 +16,7 @@ public class AccountDo extends BaseEntity {
     private String email;
     private String password;
     private Integer loginCount;
-    private Date lastLoginTime;
+    private LocalDateTime lastLoginTime;
     private String lastLoginIp;
     private String loginAgent;
     private String loginOs;

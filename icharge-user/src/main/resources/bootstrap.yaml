@@ -17,4 +17,4 @@ spring:
             refresh: true
       discovery:
         namespace: ${spring.cloud.nacos.namespace}
-        ip: "2409:8a62:4fe:fec0:fdce:7f8f:40fc:5a12"
+        ip: "2409:8a62:4ff:7d70:88af:444:c34f:a757"

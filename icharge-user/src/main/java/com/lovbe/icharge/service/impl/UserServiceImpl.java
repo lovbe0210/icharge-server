@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Author: lovbe
@@ -33,6 +33,14 @@ public class UserServiceImpl implements UserService {
     public LoginUser createUserIfAbsent(AuthUserDTO authUserDTO) {
         AccountDo account = accountService.getAccountInfo(authUserDTO);
         if (account != null) {
+            // 记录登录日志
+            account.setLastLoginIp(authUserDTO.getUserIp())
+                    .setLastLoginTime(LocalDateTime.now())
+                    .setLoginAgent(authUserDTO.getLoginAgent())
+                    .setLoginOs(authUserDTO.getLoginOs())
+                    .setLoginCount(account.getLoginCount()+1)
+                    .setUpdateTime(LocalDateTime.now());
+            accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
             loginUser.setStatus(account.getStatus());
             loginUser.setUid(account.getUid());
@@ -46,7 +54,7 @@ public class UserServiceImpl implements UserService {
                 .setPassword(authUserDTO.getPassword())
                 .setLoginCount(1)
                 .setLastLoginIp(authUserDTO.getUserIp())
-                .setLastLoginTime(new Date());
+                .setLastLoginTime(LocalDateTime.now());
         account.setUid(uid);
         account.setCreateTime(LocalDateTime.now());
         account.setUpdateTime(LocalDateTime.now());
@@ -54,11 +62,34 @@ public class UserServiceImpl implements UserService {
         // 创建用户
         UserInfoDo userInfoDo = new UserInfoDo()
                 .setUsername("用户"+ IdUtil.nanoId(4))
-                .setDomain(IdUtil.simpleUUID().substring(0, 7));
+                .setDomain(IdUtil.nanoId(6));
         userInfoDo.setUid(uid);
         userInfoDo.setCreateTime(LocalDateTime.now());
         userInfoDo.setUpdateTime(LocalDateTime.now());
         userMapper.insert(userInfoDo);
-        return new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
+        LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
+        loginUser.setStatus(CommonStatusEnum.NORMAL.getStatus());
+        loginUser.setUid(uid);
+        return loginUser;
+    }
+
+    @Override
+    public LoginUser getLoginUserByPayload(AuthUserDTO authUserDTO) {
+        AccountDo account = accountService.getAccountInfo(authUserDTO);
+        if (account != null) {
+            // 记录登录日志
+            account.setLastLoginIp(authUserDTO.getUserIp())
+                    .setLastLoginTime(LocalDateTime.now())
+                    .setLoginAgent(authUserDTO.getLoginAgent())
+                    .setLoginOs(authUserDTO.getLoginOs())
+                    .setLoginCount(account.getLoginCount()+1)
+                    .setUpdateTime(LocalDateTime.now());
+            accountService.updateAccount(account);
+            LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
+            loginUser.setStatus(account.getStatus());
+            loginUser.setUid(account.getUid());
+            return loginUser;
+        }
+        return null;
     }
 }

@@ -8,8 +8,8 @@ package com.lovbe.icharge.common.exception;
 public interface ServiceErrorCodeConstants {
 
     // ========== 用户相关  1003 ============
-    ErrorCode USER_NOT_EXISTS = new ErrorCode(100301, "用户不存在");
-    ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(100302, "手机号未注册用户");
+    ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(100301, "手机号未注册用户，请注册后再进行登录");
+    ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(100302, "邮箱未注册用户，请注册后再进行登录");
     ErrorCode USER_MOBILE_USED = new ErrorCode(100303, "修改手机失败，该手机号({})已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100304, "用户积分余额不足");
 
@@ -19,6 +19,7 @@ public interface ServiceErrorCodeConstants {
     ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(100403, "登录失败，解析不到三方登录信息");
     ErrorCode AUTH_MOBILE_USED = new ErrorCode(100404, "手机号已经被使用");
     ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(100405, "登录方式不得为空");
+    ErrorCode AUTH_FAILED = new ErrorCode(100406, "登录失败，请稍后再试！");
 
     // ========== feign 远程调用相关 ==========
     ErrorCode FEIGN_FAILED_REQUEST = new ErrorCode(1005, "Feign接口请求失败");

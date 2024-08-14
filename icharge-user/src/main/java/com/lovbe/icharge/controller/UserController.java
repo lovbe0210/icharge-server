@@ -26,13 +26,8 @@ public class UserController {
         return ResponseBean.ok(userService.createUserIfAbsent(authUserDTO));
     }
 
-    @PostMapping("getUser/byMobile")
-    public ResponseBean<LoginUser> getLoginUserByMobile(@RequestBody AuthUserDTO authUserDTO) {
-        return null;
-    }
-
-    @PostMapping("/getUser/byEmail")
-    public ResponseBean<LoginUser> getLoginUserByEmail(@RequestBody AuthUserDTO authUserDTO) {
-        return null;
+    @PostMapping("/getUser/loginPayload")
+    public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody AuthUserDTO authUserDTO) {
+        return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO));
     }
 }
