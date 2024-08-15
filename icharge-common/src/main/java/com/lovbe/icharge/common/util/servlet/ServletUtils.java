@@ -7,7 +7,9 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -184,4 +186,27 @@ public class ServletUtils {
         return Collections.unmodifiableMap(map);
     }
 
+    /**
+     * @description 给相应结果设置cookie
+     * @param[1] response
+     * @param[2] loginRespVo
+     * @author lovbe0210
+     * @date 2024/8/16 0:41
+     */
+    public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginRespVo loginRespVo) {
+        Cookie accessToken = new Cookie("ichagre_token",String.valueOf(loginRespVo.getAccessToken()));
+        accessToken.setDomain(domain);
+        accessToken.setPath("/");
+        accessToken.setMaxAge(60 * 30);
+        accessToken.setSecure(true);
+        accessToken.setHttpOnly(true);
+        response.addCookie(accessToken);
+        Cookie refreshToken = new Cookie("ichagre_rtoken",String.valueOf(loginRespVo.getRefreshToken()));
+        refreshToken.setDomain(domain);
+        refreshToken.setPath("/");
+        refreshToken.setMaxAge(60 * 60 * 24 * 30);
+        refreshToken.setSecure(true);
+        response.addCookie(refreshToken);
+
+    }
 }

@@ -4,7 +4,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.entity.vo.AuthEmailCodeLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
-import com.lovbe.icharge.entity.vo.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
 
 /**

@@ -18,8 +18,10 @@ public interface ServiceErrorCodeConstants {
     ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(100402, "登录失败，账号被禁用");
     ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(100403, "登录失败，解析不到三方登录信息");
     ErrorCode AUTH_MOBILE_USED = new ErrorCode(100404, "手机号已经被使用");
-    ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(100405, "登录方式不得为空");
-    ErrorCode AUTH_FAILED = new ErrorCode(100406, "登录失败，请稍后再试！");
+    ErrorCode AUTH_CODE_EXPIRED = new ErrorCode(100405, "验证码已过期，请重新获取");
+    ErrorCode AUTH_CODE_ERROR = new ErrorCode(100406, "验证码错误");
+    ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(100407, "登录方式不得为空");
+    ErrorCode AUTH_FAILED = new ErrorCode(100408, "登录失败，请稍后再试！");
 
     // ========== feign 远程调用相关 ==========
     ErrorCode FEIGN_FAILED_REQUEST = new ErrorCode(1005, "Feign接口请求失败");

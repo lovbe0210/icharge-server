@@ -32,7 +32,7 @@ public interface AuthCodeService {
      *
      * @param reqDTO 使用请求
      */
-    void useSmsCode(AuthCodeReqDTO reqDTO) throws ServiceException;
+    void useVerifyCode(AuthCodeReqDTO reqDTO) throws ServiceException;
 
     /**
      * 检查验证码是否有效

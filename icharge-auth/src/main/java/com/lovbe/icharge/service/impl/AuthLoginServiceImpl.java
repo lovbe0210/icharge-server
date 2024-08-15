@@ -1,5 +1,6 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.exception.GlobalErrorCodeConstants;
 import com.lovbe.icharge.common.exception.ServiceErrorCodeConstants;
@@ -8,24 +9,27 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.common.util.FeignRequestUtils;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;
 import com.lovbe.icharge.entity.vo.AuthEmailCodeLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
-import com.lovbe.icharge.entity.vo.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 import com.lovbe.icharge.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
 import com.lovbe.icharge.enums.LoginResultEnum;
 import com.lovbe.icharge.service.AuthCodeService;
 import com.lovbe.icharge.service.AuthService;
 import com.lovbe.icharge.service.feign.UserService;
+import com.lovbe.icharge.util.RedisKeyConstant;
+import com.lovbe.icharge.util.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -41,7 +45,7 @@ public class AuthLoginServiceImpl implements AuthService {
         // 校验验证码
         String userIp = ServletUtils.getClientIP();
         AuthSmsLoginReqVo data = reqVo.getData();
-        codeService.useSmsCode(new AuthCodeReqDTO()
+        codeService.useVerifyCode(new AuthCodeReqDTO()
                 .setMobile(data.getMobile())
                 .setCode(data.getCode())
                 .setScene(CodeSceneEnum.MOBILE_LOGIN)
@@ -77,7 +81,7 @@ public class AuthLoginServiceImpl implements AuthService {
         // 校验验证码
         String userIp = ServletUtils.getClientIP();
         AuthEmailCodeLoginReqVo data = reqVo.getData();
-        codeService.useSmsCode(new AuthCodeReqDTO()
+        codeService.useVerifyCode(new AuthCodeReqDTO()
                 .setEmail(data.getEmail())
                 .setCode(data.getCode())
                 .setScene(CodeSceneEnum.EMAIL_LOGIN)
@@ -175,10 +179,18 @@ public class AuthLoginServiceImpl implements AuthService {
     private AuthLoginRespVo createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
         recordLoginLog(userId, mobileOrEmail, logType, LoginResultEnum.SUCCESS);
         // 创建 Token 令牌
-
+        // accessToken 30分钟
+        String accessToken = IdUtil.fastSimpleUUID();
+        String key = RedisKeyConstant.getAccessTokenKey(accessToken);
+        RedisUtil.set(key, userId, 30, TimeUnit.MINUTES);
+        // refreshToken 30天
+        String refreshToken = IdUtil.fastSimpleUUID();
+        key = RedisKeyConstant.getRefreshTokenKey(refreshToken);
+        RedisUtil.set(key, userId, 30, TimeUnit.DAYS);
         // 构建返回结果
         return AuthLoginRespVo.builder()
-                .accessToken("")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .userId(userId)
                 .build();
     }

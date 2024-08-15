@@ -18,3 +18,4 @@ spring:
       discovery:
         namespace: ${spring.cloud.nacos.namespace}
         ip: "2409:8a62:4ff:7d70:88af:444:c34f:a757"
+

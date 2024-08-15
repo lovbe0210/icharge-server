@@ -43,4 +43,20 @@ public enum CodeSceneEnum {
                 values());
     }
 
+    public static boolean sceneIsMobile(CodeSceneEnum scene) {
+        return MOBILE_LOGIN.equals(scene) ? true
+                : BIND_MOBILE.equals(scene) ? true
+                : EMAIL_UPDATE_MOBILE.equals(scene) ? true
+                : MOBILE_UPDATE_PASSWORD.equals(scene) ? true
+                : MOBILE_RESET_PASSWORD.equals(scene);
+    }
+
+    public static boolean sceneIsEmail(CodeSceneEnum scene) {
+        return EMAIL_LOGIN.equals(scene) ? true
+                : EMAIL_EMAIL.equals(scene) ? true
+                : MOBILE_UPDATE_EMAIL.equals(scene) ? true
+                : EMAIL_UPDATE_PASSWORD.equals(scene) ? true
+                : EMAIL_RESET_PASSWORD.equals(scene);
+    }
+
 }

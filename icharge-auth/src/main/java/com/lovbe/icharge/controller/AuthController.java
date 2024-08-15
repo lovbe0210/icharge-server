@@ -2,13 +2,18 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.vo.AuthEmailCodeLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
 import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,10 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
  * @author: Lvhl
  * @date: 2024/8/2 15:21
  */
+@RefreshScope
 @RestController
 public class AuthController {
     @Resource
     private AuthService authService;
+    @Value("${global.param.domain}")
+    private String domain;
 
     /**
      * description: 手机验证码登录
@@ -32,8 +40,10 @@ public class AuthController {
      * @return ResponseBean
      */
     @PostMapping("/sms/login")
-    public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo) {
-        return ResponseBean.ok(authService.smsLogin(reqVo));
+    public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo, HttpServletResponse response) {
+        AuthLoginRespVo loginRespVo = authService.smsLogin(reqVo);
+        ServletUtils.setLoginCookie(domain, response, loginRespVo);
+        return ResponseBean.ok("登录成功");
     }
 
     /**

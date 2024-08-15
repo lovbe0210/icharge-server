@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity.vo.resp;
+package com.lovbe.icharge.common.model.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
