@@ -13,8 +13,9 @@ public interface AuthCodeService {
      * 发送短信验证码
      *
      * @param reqDTO 发送请求
+     * @return
      */
-    void sendMobileCode(AuthCodeReqDTO reqDTO);
+    String sendMobileCode(AuthCodeReqDTO reqDTO);
 
     /**
      * description: 发送邮箱验证码
@@ -33,11 +34,4 @@ public interface AuthCodeService {
      * @param reqDTO 使用请求
      */
     void useVerifyCode(AuthCodeReqDTO reqDTO) throws ServiceException;
-
-    /**
-     * 检查验证码是否有效
-     *
-     * @param reqDTO 校验请求
-     */
-    void validateSmsCode(AuthCodeReqDTO reqDTO);
 }

@@ -1,9 +1,13 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
-import com.lovbe.icharge.common.exception.GlobalErrorCodeConstants;
-import com.lovbe.icharge.common.exception.ServiceErrorCodeConstants;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
@@ -11,10 +15,7 @@ import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;
-import com.lovbe.icharge.entity.vo.AuthEmailCodeLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
+import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 import com.lovbe.icharge.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
@@ -27,6 +28,7 @@ import com.lovbe.icharge.util.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -112,6 +114,33 @@ public class AuthLoginServiceImpl implements AuthService {
         return getAuthLoginRespVo(userInfoResp, data.getEmail(), data.getPassword(), LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD);
     }
 
+    @Override
+    public ResponseBean sendVerifyCode(BaseRequest<AuthMobileCodeReqVo> reqVo) {
+        AuthMobileCodeReqVo data = reqVo.getData();
+        Assert.notNull(data.getCodeScene(), GlobalErrorCodes.ERROR_CONFIGURATION.getMsg());
+        // 滑块验证
+        String sliderVerification = data.getSliderVerification();
+        // 滑块验证 TODO
+        JSONObject parsed = JSONUtil.parseObj(sliderVerification);
+        Long sliderVerifyCode = parsed.getLong("SLIDER_VERIFY_CODE");
+        // 简单确定客户端唯一就行，只是用于存放滑块验证码的code值的有效期
+        String key = RedisKeyConstant.getSliderVerifyKey(ServletUtils.getClientIP(), ServletUtils.getUserAgent());
+        if (sliderVerifyCode == null || RedisUtil.get(key) == null) {
+            return sliderVerifyFailed(key, data);
+        }
+        // 比较是否一致
+        if (sliderVerifyCode != RedisUtil.get(key)) {
+            return sliderVerifyFailed(key, data);
+        }
+
+        // 发送验证码
+        AuthCodeReqDTO codeReqDTO = new AuthCodeReqDTO()
+                .setMobile(data.getMobile())
+                .setScene(data.getCodeScene())
+                .setUsedIp(ServletUtils.getClientIP());
+        return ResponseBean.ok(MapUtil.of("code", codeService.sendMobileCode(codeReqDTO)));
+    }
+
 
     /**
      * @description 校验用户身份信息， 生成认证登录信息
@@ -128,26 +157,26 @@ public class AuthLoginServiceImpl implements AuthService {
                                                String password,
                                                LoginLogTypeEnum logType) {
         if (userInfoResp == null || !userInfoResp.isResult()) {
-            throw new ServiceException(GlobalErrorCodeConstants.INTERNAL_SERVER_ERROR);
+            throw new ServiceException(GlobalErrorCodes.INTERNAL_SERVER_ERROR);
         }
 
         LoginUser user = userInfoResp.getData();
         if (user == null) {
             throw new ServiceException(
-                    LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.equals(logType) ? ServiceErrorCodeConstants.USER_MOBILE_NOT_EXISTS
-                            : LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.equals(logType) ? ServiceErrorCodeConstants.USER_EMAIL_NOT_EXISTS
-                            : ServiceErrorCodeConstants.AUTH_FAILED);
+                    LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.equals(logType) ? ServiceErrorCodes.USER_MOBILE_NOT_EXISTS
+                            : LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.equals(logType) ? ServiceErrorCodes.USER_EMAIL_NOT_EXISTS
+                            : ServiceErrorCodes.AUTH_FAILED);
         }
 
         // 校验是否禁用
         if (!CommonStatusEnum.isNormal(user.getStatus())) {
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_USER_DISABLED);
+            throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
         }
 
         // 校验密码是否正确
         if (StringUtils.hasLength(password) && !isPasswordMatch(user.getPassword(), password)) {
-            recordLoginLog(user.getUid(), loginPayload, logType, LoginResultEnum.BAD_CREDENTIALS);
-            throw new ServiceException(ServiceErrorCodeConstants.AUTH_LOGIN_BAD_CREDENTIALS);
+            recordLoginLog(user.getUid(), loginPayload, logType.getDesc(), LoginResultEnum.BAD_CREDENTIALS);
+            throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_BAD_CREDENTIALS);
         }
 
         // 创建 Token 令牌，记录登录日志
@@ -177,16 +206,16 @@ public class AuthLoginServiceImpl implements AuthService {
      * @date 2024/8/14 22:46
      */
     private AuthLoginRespVo createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
-        recordLoginLog(userId, mobileOrEmail, logType, LoginResultEnum.SUCCESS);
+        recordLoginLog(userId, mobileOrEmail, logType.getDesc(), LoginResultEnum.SUCCESS);
         // 创建 Token 令牌
         // accessToken 30分钟
         String accessToken = IdUtil.fastSimpleUUID();
         String key = RedisKeyConstant.getAccessTokenKey(accessToken);
-        RedisUtil.set(key, userId, 30, TimeUnit.MINUTES);
+        RedisUtil.set(key, userId, RedisKeyConstant.EXPIRE_30_MIN);
         // refreshToken 30天
         String refreshToken = IdUtil.fastSimpleUUID();
         key = RedisKeyConstant.getRefreshTokenKey(refreshToken);
-        RedisUtil.set(key, userId, 30, TimeUnit.DAYS);
+        RedisUtil.set(key, userId, RedisKeyConstant.EXPIRE_30_MIN);
         // 构建返回结果
         return AuthLoginRespVo.builder()
                 .accessToken(accessToken)
@@ -204,9 +233,23 @@ public class AuthLoginServiceImpl implements AuthService {
      * @author lovbe0210
      * @date 2024/8/14 22:47
      */
-    private void recordLoginLog(Long uid, String mobile, LoginLogTypeEnum logTypeEnum, LoginResultEnum loginResultEnum) {
+    private void recordLoginLog(Long uid, String payload, String actionDesc, LoginResultEnum loginResultEnum) {
         // 插入登陆日志 TODO
         String userIp = ServletUtils.getClientIP();
         log.info("[Login] - userId: {}, LoginLogType：{}, userIp: {}", uid, loginResultEnum, userIp);
+    }
+
+    /**
+     * @description: 滑块验证失败的处理
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/8/18 15:34
+     */
+    private ResponseBean sliderVerifyFailed(String key, AuthMobileCodeReqVo data) {
+        long sliderVerifyCode = YitIdHelper.nextId();
+        RedisUtil.set(key, sliderVerifyCode, RedisKeyConstant.EXPIRE_2_HOUR);
+        recordLoginLog(null, data.getMobile(), data.getCodeScene().getDescription() + "获取验证码", LoginResultEnum.SLIDER_VERIFY_FAILED);
+        return ResponseBean.error(GlobalErrorCodes.SLIDER_VERIFY_FAILED.getCode(), String.valueOf(sliderVerifyCode));
     }
 }

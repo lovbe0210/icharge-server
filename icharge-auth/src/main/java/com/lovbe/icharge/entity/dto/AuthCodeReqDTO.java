@@ -1,11 +1,13 @@
 package com.lovbe.icharge.entity.dto;
 
 
+import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.enums.CodeSceneEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
 
 @Data
 @Accessors(chain = true)
@@ -33,5 +35,4 @@ public class AuthCodeReqDTO {
      * 用户ip
      */
     private String usedIp;
-
 }

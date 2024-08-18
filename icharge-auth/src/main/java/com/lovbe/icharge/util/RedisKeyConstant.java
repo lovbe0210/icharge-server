@@ -1,5 +1,7 @@
 package com.lovbe.icharge.util;
 
+import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.crypto.digest.MD5;
 import com.lovbe.icharge.enums.CodeSceneEnum;
 
 /**
@@ -9,6 +11,13 @@ import com.lovbe.icharge.enums.CodeSceneEnum;
  * @createDate 2024/8/15 21:17
  */
 public abstract class RedisKeyConstant {
+    /**
+     * 过期时间，单位都为秒
+     */
+    public static final long EXPIRE_10_MIN = 60 * 10;
+    public static final long EXPIRE_30_MIN = 60 * 30;
+    public static final long EXPIRE_1_HOUR = 60 * 60;
+    public static final long EXPIRE_2_HOUR = 60 * 60 * 2;
 
     /**
      * 项目前缀
@@ -63,11 +72,50 @@ public abstract class RedisKeyConstant {
     }
 
 
+    /** 
+     * @description: 获取accessToken
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:22
+     */
     public static String getAccessTokenKey(String accessToken) {
         return BASE_PROJECT + AUTH + "access-token:" + accessToken;
     }
 
+    /** 
+     * @description: 获取refreshToken
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:22
+     */
     public static String getRefreshTokenKey(String refreshToken) {
         return BASE_PROJECT + AUTH + "refresh-token:" + refreshToken;
     }
+
+    /** 
+     * @description: 获取验证码发送频率验证
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:23
+     */
+    public static String getCodeFrequencyKey(String payload) {
+        return BASE_PROJECT + AUTH + "code-frequency:" + payload;
+    }
+
+    /** 
+     * @description: 获取滑块验证码
+     * @param: long
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:25
+     */
+    public static String getSliderVerifyKey(String userAgent, String userIp) {
+        String md5Hex = DigestUtil.md5Hex(userAgent + userIp);
+        return BASE_PROJECT + AUTH + "slider-verify:" + md5Hex;
+    }
+
+
 }

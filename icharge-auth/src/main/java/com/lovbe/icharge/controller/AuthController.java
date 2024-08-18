@@ -1,13 +1,12 @@
 package com.lovbe.icharge.controller;
 
+import cn.hutool.core.map.MapUtil;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
-import com.lovbe.icharge.entity.vo.AuthEmailCodeLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
+import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.enums.CodeSceneEnum;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -56,6 +55,19 @@ public class AuthController {
     @PostMapping("/mobile/login")
     public ResponseBean mobileLogin(@RequestBody @Valid BaseRequest<AuthMobileLoginReqVo> reqVo) {
         return ResponseBean.ok(authService.mobileLogin(reqVo));
+    }
+
+    /**
+     * description: 发送手机验证码
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param reqVo
+     * @return ResponseBean
+     */
+    @PostMapping("/mobile/code")
+    public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<AuthMobileCodeReqVo> reqVo) {
+        reqVo.getData().setCodeScene(CodeSceneEnum.MOBILE_LOGIN);
+        return authService.sendVerifyCode(reqVo);
     }
 
     /**

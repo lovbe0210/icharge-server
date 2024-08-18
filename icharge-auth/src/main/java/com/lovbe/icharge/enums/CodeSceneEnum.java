@@ -39,8 +39,10 @@ public enum CodeSceneEnum {
 
 
     public static CodeSceneEnum getCodeByScene(Integer scene) {
-        return ArrayUtil.firstMatch(sceneEnum -> sceneEnum.getScene().equals(scene),
-                values());
+        if (scene == null) {
+            return null;
+        }
+        return ArrayUtil.firstMatch(sceneEnum -> sceneEnum.getScene() == scene, values());
     }
 
     public static boolean sceneIsMobile(CodeSceneEnum scene) {

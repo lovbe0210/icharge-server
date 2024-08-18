@@ -1,11 +1,9 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.entity.vo.AuthEmailCodeLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthEmailLoginReqVo;
-import com.lovbe.icharge.entity.vo.AuthMobileLoginReqVo;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
-import com.lovbe.icharge.entity.vo.AuthSmsLoginReqVo;
 
 /**
  * @description: 登陆认证服务
@@ -49,4 +47,13 @@ public interface AuthService {
      * @return AuthLoginRespVo
      */
     AuthLoginRespVo emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo);
+
+    /** 
+     * @description: 发送验证码
+     * @param: BaseRequest<AuthMobileCodeReqVo>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/8/16 17:31
+     */
+    ResponseBean sendVerifyCode(BaseRequest<AuthMobileCodeReqVo> reqVo);
 }

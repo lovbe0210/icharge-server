@@ -10,7 +10,7 @@ package com.lovbe.icharge.common.exception;
  *
  * @author 芋道源码
  */
-public interface GlobalErrorCodeConstants {
+public interface GlobalErrorCodes {
 
     ErrorCode SUCCESS = new ErrorCode(200, "成功");
 
@@ -23,6 +23,7 @@ public interface GlobalErrorCodeConstants {
     ErrorCode METHOD_NOT_ALLOWED = new ErrorCode(405, "请求方法不正确");
     ErrorCode LOCKED = new ErrorCode(423, "请求失败，请稍后重试");
     ErrorCode TOO_MANY_REQUESTS = new ErrorCode(429, "请求过于频繁，请稍后重试");
+    ErrorCode SLIDER_VERIFY_FAILED = new ErrorCode(430, "滑块验证失败，请稍后重试");
 
     // ========== 服务端错误段 ==========
 

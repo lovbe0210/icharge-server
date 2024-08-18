@@ -5,7 +5,7 @@ package com.lovbe.icharge.common.exception;
  * <p>
  * member 系统，使用 1-004-000-000 段
  */
-public interface ServiceErrorCodeConstants {
+public interface ServiceErrorCodes {
 
     // ========== 用户相关  1003 ============
     ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(100301, "手机号未注册用户，请注册后再进行登录");

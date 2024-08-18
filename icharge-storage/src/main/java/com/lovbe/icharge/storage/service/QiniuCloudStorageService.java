@@ -2,8 +2,8 @@ package com.lovbe.icharge.storage.service;
 
 
 import cn.hutool.core.io.IoUtil;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.storage.config.OssStorageConfig;
-import com.lovbe.icharge.storage.exception.StorageException;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.*;
@@ -42,10 +42,10 @@ public class QiniuCloudStorageService extends OssStorageService {
             String token = auth.uploadToken(config.getBucketName());
             Response res = uploadManager.put(data, path, token);
             if (!res.isOK()) {
-                throw new StorageException("上传七牛出错：" + res);
+                throw new ServiceException("上传七牛出错：" + res);
             }
         } catch (Exception e) {
-            throw new StorageException("上传文件失败，请核对七牛配置信息", e);
+            throw new ServiceException("上传文件失败，请核对七牛配置信息", e);
         }
         return fullPath(path);
     }

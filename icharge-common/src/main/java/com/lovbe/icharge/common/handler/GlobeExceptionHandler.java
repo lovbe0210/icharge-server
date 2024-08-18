@@ -1,6 +1,5 @@
 package com.lovbe.icharge.common.handler;
 
-import com.lovbe.icharge.common.exception.GlobalErrorCodeConstants;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.RequestResultEnum;
 import com.lovbe.icharge.common.model.base.ResponseBean;

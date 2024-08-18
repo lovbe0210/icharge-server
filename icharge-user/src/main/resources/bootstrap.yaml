@@ -6,8 +6,8 @@ spring:
     name: icharge-user
   cloud:
     nacos:
-      server-addr: "[2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838"
-      #      server-addr: 45.12.52.97:38838
+#      server-addr: "[2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838"
+      server-addr: 45.12.52.97:38838
       namespace: 059a88cd-8bda-46ce-9e69-dfc3c541014a
       config:
         file-extension: yaml
@@ -17,4 +17,5 @@ spring:
             refresh: true
       discovery:
         namespace: ${spring.cloud.nacos.namespace}
-        ip: "2409:8a62:4ff:7d70:88af:444:c34f:a757"
+#        ip: "2409:8a62:4ff:7d70:88af:444:c34f:a757"
+        ip: 10.3.8.84
