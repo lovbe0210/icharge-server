@@ -1,12 +1,11 @@
 package com.lovbe.icharge.controller;
 
-import cn.hutool.core.map.MapUtil;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
-import com.lovbe.icharge.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -67,7 +66,7 @@ public class AuthController {
     @PostMapping("/mobile/code")
     public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<AuthMobileCodeReqVo> reqVo) {
         reqVo.getData().setCodeScene(CodeSceneEnum.MOBILE_LOGIN);
-        return authService.sendVerifyCode(reqVo);
+        return authService.sendSmsCode(reqVo);
     }
 
     /**

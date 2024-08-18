@@ -2,10 +2,8 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
@@ -13,25 +11,23 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;
 import com.lovbe.icharge.entity.vo.*;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
-import com.lovbe.icharge.enums.CodeSceneEnum;
-import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.enums.LoginResultEnum;
 import com.lovbe.icharge.service.AuthCodeService;
 import com.lovbe.icharge.service.AuthService;
 import com.lovbe.icharge.service.feign.UserService;
-import com.lovbe.icharge.util.RedisKeyConstant;
-import com.lovbe.icharge.util.RedisUtil;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -41,6 +37,8 @@ public class AuthLoginServiceImpl implements AuthService {
     private AuthCodeService codeService;
     @Resource
     private UserService userService;
+    @Resource
+    private CommonService commonService;
 
     @Override
     public AuthLoginRespVo smsLogin(BaseRequest<AuthSmsLoginReqVo> reqVo) {
@@ -115,22 +113,15 @@ public class AuthLoginServiceImpl implements AuthService {
     }
 
     @Override
-    public ResponseBean sendVerifyCode(BaseRequest<AuthMobileCodeReqVo> reqVo) {
+    public ResponseBean sendSmsCode(BaseRequest<AuthMobileCodeReqVo> reqVo) {
         AuthMobileCodeReqVo data = reqVo.getData();
         Assert.notNull(data.getCodeScene(), GlobalErrorCodes.ERROR_CONFIGURATION.getMsg());
-        // 滑块验证
-        String sliderVerification = data.getSliderVerification();
         // 滑块验证 TODO
-        JSONObject parsed = JSONUtil.parseObj(sliderVerification);
-        Long sliderVerifyCode = parsed.getLong("SLIDER_VERIFY_CODE");
-        // 简单确定客户端唯一就行，只是用于存放滑块验证码的code值的有效期
-        String key = RedisKeyConstant.getSliderVerifyKey(ServletUtils.getClientIP(), ServletUtils.getUserAgent());
-        if (sliderVerifyCode == null || RedisUtil.get(key) == null) {
-            return sliderVerifyFailed(key, data);
-        }
-        // 比较是否一致
-        if (sliderVerifyCode != RedisUtil.get(key)) {
-            return sliderVerifyFailed(key, data);
+        String sliderVerification = data.getSliderVerification();
+        String actionDesc = data.getCodeScene().getDescription() + "获取验证码-滑块验证";
+        ResponseBean sVResp = commonService.getSliderVerifyCode(sliderVerification, data.getMobile(), actionDesc);
+        if (!sVResp.isResult()) {
+            return sVResp;
         }
 
         // 发送验证码
@@ -239,17 +230,5 @@ public class AuthLoginServiceImpl implements AuthService {
         log.info("[Login] - userId: {}, LoginLogType：{}, userIp: {}", uid, loginResultEnum, userIp);
     }
 
-    /**
-     * @description: 滑块验证失败的处理
-     * @param: String
-     * @return: ResponseBean
-     * @author: lovbe0210
-     * @date: 2024/8/18 15:34
-     */
-    private ResponseBean sliderVerifyFailed(String key, AuthMobileCodeReqVo data) {
-        long sliderVerifyCode = YitIdHelper.nextId();
-        RedisUtil.set(key, sliderVerifyCode, RedisKeyConstant.EXPIRE_2_HOUR);
-        recordLoginLog(null, data.getMobile(), data.getCodeScene().getDescription() + "获取验证码", LoginResultEnum.SLIDER_VERIFY_FAILED);
-        return ResponseBean.error(GlobalErrorCodes.SLIDER_VERIFY_FAILED.getCode(), String.valueOf(sliderVerifyCode));
-    }
+
 }

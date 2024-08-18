@@ -1,7 +1,7 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.validation.Mobile;
-import com.lovbe.icharge.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

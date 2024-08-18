@@ -45,7 +45,15 @@ public class ResponseBean<T> {
         return new ResponseBean(code, false, message);
     }
 
+    public static <T> ResponseBean error(int code, String message, T t) {
+        return new ResponseBean(code, false, message, t);
+    }
+
     public static ResponseBean error(RequestResultEnum resultEnum) {
         return new ResponseBean(resultEnum.getCode(), false, resultEnum.getMsg());
+    }
+
+    public static ResponseBean error(ErrorCode errorCode, String data) {
+        return new ResponseBean(errorCode.getCode(), false, errorCode.getMsg(), data);
     }
 }

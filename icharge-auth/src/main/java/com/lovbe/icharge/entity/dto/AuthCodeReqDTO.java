@@ -1,8 +1,7 @@
 package com.lovbe.icharge.entity.dto;
 
 
-import cn.hutool.json.JSONObject;
-import com.lovbe.icharge.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

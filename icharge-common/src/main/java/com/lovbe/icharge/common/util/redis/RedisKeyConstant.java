@@ -1,8 +1,7 @@
-package com.lovbe.icharge.util;
+package com.lovbe.icharge.common.util.redis;
 
 import cn.hutool.crypto.digest.DigestUtil;
-import cn.hutool.crypto.digest.MD5;
-import com.lovbe.icharge.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
 
 /**
  * redis键相关

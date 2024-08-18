@@ -55,5 +55,5 @@ public interface AuthService {
      * @author: lovbe0210
      * @date: 2024/8/16 17:31
      */
-    ResponseBean sendVerifyCode(BaseRequest<AuthMobileCodeReqVo> reqVo);
+    ResponseBean sendSmsCode(BaseRequest<AuthMobileCodeReqVo> reqVo);
 }

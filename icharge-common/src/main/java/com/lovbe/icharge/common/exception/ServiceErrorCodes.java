@@ -12,6 +12,8 @@ public interface ServiceErrorCodes {
     ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(100302, "邮箱未注册用户，请注册后再进行登录");
     ErrorCode USER_MOBILE_USED = new ErrorCode(100303, "修改手机失败，该手机号({})已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100304, "用户积分余额不足");
+    ErrorCode MOBILE_NOT_EXIST = new ErrorCode(100305, "手机号不存在");
+    ErrorCode VCODE_TEMPLATE_NOT_EXISTS = new ErrorCode(100306, "短信模板不存在");
 
     // ========== AUTH 模块 1004 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(100401, "登录失败，账号密码不正确");

@@ -1,4 +1,4 @@
-package com.lovbe.icharge.util;
+package com.lovbe.icharge.common.util.redis;
 
 import cn.hutool.core.io.IoUtil;
 import lombok.extern.slf4j.Slf4j;
