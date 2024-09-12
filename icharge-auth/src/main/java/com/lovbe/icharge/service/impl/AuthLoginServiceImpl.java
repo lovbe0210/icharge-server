@@ -12,13 +12,13 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
-import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;
+import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.enums.LoginResultEnum;
-import com.lovbe.icharge.service.AuthCodeService;
 import com.lovbe.icharge.service.AuthService;
 import com.lovbe.icharge.service.feign.UserService;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -34,8 +34,6 @@ import org.springframework.util.StringUtils;
 @Service
 public class AuthLoginServiceImpl implements AuthService {
     @Resource
-    private AuthCodeService codeService;
-    @Resource
     private UserService userService;
     @Resource
     private CommonService commonService;
@@ -45,18 +43,19 @@ public class AuthLoginServiceImpl implements AuthService {
         // 校验验证码
         String userIp = ServletUtils.getClientIP();
         AuthSmsLoginReqVo data = reqVo.getData();
-        codeService.useVerifyCode(new AuthCodeReqDTO()
+        SimpleCodeReqDTO simpleCodeReqDTO = new SimpleCodeReqDTO()
                 .setMobile(data.getMobile())
                 .setCode(data.getCode())
                 .setScene(CodeSceneEnum.MOBILE_LOGIN)
-                .setUsedIp(userIp));
+                .setUsedIp(userIp);
+        userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
 
         // 获取用户信息
-        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(
-                new AuthUserDTO()
-                        .setMobile(data.getMobile())
-                        .setLoginType(LoginLogTypeEnum.LOGIN_SMS_CODE.getType())
-                        .setUserIp(userIp));
+        AuthUserDTO authUserDTO = new AuthUserDTO()
+                .setMobile(data.getMobile())
+                .setLoginType(LoginLogTypeEnum.LOGIN_SMS_CODE.getType())
+                .setUserIp(userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(new BaseRequest<>());
         // 生成token信息
         return getAuthLoginRespVo(userInfoResp, data.getMobile(), null, LoginLogTypeEnum.LOGIN_SMS_CODE);
     }
@@ -66,12 +65,11 @@ public class AuthLoginServiceImpl implements AuthService {
         // 使用手机 + 密码，进行登录。
         AuthMobileLoginReqVo data = reqVo.getData();
         String userIp = ServletUtils.getClientIP();
-        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(
-                new AuthUserDTO()
-                        .setMobile(data.getMobile())
-                        .setLoginType(LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.getType())
-                        .setUserIp(userIp)
-        );
+        AuthUserDTO authUserDTO = new AuthUserDTO()
+                .setMobile(data.getMobile())
+                .setLoginType(LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD.getType())
+                .setUserIp(userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(new BaseRequest<>(authUserDTO));
         // 生成token信息
         return getAuthLoginRespVo(userInfoResp, data.getMobile(), data.getPassword(), LoginLogTypeEnum.LOGIN_MOBILE_PASSWORD);
     }
@@ -81,18 +79,19 @@ public class AuthLoginServiceImpl implements AuthService {
         // 校验验证码
         String userIp = ServletUtils.getClientIP();
         AuthEmailCodeLoginReqVo data = reqVo.getData();
-        codeService.useVerifyCode(new AuthCodeReqDTO()
+        SimpleCodeReqDTO simpleCodeReqDTO = new SimpleCodeReqDTO()
                 .setEmail(data.getEmail())
                 .setCode(data.getCode())
                 .setScene(CodeSceneEnum.EMAIL_LOGIN)
-                .setUsedIp(userIp));
+                .setUsedIp(userIp);
+        userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
 
         // 获得注册用户
-        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(
-                new AuthUserDTO()
-                        .setEmail(data.getEmail())
-                        .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_CODE.getType())
-                        .setUserIp(userIp));
+        AuthUserDTO authUserDTO = new AuthUserDTO()
+                .setEmail(data.getEmail())
+                .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_CODE.getType())
+                .setUserIp(userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(new BaseRequest<>(authUserDTO));
         return getAuthLoginRespVo(userInfoResp, data.getEmail(), null, LoginLogTypeEnum.LOGIN_EMAIL_CODE);
     }
 
@@ -102,19 +101,18 @@ public class AuthLoginServiceImpl implements AuthService {
         // 使用邮箱 + 密码，进行登录。
         AuthEmailLoginReqVo data = reqVo.getData();
         String userIp = ServletUtils.getClientIP();
-        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(
-                new AuthUserDTO()
-                        .setEmail(data.getEmail())
-                        .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.getType())
-                        .setUserIp(userIp)
-        );
+        AuthUserDTO authUserDTO = new AuthUserDTO()
+                .setEmail(data.getEmail())
+                .setLoginType(LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD.getType())
+                .setUserIp(userIp);
+        ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(new BaseRequest<>(authUserDTO));
         // 创建 Token 令牌，记录登录日志
         return getAuthLoginRespVo(userInfoResp, data.getEmail(), data.getPassword(), LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD);
     }
 
     @Override
-    public ResponseBean sendSmsCode(BaseRequest<AuthMobileCodeReqVo> reqVo) {
-        AuthMobileCodeReqVo data = reqVo.getData();
+    public ResponseBean sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo) {
+        SmsCodeReqVo data = reqVo.getData();
         Assert.notNull(data.getCodeScene(), GlobalErrorCodes.ERROR_CONFIGURATION.getMsg());
         // 滑块验证 TODO
         String sliderVerification = data.getSliderVerification();
@@ -125,11 +123,11 @@ public class AuthLoginServiceImpl implements AuthService {
         }
 
         // 发送验证码
-        AuthCodeReqDTO codeReqDTO = new AuthCodeReqDTO()
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
                 .setMobile(data.getMobile())
                 .setScene(data.getCodeScene())
                 .setUsedIp(ServletUtils.getClientIP());
-        return ResponseBean.ok(MapUtil.of("code", codeService.sendMobileCode(codeReqDTO)));
+        return ResponseBean.ok(MapUtil.of("code", userService.sendSmsCode(new BaseRequest<>(codeReqDTO))));
     }
 
 

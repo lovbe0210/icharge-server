@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
@@ -22,12 +23,12 @@ public class UserController {
 
 
     @PostMapping("/createUserIfAbsent")
-    public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody @Valid AuthUserDTO authUserDTO) {
-        return ResponseBean.ok(userService.createUserIfAbsent(authUserDTO));
+    public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody @Valid BaseRequest<AuthUserDTO> authUserDTO) {
+        return ResponseBean.ok(userService.createUserIfAbsent(authUserDTO.getData()));
     }
 
     @PostMapping("/getUser/loginPayload")
-    public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody AuthUserDTO authUserDTO) {
-        return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO));
+    public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody BaseRequest<AuthUserDTO> authUserDTO) {
+        return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO.getData()));
     }
 }

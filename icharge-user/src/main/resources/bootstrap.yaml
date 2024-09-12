@@ -1,14 +1,19 @@
 server:
   port: 10211
 
+global:
+  param:
+    # 雪花Id机器码
+    snowflakeId: 2
+
 spring:
   application:
     name: icharge-user
   cloud:
     nacos:
 #      server-addr: "[2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838"
-      server-addr: 45.12.52.97:38838
-      namespace: 059a88cd-8bda-46ce-9e69-dfc3c541014a
+      server-addr: 10.2.2.14:8848,10.2.2.15:8848,10.2.2.16:8848
+      namespace: 2f35e6d2-374b-45c4-85a5-cf9ef2866341
       config:
         file-extension: yaml
         namespace: ${spring.cloud.nacos.namespace}

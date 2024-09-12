@@ -1,20 +1,22 @@
 package com.lovbe.icharge.service.impl;
 
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ErrorCode;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.common.util.servlet.ServletUtils;
-import com.lovbe.icharge.entity.dto.VCodeTemplateDO;
-import com.lovbe.icharge.common.enums.CodeSceneEnum;
-import com.lovbe.icharge.service.AuthCodeService;
+import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
+import com.lovbe.icharge.common.model.dto.VCodeTemplateDO;
+import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.common.util.servlet.ServletUtils;
+import com.lovbe.icharge.service.SimpleCodeService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,26 +32,28 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Valid
-public class AuthCodeServiceImpl implements AuthCodeService {
+public class SimpleCodeServiceImpl implements SimpleCodeService {
     @Override
-    public String sendMobileCode(AuthCodeReqDTO reqDTO) {
-        Assert.notNull(reqDTO.getScene(), GlobalErrorCodes.NOT_IMPLEMENTED.getMsg(), GlobalErrorCodes.NOT_IMPLEMENTED.getCode());
+    public String sendSmsCode(SmsCodeReqVo reqVo) {
         // 判断并创建验证码
-        String code = canCreateCode(reqDTO);
+        String code = canCreateCode(new SimpleCodeReqDTO()
+                .setMobile(reqVo.getMobile())
+                .setScene(reqVo.getCodeScene())
+                .setUsedIp(ServletUtils.getClientIP()));
         // 发送短信验证码
-        HashMap<String, String> paramMap = MapUtil.of(SysConstant.CODE, code);
-        paramMap.put(SysConstant.MOBILE, reqDTO.getMobile());
-        sendSingleSms(paramMap, null, reqDTO.getScene().getTemplateCode());
+        HashMap<String, Object> paramMap = MapUtil.of(SysConstant.CODE, code);
+        paramMap.put(SysConstant.MOBILE, reqVo.getMobile());
+        sendSingleSms(paramMap, null, reqVo.getCodeScene().getTemplateCode());
         return code;
     }
 
     @Override
-    public void sendEmailCode(AuthCodeReqDTO reqDTO) {
-
+    public String sendEmailCode(SimpleCodeReqDTO reqDTO) {
+        return null;
     }
 
     @Override
-    public void useVerifyCode(@Valid AuthCodeReqDTO reqDTO) throws ServiceException {
+    public void useVerifyCode(@Valid SimpleCodeReqDTO reqDTO) throws ServiceException {
         String key = RedisKeyConstant.getVerifyCode(reqDTO.getScene(), reqDTO.getMobile(), reqDTO.getEmail());
         // 查询redis
         String code = (String) RedisUtil.get(key);
@@ -68,7 +72,7 @@ public class AuthCodeServiceImpl implements AuthCodeService {
         // TODO 记录日志
     }
 
-    private void saveErrorLog(AuthCodeReqDTO reqDTO, ErrorCode authCodeError) {
+    private void saveErrorLog(SimpleCodeReqDTO reqDTO, ErrorCode authCodeError) {
         // TODO 记录日志
         log.error("[验证码错误]--loginInfo: {}", JSONUtil.toJsonStr(reqDTO));
     }
@@ -81,7 +85,7 @@ public class AuthCodeServiceImpl implements AuthCodeService {
      * @author: lovbe0210
      * @date: 2024/8/16 16:50
      */
-    private String canCreateCode(AuthCodeReqDTO codeReqDTO) {
+    private String canCreateCode(SimpleCodeReqDTO codeReqDTO) {
         boolean isMobile = CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene());
         String payload = isMobile ? codeReqDTO.getMobile() : codeReqDTO.getEmail();
         String codeExpireKey = RedisKeyConstant.getCodeFrequencyKey(payload);
@@ -118,20 +122,20 @@ public class AuthCodeServiceImpl implements AuthCodeService {
         return code;
     }
 
-    public Long sendSingleSms(Map<String, String> templateParams, Long userId, String templateCode) {
+    public Long sendSingleSms(Map<String, Object> templateParams, Long userId, String templateCode) {
         // 校验短信模板是否合法
         VCodeTemplateDO template = validateSmsTemplate(templateCode);
 
         // 校验手机号码是否存在
-        if (!StringUtils.hasLength(templateParams.get(SysConstant.MOBILE))) {
+        if (!StringUtils.hasLength((CharSequence) templateParams.get(SysConstant.MOBILE))) {
             throw new ServiceException(ServiceErrorCodes.MOBILE_NOT_EXIST);
         }
         // 构建有序的模板参数。为什么放在这个位置，是提前保证模板参数的正确性，而不是到了插入发送日志
-        List<Map<String, String>> newTemplateParams = buildTemplateParams(template, templateParams);
+        List<Map<String, Object>> newTemplateParams = buildTemplateParams(template, templateParams);
 
         // 创建发送日志。如果模板被禁用，则不发送短信，只记录日志
-        Boolean isSend = CommonStatusEnum.ENABLE.getStatus().equals(template.getStatus())
-                && CommonStatusEnum.ENABLE.getStatus().equals(smsChannel.getStatus());
+      /*  Boolean isSend = CommonStatusEnum.NORMAL.getStatus().equals(template.getStatus())
+                && CommonStatusEnum.NORMAL.getStatus().equals(smsChannel.getStatus());
         String content = smsTemplateService.formatSmsTemplateContent(template.getContent(), templateParams);
         Long sendLogId = smsLogService.createSmsLog(mobile, userId, userType, isSend, template, content, templateParams);
 
@@ -140,7 +144,8 @@ public class AuthCodeServiceImpl implements AuthCodeService {
             smsProducer.sendSmsSendMessage(sendLogId, mobile, template.getChannelId(),
                     template.getApiTemplateId(), newTemplateParams);
         }
-        return sendLogId;
+        return sendLogId;*/
+        return 0L;
     }
 
     /**
@@ -159,20 +164,21 @@ public class AuthCodeServiceImpl implements AuthCodeService {
     }
 
     /**
+     * @return VCodeTemplateDO
      * @description 获取验证码模板
      * @param[1] templateCode
-     * @return VCodeTemplateDO
      * @author lovbe0210
      * @date 2024/8/18 21:06
      */
     VCodeTemplateDO validateSmsTemplate(String templateCode) {
         // 获得短信模板。考虑到效率，从缓存中获取
-        VCodeTemplateDO template = vCodeTemplateService.getSmsTemplateByCodeFromCache(templateCode);
+//        VCodeTemplateDO template = vCodeTemplateService.getSmsTemplateByCodeFromCache(templateCode);
         // 短信模板不存在
-        if (template == null) {
-            throw new ServiceException(ServiceErrorCodes.VCODE_TEMPLATE_NOT_EXISTS);
-        }
-        return template;
+//        if (template == null) {
+//            throw new ServiceException(ServiceErrorCodes.VCODE_TEMPLATE_NOT_EXISTS);
+//        }
+//        return template;
+        return null;
     }
 
     /**

@@ -1,21 +1,24 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.entity.dto.AuthCodeReqDTO;
+import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
+import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 
 /**
  * @description: 验证码相关接口
  * @author: Lvhl
  * @date: 2024/8/7 14:06
  */
-public interface AuthCodeService {
+public interface SimpleCodeService {
     /**
      * 发送短信验证码
      *
      * @param reqDTO 发送请求
      * @return
      */
-    String sendMobileCode(AuthCodeReqDTO reqDTO);
+    String sendSmsCode(SmsCodeReqVo reqDTO);
 
     /**
      * description: 发送邮箱验证码
@@ -24,7 +27,7 @@ public interface AuthCodeService {
      * @param reqDTO
      * @return void
      */
-    void sendEmailCode(AuthCodeReqDTO reqDTO);
+    String sendEmailCode(SimpleCodeReqDTO reqDTO);
 
     /**
      * 验证验证码，并进行使用
@@ -33,5 +36,6 @@ public interface AuthCodeService {
      *
      * @param reqDTO 使用请求
      */
-    void useVerifyCode(AuthCodeReqDTO reqDTO) throws ServiceException;
+    void useVerifyCode(SimpleCodeReqDTO reqDTO) throws ServiceException;
+
 }

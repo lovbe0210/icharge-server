@@ -5,6 +5,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 
 /**
@@ -12,6 +14,8 @@ import lombok.Data;
  * @author: Lvhl
  * @date: 2024/7/9 11:35
  */
+@NoArgsConstructor
+@Accessors(chain = true)
 @Data
 public class BaseRequest<T> {
     private String userId;
@@ -20,4 +24,8 @@ public class BaseRequest<T> {
     @Valid
     @NotNull(message = "参数不得为空")
     private T data;
+
+    public BaseRequest(T data) {
+        this.data = data;
+    }
 }

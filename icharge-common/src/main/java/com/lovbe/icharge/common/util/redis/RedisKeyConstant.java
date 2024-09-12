@@ -38,7 +38,7 @@ public abstract class RedisKeyConstant {
      * @date 2024/8/15 21:20
      */
     public static String getVerifyCode(CodeSceneEnum scene, String mobile, String email) {
-        String sub = CodeSceneEnum.sceneIsMobile(scene) ? "mobile:" + mobile : "email:" + email;
+        String sub = CodeSceneEnum.sceneIsMobile(scene) ? ("mobile:" + mobile) : ("email:" + email);
         return BASE_PROJECT + AUTH + sub;
     }
 
