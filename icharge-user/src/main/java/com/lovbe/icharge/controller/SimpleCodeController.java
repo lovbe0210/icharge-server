@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.service.SimpleCodeService;
 import com.lovbe.icharge.service.UserService;
@@ -50,5 +51,17 @@ public class SimpleCodeController {
     @PostMapping("/mobile/code")
     public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<SmsCodeReqVo> reqVo) {
         return ResponseBean.ok(codeService.sendSmsCode(reqVo.getData()));
+    }
+
+    /**
+     * description: 发送邮箱验证码
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param reqVo
+     * @return ResponseBean
+     */
+    @PostMapping("/email/code")
+    public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo) {
+        return ResponseBean.ok(codeService.sendEmailCode(reqVo.getData()));
     }
 }

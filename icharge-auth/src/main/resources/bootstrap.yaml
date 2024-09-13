@@ -1,14 +1,19 @@
 server:
   port: 10212
 
+global:
+  param:
+    # 雪花Id机器码
+    snowflakeId: 2
+
 spring:
   application:
     name: icharge-auth
   cloud:
     nacos:
-#      server-addr: "[2607:fcd0:100:000e:0000:0000:aacd:74ba]:38838"
-      server-addr: 45.12.52.97:38838
-      namespace: 059a88cd-8bda-46ce-9e69-dfc3c541014a
+      server-addr: "[2409:8a62:4f2:7291:20c:29ff:febb:e2f3]:8848,[2409:8a62:4f2:7291:20c:29ff:fe29:775f]:8848,[2409:8a62:4f2:7291:20c:29ff:fe61:dfaa]:8848"
+      #      server-addr: 10.2.2.14:8848,10.2.2.15:8848,10.2.2.16:8848
+      namespace: 2f35e6d2-374b-45c4-85a5-cf9ef2866341
       config:
         file-extension: yaml
         namespace: ${spring.cloud.nacos.namespace}
@@ -17,6 +22,6 @@ spring:
             refresh: true
       discovery:
         namespace: ${spring.cloud.nacos.namespace}
-#        ip: "2409:8a62:4fe:fec0:fdce:7f8f:40fc:5a12
-        ip: 10.3.8.84
+#        ip: "2409:8962:37c:7a02:ceeb:e37e:5c16:c658"
+        ip: 127.0.0.1
 

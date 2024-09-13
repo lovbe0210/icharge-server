@@ -12,6 +12,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.dto.VCodeTemplateDO;
+import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
@@ -43,13 +44,22 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         // 发送短信验证码
         HashMap<String, Object> paramMap = MapUtil.of(SysConstant.CODE, code);
         paramMap.put(SysConstant.MOBILE, reqVo.getMobile());
-        sendSingleSms(paramMap, null, reqVo.getCodeScene().getTemplateCode());
+        sendSimpleCode(paramMap, null, reqVo.getCodeScene().getTemplateCode());
         return code;
     }
 
     @Override
-    public String sendEmailCode(SimpleCodeReqDTO reqDTO) {
-        return null;
+    public String sendEmailCode(EmailCodeReqVo reqVo) {
+        // 判断并创建验证码
+        String code = canCreateCode(new SimpleCodeReqDTO()
+                .setEmail(reqVo.getEmail())
+                .setScene(reqVo.getCodeScene())
+                .setUsedIp(ServletUtils.getClientIP()));
+        // 发送邮箱验证码
+        HashMap<String, Object> paramMap = MapUtil.of(SysConstant.CODE, code);
+        paramMap.put(SysConstant.EMAIL, reqVo.getEmail());
+        sendSimpleCode(paramMap, null, reqVo.getCodeScene().getTemplateCode());
+        return code;
     }
 
     @Override
@@ -122,7 +132,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         return code;
     }
 
-    public Long sendSingleSms(Map<String, Object> templateParams, Long userId, String templateCode) {
+    public Long sendSimpleCode(Map<String, Object> templateParams, Long userId, String templateCode) {
         // 校验短信模板是否合法
         VCodeTemplateDO template = validateSmsTemplate(templateCode);
 

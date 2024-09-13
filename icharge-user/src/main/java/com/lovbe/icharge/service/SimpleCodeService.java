@@ -4,6 +4,7 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
+import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 
 /**
@@ -15,19 +16,19 @@ public interface SimpleCodeService {
     /**
      * 发送短信验证码
      *
-     * @param reqDTO 发送请求
+     * @param reqVo 发送请求
      * @return
      */
-    String sendSmsCode(SmsCodeReqVo reqDTO);
+    String sendSmsCode(SmsCodeReqVo reqVo);
 
     /**
      * description: 发送邮箱验证码
      * @author: Lvhl
      * @date: 2024/8/7 15:23
-     * @param reqDTO
+     * @param reqVo
      * @return void
      */
-    String sendEmailCode(SimpleCodeReqDTO reqDTO);
+    String sendEmailCode(EmailCodeReqVo reqVo);
 
     /**
      * 验证验证码，并进行使用
