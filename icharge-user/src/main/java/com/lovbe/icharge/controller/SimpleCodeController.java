@@ -1,16 +1,12 @@
 
 package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
-import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.service.SimpleCodeService;
-import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;

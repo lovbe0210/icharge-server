@@ -15,7 +15,7 @@ public enum CommonStatusEnum {
 
     NORMAL("A", "启用"),
     DELETE("D", "删除"),
-    DISABLE("S", "封禁/审核不通过");
+    DISABLE("S", "停用/封禁/审核不通过");
 
     /**
      * 状态值

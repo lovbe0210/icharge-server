@@ -13,7 +13,7 @@ public interface ServiceErrorCodes {
     ErrorCode USER_MOBILE_USED = new ErrorCode(100303, "修改手机失败，该手机号({})已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100304, "用户积分余额不足");
     ErrorCode MOBILE_NOT_EXIST = new ErrorCode(100305, "手机号不存在");
-    ErrorCode VCODE_TEMPLATE_NOT_EXISTS = new ErrorCode(100306, "短信模板不存在");
+    ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(100306, "验证码发送失败，请稍后再试");
 
     // ========== AUTH 模块 1004 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(100401, "登录失败，账号密码不正确");
@@ -24,6 +24,7 @@ public interface ServiceErrorCodes {
     ErrorCode AUTH_CODE_ERROR = new ErrorCode(100406, "验证码错误");
     ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(100407, "登录方式不得为空");
     ErrorCode AUTH_FAILED = new ErrorCode(100408, "登录失败，请稍后再试！");
+    ErrorCode AUTH_ACCOUNT_STATUS_ERROR = new ErrorCode(100309, "账号状态异常，请刷新页面重试");
 
     // ========== feign 远程调用相关 ==========
     ErrorCode FEIGN_FAILED_REQUEST = new ErrorCode(1005, "Feign接口请求失败");

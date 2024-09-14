@@ -3,13 +3,14 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
-import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ErrorCode;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.dto.VCodeTemplateDO;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
@@ -17,48 +18,52 @@ import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
+import com.lovbe.icharge.mapper.AccountMapper;
+import com.lovbe.icharge.mapper.SimpleCodeMapper;
 import com.lovbe.icharge.service.SimpleCodeService;
+import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @Valid
 public class SimpleCodeServiceImpl implements SimpleCodeService {
+    @Resource
+    private SimpleCodeMapper simpleCodeMapper;
+    @Resource
+    private AccountMapper accountMapper;
+
     @Override
     public String sendSmsCode(SmsCodeReqVo reqVo) {
-        // 判断并创建验证码
-        String code = canCreateCode(new SimpleCodeReqDTO()
-                .setMobile(reqVo.getMobile())
-                .setScene(reqVo.getCodeScene())
-                .setUsedIp(ServletUtils.getClientIP()));
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setMobile(reqVo.getMobile()).setScene(reqVo.getCodeScene()).setUsedIp(ServletUtils.getClientIP());
+        // 判断使用场景是否合法
+        checkCodeSceneValidate(codeReqDTO);
+        // 判断能否创建验证码
+        String code = canCreateCode(codeReqDTO);
+        codeReqDTO.setCode(code);
         // 发送短信验证码
-        HashMap<String, Object> paramMap = MapUtil.of(SysConstant.CODE, code);
-        paramMap.put(SysConstant.MOBILE, reqVo.getMobile());
-        sendSimpleCode(paramMap, null, reqVo.getCodeScene().getTemplateCode());
+        sendSimpleCode(codeReqDTO);
         return code;
     }
 
     @Override
     public String sendEmailCode(EmailCodeReqVo reqVo) {
         // 判断并创建验证码
-        String code = canCreateCode(new SimpleCodeReqDTO()
-                .setEmail(reqVo.getEmail())
-                .setScene(reqVo.getCodeScene())
-                .setUsedIp(ServletUtils.getClientIP()));
-        // 发送邮箱验证码
-        HashMap<String, Object> paramMap = MapUtil.of(SysConstant.CODE, code);
-        paramMap.put(SysConstant.EMAIL, reqVo.getEmail());
-        sendSimpleCode(paramMap, null, reqVo.getCodeScene().getTemplateCode());
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setEmail(reqVo.getEmail()).setScene(reqVo.getCodeScene()).setUsedIp(ServletUtils.getClientIP());
+        // 判断使用场景是否合法
+        checkCodeSceneValidate(codeReqDTO);
+        // 判断能否创建验证码
+        String code = canCreateCode(codeReqDTO);
+        codeReqDTO.setCode(code);
+        // 发送短信验证码
+        sendSimpleCode(codeReqDTO);
         return code;
     }
 
@@ -82,9 +87,27 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         // TODO 记录日志
     }
 
-    private void saveErrorLog(SimpleCodeReqDTO reqDTO, ErrorCode authCodeError) {
-        // TODO 记录日志
-        log.error("[验证码错误]--loginInfo: {}", JSONUtil.toJsonStr(reqDTO));
+    /**
+     * @description: 发送验证码
+     * @param: SimpleCodeReqDTO
+     * @return: Long
+     * @author: lovbe0210
+     * @date: 2024/9/14 13:34
+     */
+    public Long sendSimpleCode(SimpleCodeReqDTO codeReqDTO) {
+        // 校验短信模板是否合法
+        VCodeTemplateDO template = validateSmsTemplate(codeReqDTO.getScene());
+
+        // 构建有序的模板参数。为什么放在这个位置，是提前保证模板参数的正确性，而不是到了插入发送日志
+        List<Map<String, Object>> newTemplateParams = buildTemplateParams(template, codeReqDTO);
+
+        // 创建发送日志。如果模板被禁用，则不发送短信，只记录日志
+        // 发送 MQ 消息，异步执行发送短信
+        /*sendSmsSendMessage(sendLogId, mobile, template.getChannelId(),
+                template.getApiTemplateId(), newTemplateParams);
+        return sendLogId;*/
+
+        return 0L;
     }
 
 
@@ -111,51 +134,130 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         }
 
         // 三次之后的频率限制以30分钟为基数
-        Object recentExpireValue = codeExpireMap.values().stream()
-                .sorted((ev1, ev2) -> {
-                    String et1 = ((String) ev1).split("_")[0];
-                    String et2 = ((String) ev1).split("_")[0];
-                    return Math.toIntExact(Long.valueOf(et2) - Long.valueOf(et1));
-                })
-                .findFirst()
-                .get();
+        Object recentExpireValue = codeExpireMap.values().stream().sorted((ev1, ev2) -> {
+            String et1 = ((String) ev1).split("_")[0];
+            String et2 = ((String) ev1).split("_")[0];
+            return Math.toIntExact(Long.valueOf(et2) - Long.valueOf(et1));
+        }).findFirst().get();
         String[] split = ((String) recentExpireValue).split("_");
         int multiple = Integer.valueOf(split[1]);
         long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN;
         if (System.currentTimeMillis() <= canSendTime) {
-            recordVerifyCodeLog(null, payload, GlobalErrorCodes.TOO_MANY_REQUESTS.getMsg());
+            recordVerifyCodeLog(codeReqDTO.getUserId(), payload, GlobalErrorCodes.TOO_MANY_REQUESTS.getMsg());
             throw new ServiceException(GlobalErrorCodes.TOO_MANY_REQUESTS);
         }
         String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN + "_" + (++multiple);
         RedisUtil.hset(codeExpireKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR * (++multiple));
-        recordVerifyCodeLog(null, payload, "success");
+        recordVerifyCodeLog(codeReqDTO.getUserId(), payload, "success");
         return code;
     }
 
-    public Long sendSimpleCode(Map<String, Object> templateParams, Long userId, String templateCode) {
-        // 校验短信模板是否合法
-        VCodeTemplateDO template = validateSmsTemplate(templateCode);
-
-        // 校验手机号码是否存在
-        if (!StringUtils.hasLength((CharSequence) templateParams.get(SysConstant.MOBILE))) {
-            throw new ServiceException(ServiceErrorCodes.MOBILE_NOT_EXIST);
+    /**
+     * @return VCodeTemplateDO
+     * @description 获取验证码模板
+     * @param[1] templateCode
+     * @author lovbe0210
+     * @date 2024/8/18 21:06
+     */
+    VCodeTemplateDO validateSmsTemplate(CodeSceneEnum sceneEnum) {
+        // 获得验证码模板
+        List<VCodeTemplateDO> template = simpleCodeMapper.selectList(new LambdaQueryWrapper<VCodeTemplateDO>().eq(VCodeTemplateDO::getCode, sceneEnum.getTemplateCode()).eq(VCodeTemplateDO::getStatus, CommonStatusEnum.NORMAL.getName()).orderByDesc(VCodeTemplateDO::getUpdateTime));
+        // 验证码模板不存在
+        if (CollectionUtils.isEmpty(template)) {
+            log.error("[发送短信] --- 系统错误，未获取到场景：{}的模板内容", sceneEnum.getDescription());
+            throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
         }
-        // 构建有序的模板参数。为什么放在这个位置，是提前保证模板参数的正确性，而不是到了插入发送日志
-        List<Map<String, Object>> newTemplateParams = buildTemplateParams(template, templateParams);
-
-        // 创建发送日志。如果模板被禁用，则不发送短信，只记录日志
-      /*  Boolean isSend = CommonStatusEnum.NORMAL.getStatus().equals(template.getStatus())
-                && CommonStatusEnum.NORMAL.getStatus().equals(smsChannel.getStatus());
-        String content = smsTemplateService.formatSmsTemplateContent(template.getContent(), templateParams);
-        Long sendLogId = smsLogService.createSmsLog(mobile, userId, userType, isSend, template, content, templateParams);
-
-        // 发送 MQ 消息，异步执行发送短信
-        if (isSend) {
-            smsProducer.sendSmsSendMessage(sendLogId, mobile, template.getChannelId(),
-                    template.getApiTemplateId(), newTemplateParams);
+        VCodeTemplateDO templateDO = template.get(0);
+        // 必须要有参数，填写code
+        List<String> params = templateDO.getParams();
+        if (CollectionUtils.isEmpty(params)) {
+            log.error("[发送短信] --- 系统错误，验证码模板参数为空，模板不可用，模板id：{}", templateDO.getUid());
+            throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
         }
-        return sendLogId;*/
-        return 0L;
+        return templateDO;
+    }
+
+    /**
+     * 将参数模板，处理成有序的 KeyValue 数组
+     * <p>
+     * 原因是，部分短信平台并不是使用 key 作为参数，而是数组下标，例如说 <a href="https://cloud.tencent.com/document/product/382/39023">腾讯云</a>
+     *
+     * @param template   短信模板
+     * @param codeReqDTO 原始参数
+     * @return 处理后的参数
+     */
+    List<Map<String, Object>> buildTemplateParams(VCodeTemplateDO template, SimpleCodeReqDTO codeReqDTO) {
+        List<String> params = template.getParams();
+        List<Map<String, Object>> collect = params.stream().map(key -> {
+            Map<String, Object> map = new HashMap<>();
+            String code = codeReqDTO.getCode();
+            if (!StringUtils.hasLength(code)) {
+                log.error("[发送验证码] --- 构建验证码模板参数错误，未获取到验证码值");
+                throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
+            }
+            map.put(key, code);
+            return map;
+        }).collect(Collectors.toList());
+        return collect;
+    }
+
+    /**
+     * @description: 判断验证码使用场景是否合法、
+     * @param: SmsCodeReqVo
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/9/14 11:14
+     */
+    private void checkCodeSceneValidate(SimpleCodeReqDTO codeReqDTO) {
+        LambdaQueryWrapper<AccountDo> queryWrapper = new LambdaQueryWrapper<>();
+        if (CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene())) {
+            queryWrapper.eq(AccountDo::getMobile, codeReqDTO.getMobile());
+        } else {
+            queryWrapper.eq(AccountDo::getEmail, codeReqDTO.getEmail());
+        }
+        AccountDo accountDo = accountMapper.selectOne(queryWrapper);
+        if (accountDo != null) {
+            codeReqDTO.setUserId(accountDo.getUid());
+        }
+        switch (codeReqDTO.getScene()) {
+            // 未注册不可发验证码
+            case BIND_MOBILE:
+                if (accountDo == null || !StringUtils.isEmpty(accountDo.getMobile())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+                }
+                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                }
+                break;
+            case BIND_EMAIL:
+                if (accountDo == null || !StringUtils.isEmpty(accountDo.getEmail())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+                }
+                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                }
+                break;
+            case MOBILE_UPDATE_EMAIL:
+            case MOBILE_UPDATE_PASSWORD:
+            case MOBILE_RESET_PASSWORD:
+                if (accountDo == null || StringUtils.isEmpty(accountDo.getMobile())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+                }
+                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                }
+                break;
+            case EMAIL_UPDATE_MOBILE:
+            case EMAIL_UPDATE_PASSWORD:
+            case EMAIL_RESET_PASSWORD:
+                if (accountDo == null || StringUtils.isEmpty(accountDo.getEmail())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+                }
+                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                }
+                break;
+        }
     }
 
     /**
@@ -173,40 +275,8 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         log.info("[Login] - userId: {}, payload：{}, status: {}, userIp: {}", uid, payload, actionDesc, userIp);
     }
 
-    /**
-     * @return VCodeTemplateDO
-     * @description 获取验证码模板
-     * @param[1] templateCode
-     * @author lovbe0210
-     * @date 2024/8/18 21:06
-     */
-    VCodeTemplateDO validateSmsTemplate(String templateCode) {
-        // 获得短信模板。考虑到效率，从缓存中获取
-//        VCodeTemplateDO template = vCodeTemplateService.getSmsTemplateByCodeFromCache(templateCode);
-        // 短信模板不存在
-//        if (template == null) {
-//            throw new ServiceException(ServiceErrorCodes.VCODE_TEMPLATE_NOT_EXISTS);
-//        }
-//        return template;
-        return null;
-    }
-
-    /**
-     * 将参数模板，处理成有序的 KeyValue 数组
-     * <p>
-     * 原因是，部分短信平台并不是使用 key 作为参数，而是数组下标，例如说 <a href="https://cloud.tencent.com/document/product/382/39023">腾讯云</a>
-     *
-     * @param template       短信模板
-     * @param templateParams 原始参数
-     * @return 处理后的参数
-     */
-    List<Map<String, Object>> buildTemplateParams(VCodeTemplateDO template, Map<String, Object> templateParams) {
-        return template.getParams().stream().map(key -> {
-            Object value = templateParams.get(key);
-            if (value == null) {
-//                throw ServiceException("SMS_SEND_MOBILE_TEMPLATE_PARAM_MISS", key);
-            }
-            return MapUtil.of(key, value);
-        }).collect(Collectors.toList());
+    private void saveErrorLog(SimpleCodeReqDTO reqDTO, ErrorCode authCodeError) {
+        // TODO 记录日志
+        log.error("[验证码错误]--loginInfo: {}", JSONUtil.toJsonStr(reqDTO));
     }
 }

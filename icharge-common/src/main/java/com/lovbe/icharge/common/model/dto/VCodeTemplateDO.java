@@ -1,11 +1,14 @@
 package com.lovbe.icharge.common.model.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -14,25 +17,24 @@ import java.util.List;
  * @Description: 验证码模板Do
  */
 @Data
-public class VCodeTemplateDO {
-    /**
-     * 自增编号
-     */
-    private long uid;
-
+@TableName(value = "p_simple_code_template")
+public class VCodeTemplateDO extends BaseEntity {
     // ========= 模板相关字段 =========
     /**
      * 启用状态
-     *
+     * status
      * 枚举 {@link CommonStatusEnum}
      */
-    private String status;
     /**
      * 模板编码，保证唯一
      *
      * 枚举 {@link CodeSceneEnum}
      */
     private String code;
+    /**
+     * 模板类型 1手机 2邮箱
+     */
+    private String type;
     /**
      * 模板名称
      */

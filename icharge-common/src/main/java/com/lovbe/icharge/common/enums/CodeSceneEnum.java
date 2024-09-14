@@ -16,7 +16,7 @@ public enum CodeSceneEnum {
     MOBILE_LOGIN(1, "mobile-login", "手机号登陆"),
     EMAIL_LOGIN(2, "email-login", "邮箱登陆"),
     BIND_MOBILE(3, "bind-mobile", "绑定手机号"),
-    EMAIL_EMAIL(4, "bing-email", "绑定邮箱"),
+    BIND_EMAIL(4, "bing-email", "绑定邮箱"),
     EMAIL_UPDATE_MOBILE(5, "update-mobile-by-email", "修改手机号码"),
     MOBILE_UPDATE_EMAIL(6, "update-email-by-mobile", "修改邮箱"),
     MOBILE_UPDATE_PASSWORD(7, "update-password-by-mobile", "使用手机设置/修改密码"),
@@ -55,7 +55,7 @@ public enum CodeSceneEnum {
 
     public static boolean sceneIsEmail(CodeSceneEnum scene) {
         return EMAIL_LOGIN.equals(scene) ? true
-                : EMAIL_EMAIL.equals(scene) ? true
+                : BIND_EMAIL.equals(scene) ? true
                 : MOBILE_UPDATE_EMAIL.equals(scene) ? true
                 : EMAIL_UPDATE_PASSWORD.equals(scene) ? true
                 : EMAIL_RESET_PASSWORD.equals(scene);

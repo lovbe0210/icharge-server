@@ -8,6 +8,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.springframework.util.StringUtils;
 
+import java.util.Base64;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -53,4 +54,52 @@ public class ValidationUtils {
         }
     }
 
+    /**
+     * @description: 滑块验证码
+     * @param: String
+     * @return: boolean
+     * @author: lovbe0210
+     * @date: 2024/9/14 13:49
+     */
+    public static boolean sliderValid(String value) {
+        return false;
+    }
+
+    public static void main(String[] args) {
+        long l1 = System.currentTimeMillis();
+        String originalString = "Hello, World!<div><p>这是滑 动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>";
+        String base64EncodedString = base64Encode(originalString);
+        System.out.println("Base64 Encoded: " + base64EncodedString);
+        long l2 = System.currentTimeMillis();
+        String decodeStr = bitwiseInvert(base64EncodedString);
+        System.out.println("After Bitwise Inversion: " + decodeStr);
+        long l3 = System.currentTimeMillis();
+        String sourceBase64 = bitwiseInvert(decodeStr);
+        String sourceStr = base64Decode(sourceBase64);
+        System.out.println("After Base64 Decode: " + sourceStr);
+        long l4 = System.currentTimeMillis();
+        System.out.println("l2-l1:" + (l2 - l1));
+        System.out.println("l3-l2:" + (l3 - l2));
+        System.out.println("l4-l3:" + (l4 - l3));
+    }
+
+    public static String base64Encode(String input) {
+        return Base64.getEncoder().encodeToString(input.getBytes());
+    }
+
+    public static String bitwiseInvert(String input) {
+        char[] chars = input.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+            // 异或操作
+            int invertedChar = c ^ 101;
+            chars[i] = (char) invertedChar;
+        }
+        return new String(chars);
+    }
+
+    public static String base64Decode(String input) {
+        byte[] decodedBytes = Base64.getDecoder().decode(input);
+        return new String(decodedBytes);
+    }
 }

@@ -31,6 +31,10 @@ public class SimpleCodeReqDTO {
      */
     private String code;
     /**
+     * 用户id
+     */
+    private Long userId;
+    /**
      * 用户ip
      */
     private String usedIp;
