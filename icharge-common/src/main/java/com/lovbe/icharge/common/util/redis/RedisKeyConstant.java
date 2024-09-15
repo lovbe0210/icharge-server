@@ -105,15 +105,25 @@ public abstract class RedisKeyConstant {
     }
 
     /** 
-     * @description: 获取滑块验证码
-     * @param: long
-     * @return: String
+     * @description: 获取页面唯一标识
+     * @param: uniqueId
+     * @return: timestamp
      * @author: lovbe0210
      * @date: 2024/8/18 14:25
      */
-    public static String getSliderVerifyKey(String userAgent, String userIp) {
-        String md5Hex = DigestUtil.md5Hex(userAgent + userIp);
-        return BASE_PROJECT + AUTH + "slider-verify:" + md5Hex;
+    public static String getSliderVerifyCookie(String uniqueId, long timestamp) {
+        return BASE_PROJECT + AUTH + "slider-verify:cookie:" + uniqueId + "-" + timestamp;
+    }
+
+    /**
+     * @description: 获取滑块验证码
+     * @param: uniqueId
+     * @return: svToken
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:25
+     */
+    public static String geSvToken(String svToken) {
+        return BASE_PROJECT + AUTH + "slider-verify:svToken:" + svToken;
     }
 
 

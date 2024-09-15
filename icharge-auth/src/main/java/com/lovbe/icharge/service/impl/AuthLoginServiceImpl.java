@@ -114,13 +114,6 @@ public class AuthLoginServiceImpl implements AuthService {
     public ResponseBean sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo) {
         SmsCodeReqVo data = reqVo.getData();
         Assert.notNull(data.getCodeScene(), GlobalErrorCodes.ERROR_CONFIGURATION.getMsg());
-        // 滑块验证 TODO
-        String sliderVerification = data.getSliderVerification();
-        String actionDesc = data.getCodeScene().getDescription() + "获取验证码-滑块验证";
-        ResponseBean sVResp = commonService.getSliderVerifyCode(sliderVerification, data.getMobile(), actionDesc);
-        if (!sVResp.isResult()) {
-            return sVResp;
-        }
 
         // 发送验证码
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()

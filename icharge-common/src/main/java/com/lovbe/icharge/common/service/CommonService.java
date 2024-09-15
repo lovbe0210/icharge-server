@@ -9,11 +9,4 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
  */
 public interface CommonService {
 
-    /**
-     * @description 根据滑块内容获取滑动验证码中的code值
-     * @param[1] null
-     * @author lovbe0210
-     * @date 2024/8/18 22:10
-     */
-    ResponseBean getSliderVerifyCode(String sliderVerifyContent, String payload, String actionDesc);
 }

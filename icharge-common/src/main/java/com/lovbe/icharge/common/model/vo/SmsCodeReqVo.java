@@ -2,6 +2,7 @@ package com.lovbe.icharge.common.model.vo;
 
 import com.lovbe.icharge.common.validation.Mobile;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.validation.SliderValid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -18,7 +19,8 @@ public class SmsCodeReqVo {
     private String mobile;
 
     @NotBlank(message = "请先完成滑块验证")
-    private String sliderVerification;
+    @SliderValid
+    private String sign;
 
     @NotNull(message = "验证码发送场景不得为空")
     private CodeSceneEnum codeScene;

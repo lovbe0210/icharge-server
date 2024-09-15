@@ -26,27 +26,6 @@ public class CommonServiceImpl implements CommonService {
     @Resource
     private LoggingService loggingService;
 
-    @Override
-    public ResponseBean getSliderVerifyCode(String sliderVerifyContent, String payload, String actionDesc) {
-        try {
-            JSONObject parsed = JSONUtil.parseObj(sliderVerifyContent);
-            Long sliderVerifyCode = parsed.getLong("SLIDER_VERIFY_CODE");
-            // 简单确定客户端唯一就行，只是用于存放滑块验证码的code值的有效期
-            String key = RedisKeyConstant.getSliderVerifyKey(ServletUtils.getClientIP(), ServletUtils.getUserAgent());
-            if (sliderVerifyCode == null || RedisUtil.get(key) == null) {
-                return sliderVerifyFailed(key, payload, actionDesc, SysConstant.FAILED);
-            }
-            // 比较是否一致
-            if (sliderVerifyCode != RedisUtil.get(key)) {
-                return sliderVerifyFailed(key, payload, actionDesc, SysConstant.FAILED);
-            }
-            return ResponseBean.ok(sliderVerifyCode);
-        } catch (Exception e) {
-            log.error("[滑块验证码解析失败]--{}", e.toString());
-            return null;
-        }
-    }
-
     /**
      * @description: 滑块验证失败的处理
      * @param: String  data.getCodeScene().getDescription() + "获取验证码"  LoginResultEnum.SLIDER_VERIFY_FAILED

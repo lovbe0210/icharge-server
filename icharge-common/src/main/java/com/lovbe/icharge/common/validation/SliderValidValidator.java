@@ -13,7 +13,7 @@ import jakarta.validation.ConstraintValidatorContext;
 public class SliderValidValidator implements ConstraintValidator<SliderValid, String> {
     @Override
     public boolean isValid(String value, ConstraintValidatorContext constraintValidatorContext) {
-        if (StrUtil.isBlankIfStr(value)) {
+        if (StrUtil.isBlank(value)) {
             return false;
         }
         return ValidationUtils.sliderValid(value);

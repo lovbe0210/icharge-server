@@ -45,7 +45,7 @@ public class QiniuCloudStorageService extends OssStorageService {
                 throw new ServiceException("上传七牛出错：" + res);
             }
         } catch (Exception e) {
-            throw new ServiceException("上传文件失败，请核对七牛配置信息", e);
+            throw new ServiceException("上传文件失败，请核对七牛配置信息");
         }
         return fullPath(path);
     }

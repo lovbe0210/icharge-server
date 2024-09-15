@@ -19,7 +19,7 @@ public class EmailCodeReqVo {
     private String email;
 
     @NotBlank(message = "请先完成滑块验证")
-    private String sliderVerification;
+    private String sign;
 
     @NotNull(message = "验证码发送场景不得为空")
 

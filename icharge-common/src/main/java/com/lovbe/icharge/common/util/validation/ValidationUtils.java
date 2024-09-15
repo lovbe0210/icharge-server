@@ -1,14 +1,22 @@
 package com.lovbe.icharge.common.util.validation;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.Base64;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -25,6 +33,7 @@ public class ValidationUtils {
     private static final Pattern PATTERN_URL = Pattern.compile("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
     private static final Pattern PATTERN_XML_NCNAME = Pattern.compile("[a-zA-Z_][\\-_.0-9_a-zA-Z$]*");
+    private static final Logger log = LoggerFactory.getLogger(ValidationUtils.class);
 
     public static boolean isMobile(String mobile) {
         return StringUtils.hasText(mobile)
@@ -62,44 +71,40 @@ public class ValidationUtils {
      * @date: 2024/9/14 13:49
      */
     public static boolean sliderValid(String value) {
+        // 先转码然后反转base64
+        try {
+            String bitwised = bitwiseInvert(value);
+            String decodedStr = Base64.decodeStr(bitwised);
+            JSONObject parseObj = JSONUtil.parseObj(decodedStr);
+            String tn = parseObj.getStr(SysConstant.TN);
+            String redisKey = RedisKeyConstant.geSvToken(tn);
+            if (RedisUtil.get(redisKey) == null) {
+                return false;
+            }
+            RedisUtil.del(redisKey);
+            return true;
+        }catch (Exception e) {
+            log.error("[滑块验证] --- 滑块解析失败，sourceValue：{}", value);
+        }
         return false;
     }
 
-    public static void main(String[] args) {
-        long l1 = System.currentTimeMillis();
-        String originalString = "Hello, World!<div><p>这是滑 动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>Hello, World!<div><p>这是滑动验证码</p><div/>";
-        String base64EncodedString = base64Encode(originalString);
-        System.out.println("Base64 Encoded: " + base64EncodedString);
-        long l2 = System.currentTimeMillis();
-        String decodeStr = bitwiseInvert(base64EncodedString);
-        System.out.println("After Bitwise Inversion: " + decodeStr);
-        long l3 = System.currentTimeMillis();
-        String sourceBase64 = bitwiseInvert(decodeStr);
-        String sourceStr = base64Decode(sourceBase64);
-        System.out.println("After Base64 Decode: " + sourceStr);
-        long l4 = System.currentTimeMillis();
-        System.out.println("l2-l1:" + (l2 - l1));
-        System.out.println("l3-l2:" + (l3 - l2));
-        System.out.println("l4-l3:" + (l4 - l3));
-    }
-
-    public static String base64Encode(String input) {
-        return Base64.getEncoder().encodeToString(input.getBytes());
-    }
 
     public static String bitwiseInvert(String input) {
         char[] chars = input.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
-            // 异或操作
-            int invertedChar = c ^ 101;
-            chars[i] = (char) invertedChar;
+            // 只针对数字或字母异或操作，对于异或之后超出数字或字母范围的还是使用原字符
+            if (Character.isLetterOrDigit(c) && Character.isLetterOrDigit(c ^ 1)) {
+                int invertedChar = c ^ 1;
+                chars[i] = (char) invertedChar;
+            }
         }
         return new String(chars);
     }
 
-    public static String base64Decode(String input) {
-        byte[] decodedBytes = Base64.getDecoder().decode(input);
-        return new String(decodedBytes);
+    public static void main(String[] args) {
+        String sss = "eyJ0biI6ImJhY2I5MmNiNDgzYzQ3YmM4NDE3MTlmNmQyZjEwNjAwIn0=";
+        System.out.println(bitwiseInvert(sss));
     }
 }

@@ -1,7 +1,7 @@
 package com.lovbe.icharge.common.handler;
 
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.common.model.base.RequestResultEnum;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindingResult;
@@ -15,6 +15,7 @@ import java.util.List;
 
 /**
  * 全局异常处理
+ *
  * @Author lovbe0210
  * @Version 1.0
  * @createDate 2024/8/13 21:23
@@ -52,13 +53,17 @@ public class GlobeExceptionHandler {
             }
         }
         log.error(errInfo.toString(), ex);
-        return ResponseBean.error(405, errInfo.toString());
+        if (errInfo.toString().contains("请先完成滑块验证")) {
+            return ResponseBean.error(GlobalErrorCodes.SLIDER_VERIFY_FAILED, null);
+        } else {
+            return ResponseBean.error(405, errInfo.toString());
+        }
     }
 
     @ExceptionHandler(Throwable.class)
     public ResponseBean handleException(Exception ex) {
         log.error(ex.getMessage(), ex);
-        return ResponseBean.error(RequestResultEnum.SYSTEM_ERROR);
+        return ResponseBean.error(GlobalErrorCodes.INTERNAL_SERVER_ERROR, null);
     }
 
 }
