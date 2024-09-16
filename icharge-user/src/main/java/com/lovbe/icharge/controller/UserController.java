@@ -1,12 +1,16 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +49,16 @@ public class UserController {
         return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO.getData()));
     }
 
-    @PostMapping("/resetpwd")
-    public ResponseBean<> resetUserPwd(@RequestBody BaseRequest<> )
+    @PostMapping("/reset/password")
+    public ResponseBean resetUserPwd(@RequestBody BaseRequest<ForgetPasswordDTO> forgetPwdDto) {
+        ForgetPasswordDTO pwdDtoData = forgetPwdDto.getData();
+        boolean isMobile = CodeSceneEnum.sceneIsMobile(pwdDtoData.getScene());
+        if (isMobile) {
+            Assert.notNull(pwdDtoData.getMobile(), "手机号不得为空");
+        }else {
+            Assert.notNull(pwdDtoData.getEmail(), "邮箱不得为空");
+        }
+        userService.resetUserPwd(forgetPwdDto.getData());
+        return ResponseBean.ok();
+    }
 }

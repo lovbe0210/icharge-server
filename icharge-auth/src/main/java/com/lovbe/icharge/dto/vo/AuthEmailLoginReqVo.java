@@ -1,8 +1,10 @@
 package com.lovbe.icharge.dto.vo;
 
+import com.lovbe.icharge.common.validation.Password;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 
 /**
@@ -16,6 +18,6 @@ public class AuthEmailLoginReqVo {
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    @NotBlank(message = "密码不能为空")
+    @Password
     private String password;
 }

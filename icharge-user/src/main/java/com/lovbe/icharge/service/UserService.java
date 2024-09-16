@@ -2,6 +2,7 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.dto.ForgetPasswordDTO;
 
 /**
  * @Author: lovbe
@@ -26,4 +27,12 @@ public interface UserService {
      * @date 2024/8/14 23:01
      */
     LoginUser getLoginUserByPayload(AuthUserDTO authUserDTO);
+
+    /**
+     * @description 重置账号密码
+     * @param[1] data
+     * @author lovbe0210
+     * @date 2024/9/16 15:21
+     */
+    void resetUserPwd(ForgetPasswordDTO data);
 }

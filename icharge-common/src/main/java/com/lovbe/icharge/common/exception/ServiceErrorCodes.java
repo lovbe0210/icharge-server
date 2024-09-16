@@ -16,6 +16,7 @@ public interface ServiceErrorCodes {
     ErrorCode MOBILE_NOT_EXIST = new ErrorCode(100306, "手机号不存在");
     ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(100307, "验证码发送失败，请稍后再试");
     ErrorCode USER_ACCOUNT_DISABLED = new ErrorCode(100308, "账号被禁用");
+    ErrorCode ACCOUNT_PASSWORD_RESET_FAILED = new ErrorCode(100309, "密码重置失败，请稍后再试");
 
     // ========== AUTH 模块 1004 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(100401, "登录失败，账号密码不正确");

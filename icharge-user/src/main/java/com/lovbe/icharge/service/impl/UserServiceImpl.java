@@ -2,15 +2,22 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.mapper.UserMapper;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +29,7 @@ import java.time.LocalDateTime;
  * @Description: MS
  */
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
     @Resource
     private AccountService accountService;
@@ -91,5 +99,37 @@ public class UserServiceImpl implements UserService {
             return loginUser;
         }
         return null;
+    }
+
+    @Override
+    public void resetUserPwd(ForgetPasswordDTO data) {
+        // 校验验证码是否正确
+        boolean isMobile = CodeSceneEnum.sceneIsMobile(data.getScene());
+        String payload = isMobile ? data.getMobile() : data.getEmail();
+        String codeExpireKey = RedisKeyConstant.getCodeFrequencyKey(payload);
+        Object codeExpire = RedisUtil.hget(codeExpireKey, data.getVerifyCode());
+        if (codeExpire == null) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
+        }
+        // 前半截为过期时间
+        String[] split = ((String) codeExpire).split("_");
+        Long expire = Long.valueOf(split[0]);
+        if (System.currentTimeMillis() > expire) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);
+        }
+
+        // 判断用户是否有效
+        AccountDo account = accountService.getAccountByMobileOrEmail(data);
+        if (account == null) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+        }
+
+        account.setPassword(data.getPassword());
+        int updated = accountService.updateAccount(account);
+        if (updated == 0) {
+            account.setPassword("***").setMobile("***").setEmail("***");
+            log.error("[重置密码] --- 密码重置失败，account: {}", account);
+            throw new ServiceException(ServiceErrorCodes.ACCOUNT_PASSWORD_RESET_FAILED);
+        }
     }
 }

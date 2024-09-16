@@ -138,7 +138,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         // 如果1小时内的发送次数小于3，则不做限制
         if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2) {
             // hash中的value用于存放key的失效时间和延长倍数
-            String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN + "_0";
+            String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000 + "_0";
             RedisUtil.hset(codeExpireKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR);
             return code;
         }
@@ -151,12 +151,12 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         }).findFirst().get();
         String[] split = ((String) recentExpireValue).split("_");
         int multiple = Integer.valueOf(split[1]);
-        long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN;
+        long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000;
         if (System.currentTimeMillis() <= canSendTime) {
             recordVerifyCodeLog(codeReqDTO.getUserId(), payload, GlobalErrorCodes.TOO_MANY_REQUESTS.getMsg());
             throw new ServiceException(GlobalErrorCodes.TOO_MANY_REQUESTS);
         }
-        String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN + "_" + (++multiple);
+        String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000 + "_" + (++multiple);
         RedisUtil.hset(codeExpireKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR * (++multiple));
         recordVerifyCodeLog(codeReqDTO.getUserId(), payload, "success");
         return code;

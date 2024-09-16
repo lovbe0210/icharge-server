@@ -3,6 +3,7 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.dto.ForgetPasswordDTO;
 
 /**
  * @Author: lovbe
@@ -18,6 +19,8 @@ public interface AccountService {
      * @date: 2024/8/13 22:37
      */
     AccountDo getAccountInfo(AuthUserDTO authUserDTO);
+
+    AccountDo getAccountByMobileOrEmail(ForgetPasswordDTO forgetPasswordDTO);
 
     /** 
      * @description: 创建账号信息
@@ -35,5 +38,5 @@ public interface AccountService {
      * @author: lovbe0210
      * @date: 2024/8/14 20:54
      */
-    void updateAccount(AccountDo account);
+    int updateAccount(AccountDo account);
 }

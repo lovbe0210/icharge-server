@@ -30,14 +30,22 @@ public class ValidationUtils {
 
     private static final Pattern PATTERN_MOBILE = Pattern.compile(MOBILE_REGEXP);
 
+    private static final Pattern PATTERN_PASSWORD = Pattern.compile("^(?=.*[a-zA-Z])(?=.*\\\\d)[^\\\\s]{8,30}$");
+
     private static final Pattern PATTERN_URL = Pattern.compile("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
 
     private static final Pattern PATTERN_XML_NCNAME = Pattern.compile("[a-zA-Z_][\\-_.0-9_a-zA-Z$]*");
+
     private static final Logger log = LoggerFactory.getLogger(ValidationUtils.class);
 
     public static boolean isMobile(String mobile) {
         return StringUtils.hasText(mobile)
                 && PATTERN_MOBILE.matcher(mobile).matches();
+    }
+
+    public static boolean isPassword(String password) {
+        return StringUtils.hasText(password)
+                && PATTERN_PASSWORD.matcher(password).matches();
     }
 
     public static boolean isURL(String url) {
@@ -104,7 +112,8 @@ public class ValidationUtils {
     }
 
     public static void main(String[] args) {
-        String sss = "eyJ0biI6ImJhY2I5MmNiNDgzYzQ3YmM4NDE3MTlmNmQyZjEwNjAwIn0=";
+//        String sss = "eyJ1bmlxdWVfaWQiOiJiYWNiOTJjYjQ4M2M0N2JjODQxNzE5ZjZkMmYxMDYwMCIsInRpbWVzdGFtcCI6MTcyNjQxOTc5Nzg4Mn0=";
+        String sss = "eyJ0biI6IjRlYjE4NDYzZjAwOTRiOWU5N2JhZGFkNzQ2NmFjZjk5In0=";
         System.out.println(bitwiseInvert(sss));
     }
 }
