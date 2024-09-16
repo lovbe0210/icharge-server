@@ -19,7 +19,7 @@ public interface SimpleCodeService {
      * @param reqVo 发送请求
      * @return
      */
-    String sendSmsCode(SmsCodeReqVo reqVo);
+    void sendSmsCode(SmsCodeReqVo reqVo);
 
     /**
      * description: 发送邮箱验证码
@@ -28,7 +28,7 @@ public interface SimpleCodeService {
      * @param reqVo
      * @return void
      */
-    String sendEmailCode(EmailCodeReqVo reqVo);
+    void sendEmailCode(EmailCodeReqVo reqVo);
 
     /**
      * 验证验证码，并进行使用

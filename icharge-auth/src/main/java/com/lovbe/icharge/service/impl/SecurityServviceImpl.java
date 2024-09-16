@@ -12,7 +12,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
-import com.lovbe.icharge.entity.vo.SecServiceSvVo;
+import com.lovbe.icharge.dto.vo.SecServiceSvVo;
 import com.lovbe.icharge.service.SecurityService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

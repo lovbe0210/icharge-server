@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -18,6 +19,7 @@ import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
+import com.lovbe.icharge.dto.SimpleSendResultDTO;
 import com.lovbe.icharge.mapper.AccountMapper;
 import com.lovbe.icharge.mapper.SimpleCodeMapper;
 import com.lovbe.icharge.service.SimpleCodeService;
@@ -41,7 +43,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     private AccountMapper accountMapper;
 
     @Override
-    public String sendSmsCode(SmsCodeReqVo reqVo) {
+    public void sendSmsCode(SmsCodeReqVo reqVo) {
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setMobile(reqVo.getMobile()).setScene(reqVo.getCodeScene()).setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
         checkCodeSceneValidate(codeReqDTO);
@@ -50,11 +52,10 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         codeReqDTO.setCode(code);
         // 发送短信验证码
         sendSimpleCode(codeReqDTO);
-        return code;
     }
 
     @Override
-    public String sendEmailCode(EmailCodeReqVo reqVo) {
+    public void sendEmailCode(EmailCodeReqVo reqVo) {
         // 判断并创建验证码
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setEmail(reqVo.getEmail()).setScene(reqVo.getCodeScene()).setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
@@ -64,7 +65,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         codeReqDTO.setCode(code);
         // 发送短信验证码
         sendSimpleCode(codeReqDTO);
-        return code;
     }
 
     @Override
@@ -94,20 +94,30 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      * @author: lovbe0210
      * @date: 2024/9/14 13:34
      */
-    public Long sendSimpleCode(SimpleCodeReqDTO codeReqDTO) {
+    public void sendSimpleCode(SimpleCodeReqDTO codeReqDTO) {
         // 校验短信模板是否合法
         VCodeTemplateDO template = validateSmsTemplate(codeReqDTO.getScene());
 
         // 构建有序的模板参数。为什么放在这个位置，是提前保证模板参数的正确性，而不是到了插入发送日志
         List<Map<String, Object>> newTemplateParams = buildTemplateParams(template, codeReqDTO);
 
-        // 创建发送日志。如果模板被禁用，则不发送短信，只记录日志
-        // 发送 MQ 消息，异步执行发送短信
-        /*sendSmsSendMessage(sendLogId, mobile, template.getChannelId(),
-                template.getApiTemplateId(), newTemplateParams);
-        return sendLogId;*/
+        // TODO 发送 MQ 消息，异步执行发送短信
+        SimpleSendResultDTO sendResult = new SimpleSendResultDTO();
+        /*SimpleSendResultDTO result = sendSmsSendMessage(mobile, template.getChannelId(),
+                template.getApiTemplateId(), newTemplateParams);*/
+        String logDesc = "";
+        if (sendResult.isResult()) {
+            logDesc = "验证码发送成功";
+        } else {
+            logDesc = "验证码发送失败， errorInfo: " + sendResult.getMark() + "sendLogId: " + sendResult.getSendLogId();
+        }
+        recordVerifyCodeLog(codeReqDTO.getUserId(), codeReqDTO.getEmail(), logDesc);
 
-        return 0L;
+        // 记录完日志，如果发送失败抛出异常
+        if (sendResult.isResult()) {
+            log.error("[发送验证码] --- {}", logDesc);
+            throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
+        }
     }
 
 
@@ -239,7 +249,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 break;
             case MOBILE_UPDATE_EMAIL:
             case MOBILE_UPDATE_PASSWORD:
-            case MOBILE_RESET_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getMobile())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
                 }
@@ -249,12 +258,27 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 break;
             case EMAIL_UPDATE_MOBILE:
             case EMAIL_UPDATE_PASSWORD:
-            case EMAIL_RESET_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
                 }
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                }
+                break;
+            case MOBILE_RESET_PASSWORD:
+                if (accountDo == null || !StringUtils.hasLength(accountDo.getMobile())) {
+                    throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
+                }
+                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
+                    throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
+                }
+                break;
+            case EMAIL_RESET_PASSWORD:
+                if (accountDo == null || !StringUtils.hasLength(accountDo.getEmail())) {
+                    throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
+                }
+                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
+                    throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
                 }
                 break;
         }
@@ -269,10 +293,10 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      * @author lovbe0210
      * @date 2024/8/14 22:47
      */
-    private void recordVerifyCodeLog(Long uid, String payload, String actionDesc) {
+    private void recordVerifyCodeLog(Long userId, String payload, String actionDesc) {
         // 插入登陆日志 TODO
         String userIp = ServletUtils.getClientIP();
-        log.info("[Login] - userId: {}, payload：{}, status: {}, userIp: {}", uid, payload, actionDesc, userIp);
+        log.info("[Login] - userId: {}, payload：{}, status: {}, userIp: {}", userId, payload, actionDesc, userIp);
     }
 
     private void saveErrorLog(SimpleCodeReqDTO reqDTO, ErrorCode authCodeError) {

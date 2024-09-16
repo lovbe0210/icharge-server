@@ -2,7 +2,7 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.entity.vo.SecServiceSvVo;
+import com.lovbe.icharge.dto.vo.SecServiceSvVo;
 import com.lovbe.icharge.service.SecurityService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;

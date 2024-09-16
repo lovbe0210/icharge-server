@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity.vo;
+package com.lovbe.icharge.dto.vo;
 
 import com.lovbe.icharge.common.validation.Mobile;
 import jakarta.validation.constraints.NotBlank;

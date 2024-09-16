@@ -3,7 +3,7 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
-import com.lovbe.icharge.entity.vo.*;
+import com.lovbe.icharge.dto.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 
 /**
@@ -48,13 +48,4 @@ public interface AuthService {
      * @return AuthLoginRespVo
      */
     AuthLoginRespVo emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo);
-
-    /** 
-     * @description: 发送验证码
-     * @param: BaseRequest<AuthMobileCodeReqVo>
-     * @return: ResponseBean
-     * @author: lovbe0210
-     * @date: 2024/8/16 17:31
-     */
-    ResponseBean sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo);
 }

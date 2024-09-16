@@ -10,10 +10,12 @@ public interface ServiceErrorCodes {
     // ========== 用户相关  1003 ============
     ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(100301, "手机号未注册用户，请注册后再进行登录");
     ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(100302, "邮箱未注册用户，请注册后再进行登录");
-    ErrorCode USER_MOBILE_USED = new ErrorCode(100303, "修改手机失败，该手机号({})已经被使用");
-    ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100304, "用户积分余额不足");
-    ErrorCode MOBILE_NOT_EXIST = new ErrorCode(100305, "手机号不存在");
-    ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(100306, "验证码发送失败，请稍后再试");
+    ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(100303, "没有找到匹配的账户");
+    ErrorCode USER_MOBILE_USED = new ErrorCode(100304, "修改手机失败，该手机号({})已经被使用");
+    ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100305, "用户积分余额不足");
+    ErrorCode MOBILE_NOT_EXIST = new ErrorCode(100306, "手机号不存在");
+    ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(100307, "验证码发送失败，请稍后再试");
+    ErrorCode USER_ACCOUNT_DISABLED = new ErrorCode(100308, "账号被禁用");
 
     // ========== AUTH 模块 1004 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(100401, "登录失败，账号密码不正确");

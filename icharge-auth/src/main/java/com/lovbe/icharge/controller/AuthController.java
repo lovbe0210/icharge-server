@@ -3,7 +3,7 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
-import com.lovbe.icharge.entity.vo.*;
+import com.lovbe.icharge.dto.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
@@ -78,5 +78,7 @@ public class AuthController {
     public ResponseBean emailLogin(@RequestBody @Valid BaseRequest<AuthEmailLoginReqVo> reqVo) {
         return ResponseBean.ok(authService.emailLogin(reqVo));
     }
+
+
 
 }

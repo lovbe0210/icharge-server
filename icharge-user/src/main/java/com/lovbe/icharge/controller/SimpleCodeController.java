@@ -46,7 +46,8 @@ public class SimpleCodeController {
      */
     @PostMapping("/mobile/code")
     public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<SmsCodeReqVo> reqVo) {
-        return ResponseBean.ok(codeService.sendSmsCode(reqVo.getData()));
+        codeService.sendSmsCode(reqVo.getData());
+        return ResponseBean.ok();
     }
 
     /**
@@ -58,6 +59,7 @@ public class SimpleCodeController {
      */
     @PostMapping("/email/code")
     public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo) {
-        return ResponseBean.ok(codeService.sendEmailCode(reqVo.getData()));
+        codeService.sendEmailCode(reqVo.getData());
+        return ResponseBean.ok();
     }
 }

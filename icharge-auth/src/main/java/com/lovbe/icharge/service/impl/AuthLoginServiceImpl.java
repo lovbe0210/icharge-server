@@ -16,7 +16,7 @@ import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
-import com.lovbe.icharge.entity.vo.*;
+import com.lovbe.icharge.dto.vo.*;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.enums.LoginResultEnum;
 import com.lovbe.icharge.service.AuthService;
@@ -109,20 +109,6 @@ public class AuthLoginServiceImpl implements AuthService {
         // 创建 Token 令牌，记录登录日志
         return getAuthLoginRespVo(userInfoResp, data.getEmail(), data.getPassword(), LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD);
     }
-
-    @Override
-    public ResponseBean sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo) {
-        SmsCodeReqVo data = reqVo.getData();
-        Assert.notNull(data.getCodeScene(), GlobalErrorCodes.ERROR_CONFIGURATION.getMsg());
-
-        // 发送验证码
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
-                .setMobile(data.getMobile())
-                .setScene(data.getCodeScene())
-                .setUsedIp(ServletUtils.getClientIP());
-        return ResponseBean.ok(MapUtil.of("code", userService.sendSmsCode(new BaseRequest<>(codeReqDTO))));
-    }
-
 
     /**
      * @description 校验用户身份信息， 生成认证登录信息

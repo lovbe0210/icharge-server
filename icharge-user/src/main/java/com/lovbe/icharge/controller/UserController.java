@@ -21,14 +21,30 @@ public class UserController {
     @Resource
     private UserService userService;
 
-
+    /**
+     * description: 通过登录/注册的方式返回用户信息，如果不存在就创建
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param authUserDTO
+     * @return ResponseBean<LoginUser>
+     */
     @PostMapping("/createUserIfAbsent")
     public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody @Valid BaseRequest<AuthUserDTO> authUserDTO) {
         return ResponseBean.ok(userService.createUserIfAbsent(authUserDTO.getData()));
     }
 
+    /**
+     * description: 通过手机号或邮箱获取用户信息
+     * @author: Lvhl
+     * @date: 2024/9/16 11:59
+     * @param authUserDTO
+     * @return ResponseBean<LoginUser>
+     */
     @PostMapping("/getUser/loginPayload")
     public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody BaseRequest<AuthUserDTO> authUserDTO) {
         return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO.getData()));
     }
+
+    @PostMapping("/resetpwd")
+    public ResponseBean<> resetUserPwd(@RequestBody BaseRequest<> )
 }
