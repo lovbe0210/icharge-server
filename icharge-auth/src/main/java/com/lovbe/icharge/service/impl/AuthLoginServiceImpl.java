@@ -1,6 +1,5 @@
 package com.lovbe.icharge.service.impl;
 
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
@@ -11,8 +10,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
-import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
@@ -26,7 +24,6 @@ import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 
@@ -39,7 +36,7 @@ public class AuthLoginServiceImpl implements AuthService {
     private CommonService commonService;
 
     @Override
-    public AuthLoginRespVo smsLogin(BaseRequest<AuthSmsLoginReqVo> reqVo) {
+    public AuthLoginUser smsLogin(BaseRequest<AuthSmsLoginReqVo> reqVo) {
         // 校验验证码
         String userIp = ServletUtils.getClientIP();
         AuthSmsLoginReqVo data = reqVo.getData();
@@ -61,7 +58,7 @@ public class AuthLoginServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthLoginRespVo mobileLogin(BaseRequest<AuthMobileLoginReqVo> reqVo) {
+    public AuthLoginUser mobileLogin(BaseRequest<AuthMobileLoginReqVo> reqVo) {
         // 使用手机 + 密码，进行登录。
         AuthMobileLoginReqVo data = reqVo.getData();
         String userIp = ServletUtils.getClientIP();
@@ -75,7 +72,7 @@ public class AuthLoginServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthLoginRespVo emailCodeLogin(BaseRequest<AuthEmailCodeLoginReqVo> reqVo) {
+    public AuthLoginUser emailCodeLogin(BaseRequest<AuthEmailCodeLoginReqVo> reqVo) {
         // 校验验证码
         String userIp = ServletUtils.getClientIP();
         AuthEmailCodeLoginReqVo data = reqVo.getData();
@@ -97,7 +94,7 @@ public class AuthLoginServiceImpl implements AuthService {
 
 
     @Override
-    public AuthLoginRespVo emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo) {
+    public AuthLoginUser emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo) {
         // 使用邮箱 + 密码，进行登录。
         AuthEmailLoginReqVo data = reqVo.getData();
         String userIp = ServletUtils.getClientIP();
@@ -120,10 +117,10 @@ public class AuthLoginServiceImpl implements AuthService {
      * @author lovbe0210
      * @date 2024/8/14 22:40
      */
-    private AuthLoginRespVo getAuthLoginRespVo(ResponseBean<LoginUser> userInfoResp,
-                                               String loginPayload,
-                                               String password,
-                                               LoginLogTypeEnum logType) {
+    private AuthLoginUser getAuthLoginRespVo(ResponseBean<LoginUser> userInfoResp,
+                                             String loginPayload,
+                                             String password,
+                                             LoginLogTypeEnum logType) {
         if (userInfoResp == null || !userInfoResp.isResult()) {
             throw new ServiceException(GlobalErrorCodes.INTERNAL_SERVER_ERROR);
         }
@@ -173,7 +170,7 @@ public class AuthLoginServiceImpl implements AuthService {
      * @author lovbe0210
      * @date 2024/8/14 22:46
      */
-    private AuthLoginRespVo createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
+    private AuthLoginUser createTokenAfterLoginSuccess(Long userId, String mobileOrEmail, LoginLogTypeEnum logType) {
         recordLoginLog(userId, mobileOrEmail, logType.getDesc(), LoginResultEnum.SUCCESS);
         // 创建 Token 令牌
         // accessToken 30分钟
@@ -185,7 +182,7 @@ public class AuthLoginServiceImpl implements AuthService {
         key = RedisKeyConstant.getRefreshTokenKey(refreshToken);
         RedisUtil.set(key, userId, RedisKeyConstant.EXPIRE_30_MIN);
         // 构建返回结果
-        return AuthLoginRespVo.builder()
+        return AuthLoginUser.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .userId(userId)

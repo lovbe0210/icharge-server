@@ -2,10 +2,7 @@ package com.lovbe.icharge.filter.security;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.nacos.shaded.com.google.common.cache.CacheLoader;
-import com.alibaba.nacos.shaded.com.google.common.cache.LoadingCache;
-import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import com.lovbe.icharge.util.SecurityFrameworkUtils;
 import com.lovbe.icharge.util.WebFrameworkUtils;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
@@ -18,9 +15,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import javax.xml.crypto.dsig.keyinfo.KeyValue;
-import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -48,24 +42,24 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
      * 1. {@link #getLoginUser(ServerWebExchange, String)} 返回 Mono.empty() 时，会导致后续的 flatMap 无法进行处理的问题。
      * 2. {@link #buildUser(String)} 时，如果 Token 已经过期，返回 LOGIN_USER_EMPTY 对象，避免缓存无法刷新
      */
-    private static final AuthLoginRespVo LOGIN_USER_EMPTY = new AuthLoginRespVo();
+    private static final AuthLoginUser LOGIN_USER_EMPTY = new AuthLoginUser();
 
     private final WebClient webClient;
-
-    /**
+/*
+    *//**
      * 登录用户的本地缓存
      *
      * key1：多租户的编号
      * key2：访问令牌
-     */
-    private final LoadingCache<Long, AuthLoginRespVo> loginUserCache = buildAsyncReloadingCache(Duration.ofMinutes(1),
+     *//*
+    private final LoadingCache<Long, AuthLoginUser> loginUserCache = buildAsyncReloadingCache(Duration.ofMinutes(1),
             new CacheLoader<Long, LoginUser>() {
                 @Override
                 public LoginUser load(Long key) throws Exception {
                     String body = checkAccessToken(token.getKey(), token.getValue()).block();
                     return buildUser(body);
                 }
-            });
+            });*/
 
     public TokenAuthenticationFilter(ReactorLoadBalancerExchangeFilterFunction lbFunction) {
         // Q：为什么不使用 OAuth2TokenApi 进行调用？
@@ -103,18 +97,18 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         });
     }
 
-    private Mono<AuthLoginRespVo> getLoginUser(ServerWebExchange exchange, String token) {
+    private Mono<AuthLoginUser> getLoginUser(ServerWebExchange exchange, String token) {
         // 从缓存中，获取 LoginUser
-        Long tenantId = WebFrameworkUtils.getTenantId(exchange);
+
         Map<Long, String> cacheKey = MapUtil.of(tenantId, token);
-        AuthLoginRespVo localUser = loginUserCache.getIfPresent(cacheKey);
+        AuthLoginUser localUser = loginUserCache.getIfPresent(cacheKey);
         if (localUser != null) {
             return Mono.just(localUser);
         }
 
         // 缓存不存在，则请求远程服务
-        return checkAccessToken(tenantId, token).flatMap((Function<String, Mono<LoginUser>>) body -> {
-            AuthLoginRespVo remoteUser = buildUser(body);
+        return checkAccessToken(token).flatMap((Function<String, Mono<AuthLoginUser>>) body -> {
+            AuthLoginUser remoteUser = buildUser(body);
             if (remoteUser != null) {
                 // 非空，则进行缓存
                 loginUserCache.put(null, remoteUser);
@@ -124,14 +118,13 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         });
     }
 
-    private Mono<String> checkAccessToken(Long tenantId, String token) {
+    private Mono<String> checkAccessToken(String token) {
         return webClient.get()
                 .uri(OAuth2TokenApi.URL_CHECK, uriBuilder -> uriBuilder.queryParam("accessToken", token).build())
-                .headers(httpHeaders -> WebFrameworkUtils.setTenantIdHeader(tenantId, httpHeaders)) // 设置租户的 Header
                 .retrieve().bodyToMono(String.class);
     }
 
-    private AuthLoginRespVo buildUser(String body) {
+    private AuthLoginUser buildUser(String body) {
         // 处理结果，结果不正确
         CommonResult<OAuth2AccessTokenCheckRespDTO> result = JsonUtils.parseObject(body, CHECK_RESULT_TYPE_REFERENCE);
         if (result == null) {
@@ -147,9 +140,9 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
 
         // 创建登录用户
         OAuth2AccessTokenCheckRespDTO tokenInfo = result.getData();
-        return new LoginUser().setId(tokenInfo.getUserId()).setUserType(tokenInfo.getUserType())
+        return new AuthLoginUser().setUserId(tokenInfo.getUserId())
                 .setInfo(tokenInfo.getUserInfo()) // 额外的用户信息
-                .setTenantId(tokenInfo.getTenantId()).setScopes(tokenInfo.getScopes());
+                .setScopes(tokenInfo.getScopes());
     }
 
     @Override

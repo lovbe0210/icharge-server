@@ -4,7 +4,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.dto.vo.*;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +38,7 @@ public class AuthController {
      */
     @PostMapping("/sms/login")
     public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo, HttpServletResponse response) {
-        AuthLoginRespVo loginRespVo = authService.smsLogin(reqVo);
+        AuthLoginUser loginRespVo = authService.smsLogin(reqVo);
         ServletUtils.setLoginCookie(domain, response, loginRespVo);
         return ResponseBean.ok("登录成功");
     }

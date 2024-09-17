@@ -1,10 +1,8 @@
 package com.lovbe.icharge.util;
 
 import cn.hutool.core.map.MapUtil;
-import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
-import cn.iocoder.yudao.gateway.filter.security.LoginUser;
-import com.lovbe.icharge.common.model.dto.AuthUserDTO;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginUser;
+import com.lovbe.icharge.common.util.JsonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -59,7 +57,7 @@ public class SecurityFrameworkUtils {
      * @param exchange 请求
      * @param user 用户
      */
-    public static void setLoginUser(ServerWebExchange exchange, AuthLoginRespVo user) {
+    public static void setLoginUser(ServerWebExchange exchange, AuthLoginUser user) {
         exchange.getAttributes().put(LOGIN_USER_ID_ATTR, user.getUserId());
 //        exchange.getAttributes().put(LOGIN_USER_TYPE_ATTR, user.getUserType());
     }
@@ -108,7 +106,7 @@ public class SecurityFrameworkUtils {
      * @param user 用户
      */
     @SneakyThrows
-    public static void setLoginUserHeader(ServerHttpRequest.Builder builder, LoginUser user) {
+    public static void setLoginUserHeader(ServerHttpRequest.Builder builder, AuthLoginUser user) {
         try {
             String userStr = JsonUtils.toJsonString(user);
             userStr = URLEncoder.encode(userStr, StandardCharsets.UTF_8.name()); // 编码，避免中文乱码

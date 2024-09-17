@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuthLoginRespVo {
+public class AuthLoginUser {
     /**
      * 用户编号
      */

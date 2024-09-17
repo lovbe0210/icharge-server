@@ -1,10 +1,8 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.dto.vo.*;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 
 /**
  * @description: 登陆认证服务
@@ -20,7 +18,7 @@ public interface AuthService {
      * @param reqVo
      * @return AuthLoginRespVo
      */
-    AuthLoginRespVo smsLogin(BaseRequest<AuthSmsLoginReqVo> reqVo);
+    AuthLoginUser smsLogin(BaseRequest<AuthSmsLoginReqVo> reqVo);
 
     /**
      * description: 手机号密码登录
@@ -29,7 +27,7 @@ public interface AuthService {
      * @param reqVo
      * @return AuthLoginRespVo
      */
-    AuthLoginRespVo mobileLogin(BaseRequest<AuthMobileLoginReqVo> reqVo);
+    AuthLoginUser mobileLogin(BaseRequest<AuthMobileLoginReqVo> reqVo);
 
     /**
      * description: 邮箱验证码登录
@@ -38,7 +36,7 @@ public interface AuthService {
      * @param reqVo
      * @return AuthLoginRespVo
      */
-    AuthLoginRespVo emailCodeLogin(BaseRequest<AuthEmailCodeLoginReqVo> reqVo);
+    AuthLoginUser emailCodeLogin(BaseRequest<AuthEmailCodeLoginReqVo> reqVo);
 
     /**
      * description: 邮箱密码登录
@@ -47,5 +45,5 @@ public interface AuthService {
      * @param reqVo
      * @return AuthLoginRespVo
      */
-    AuthLoginRespVo emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo);
+    AuthLoginUser emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo);
 }

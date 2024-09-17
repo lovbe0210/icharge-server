@@ -7,7 +7,7 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.lovbe.icharge.common.model.resp.AuthLoginRespVo;
+import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -193,7 +193,7 @@ public class ServletUtils {
      * @author lovbe0210
      * @date 2024/8/16 0:41
      */
-    public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginRespVo loginRespVo) {
+    public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginUser loginRespVo) {
         Cookie accessToken = new Cookie("ichagre_token",String.valueOf(loginRespVo.getAccessToken()));
         accessToken.setDomain(domain);
         accessToken.setPath("/");
