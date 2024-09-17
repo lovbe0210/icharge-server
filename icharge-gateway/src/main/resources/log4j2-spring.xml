@@ -5,7 +5,7 @@
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
         <Property name="LOG_LEVEL">${sys:log.level:-DEBUG}</Property>
-        <Property name="APP_NAME">icharge-web</Property>
+        <Property name="APP_NAME">icharge-gateway</Property>
         <Property name="LOG_FILE_PATH">${sys:logdir:-./logs}</Property>
         <Property name="PATTERN_FORMAT">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%.15t] [%X{logId}] %c{1.}.%L: %msg%xEx%n</Property>
         <Property name="CONSOLE">%clr{%d{yyyy-MM-dd HH:mm:ss.SSS}}{faint} %clr{%5p} %clr{[%.15t]}{faint} [%X{logId}] %clr{%c{1.}}{cyan}.%L%clr{:}{faint} %m%n%xwEx</Property>

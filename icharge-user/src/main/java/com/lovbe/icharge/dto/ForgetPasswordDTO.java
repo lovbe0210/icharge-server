@@ -22,7 +22,7 @@ public class ForgetPasswordDTO {
     private String email;
     @NotNull(message = "验证码使用场景不得为空")
     private CodeSceneEnum scene;
-    @Password
+//    @Password
     private String password;
     @NotBlank(message = "验证码不得为空")
     @Length(min = 6, max = 6, message = "验证码错误")

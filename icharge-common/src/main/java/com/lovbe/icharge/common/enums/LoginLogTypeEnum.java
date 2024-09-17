@@ -10,7 +10,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum LoginLogTypeEnum {
+public enum LoginLogTypeEnum implements BaseEnum {
 
     LOGIN_MOBILE_PASSWORD(101, "使用手机密码登录"),
     LOGIN_EMAIL_PASSWORD(102, "使用邮箱密码登录"),
@@ -28,4 +28,8 @@ public enum LoginLogTypeEnum {
     private final Integer type;
     private final String desc;
 
+    @Override
+    public Object getCode() {
+        return type;
+    }
 }

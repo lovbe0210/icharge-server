@@ -45,12 +45,12 @@ public class UserController {
      * @return ResponseBean<LoginUser>
      */
     @PostMapping("/getUser/loginPayload")
-    public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody BaseRequest<AuthUserDTO> authUserDTO) {
+    public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody @Valid BaseRequest<AuthUserDTO> authUserDTO) {
         return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO.getData()));
     }
 
     @PostMapping("/reset/password")
-    public ResponseBean resetUserPwd(@RequestBody BaseRequest<ForgetPasswordDTO> forgetPwdDto) {
+    public ResponseBean resetUserPwd(@RequestBody @Valid BaseRequest<ForgetPasswordDTO> forgetPwdDto) {
         ForgetPasswordDTO pwdDtoData = forgetPwdDto.getData();
         boolean isMobile = CodeSceneEnum.sceneIsMobile(pwdDtoData.getScene());
         if (isMobile) {

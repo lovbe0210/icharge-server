@@ -1,14 +1,14 @@
 server:
-  port: 10212
+  port: 10210
 
 global:
   param:
     # 雪花Id机器码
-    snowflakeId: 2
+    snowflakeId: 1
 
 spring:
   application:
-    name: auth
+    name: gateway
   cloud:
     nacos:
 #      server-addr: "[2409:8a62:4f2:7291:20c:29ff:febb:e2f3]:8848,[2409:8a62:4f2:7291:20c:29ff:fe29:775f]:8848,[2409:8a62:4f2:7291:20c:29ff:fe61:dfaa]:8848"

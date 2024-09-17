@@ -24,6 +24,7 @@
 
 
     <modules>
+        <module>icharge-gateway</module>
         <module>icharge-common</module>
         <module>icharge-auth</module>
         <module>icharge-storage</module>

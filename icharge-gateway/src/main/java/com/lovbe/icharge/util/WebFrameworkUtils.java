@@ -1,4 +1,4 @@
-package com.lovbe.icharge.common.util.servlet;
+package com.lovbe.icharge.util;
 
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
@@ -6,6 +6,8 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import com.lovbe.icharge.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.route.Route;
+import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -99,6 +101,16 @@ public class WebFrameworkUtils {
         }
         ip = exchange.getRequest().getRemoteAddress().getHostString();
         return NetUtil.getMultistageReverseProxyIp(ip);
+    }
+
+    /**
+     * 获得请求匹配的 Route 路由
+     *
+     * @param exchange 请求
+     * @return 路由
+     */
+    public static Route getGatewayRoute(ServerWebExchange exchange) {
+        return exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
     }
 
 }

@@ -11,8 +11,8 @@ spring:
     name: icharge-auth
   cloud:
     nacos:
-      server-addr: "[2409:8a62:4f2:7291:20c:29ff:febb:e2f3]:8848,[2409:8a62:4f2:7291:20c:29ff:fe29:775f]:8848,[2409:8a62:4f2:7291:20c:29ff:fe61:dfaa]:8848"
-      #      server-addr: 10.2.2.14:8848,10.2.2.15:8848,10.2.2.16:8848
+#      server-addr: "[2409:8a62:4f2:7291:20c:29ff:febb:e2f3]:8848,[2409:8a62:4f2:7291:20c:29ff:fe29:775f]:8848,[2409:8a62:4f2:7291:20c:29ff:fe61:dfaa]:8848"
+      server-addr: 10.2.2.14:8848,10.2.2.15:8848,10.2.2.16:8848
       namespace: 2f35e6d2-374b-45c4-85a5-cf9ef2866341
       config:
         file-extension: yaml
@@ -24,4 +24,3 @@ spring:
         namespace: ${spring.cloud.nacos.namespace}
 #        ip: "2409:8962:37c:7a02:ceeb:e37e:5c16:c658"
         ip: 127.0.0.1
-

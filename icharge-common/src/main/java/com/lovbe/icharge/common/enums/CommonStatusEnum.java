@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum CommonStatusEnum {
+public enum CommonStatusEnum implements BaseEnum {
 
     NORMAL("A", "启用"),
     DELETE("D", "删除"),
@@ -38,4 +38,8 @@ public enum CommonStatusEnum {
         return ObjUtil.equal(DISABLE.status, status);
     }
 
+    @Override
+    public Object getCode() {
+        return status;
+    }
 }

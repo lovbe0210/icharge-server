@@ -32,7 +32,6 @@ public class ContextRefreshedListener implements ApplicationRunner {
 
         // 保存参数（务必调用，否则参数设置不生效）：
         YitIdHelper.setIdGenerator(options);
-
         // 以上过程只需全局一次，且应在生成ID之前完成。
     }
 }

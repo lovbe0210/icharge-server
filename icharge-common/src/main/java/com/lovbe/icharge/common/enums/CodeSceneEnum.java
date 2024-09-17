@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum CodeSceneEnum {
+public enum CodeSceneEnum implements BaseEnum {
 
     MOBILE_LOGIN(1, "mobile-login", "手机号登陆"),
     EMAIL_LOGIN(2, "email-login", "邮箱登陆"),
@@ -61,4 +61,8 @@ public enum CodeSceneEnum {
                 : EMAIL_RESET_PASSWORD.equals(scene);
     }
 
+    @Override
+    public Object getCode() {
+        return scene;
+    }
 }
