@@ -1,23 +1,21 @@
 package com.lovbe.icharge.filter.security;
 
-import cn.hutool.core.map.MapUtil;
+
 import cn.hutool.core.util.StrUtil;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.util.SecurityFrameworkUtils;
-import com.lovbe.icharge.util.WebFrameworkUtils;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
+import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
 
 /**
  * Token 过滤器，验证 token 的有效性
@@ -28,12 +26,6 @@ import java.util.function.Function;
  */
 @Component
 public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
-
-    /**
-     * CommonResult<OAuth2AccessTokenCheckRespDTO> 对应的 TypeReference 结果，用于解析 checkToken 的结果
-     */
-//    private static final TypeReference<CommonResult<OAuth2AccessTokenCheckRespDTO>> CHECK_RESULT_TYPE_REFERENCE
-//            = new TypeReference<CommonResult<OAuth2AccessTokenCheckRespDTO>>() {};
 
     /**
      * 空的 LoginUser 的结果
@@ -80,70 +72,19 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // 情况二，如果有 Token 令牌，则解析对应 userId、userType、tenantId 等字段，并通过 通过 Header 转发给服务
-        // 重要说明：defaultIfEmpty 作用，保证 Mono.empty() 情况，可以继续执行 `flatMap 的 chain.filter(exchange)` 逻辑，避免返回给前端空的 Response！！
-        return getLoginUser(exchange, token).defaultIfEmpty(LOGIN_USER_EMPTY).flatMap(user -> {
-            // 1. 无用户，直接 filter 继续请求
-            if (user == LOGIN_USER_EMPTY) {
-                return chain.filter(exchange);
-            }
-
-            // 2.1 有用户，则设置登录用户
-            SecurityFrameworkUtils.setLoginUser(exchange, user);
-            // 2.2 将 user 并设置到 login-user 的请求头，使用 json 存储值
-            ServerWebExchange newExchange = exchange.mutate()
-                    .request(builder -> SecurityFrameworkUtils.setLoginUserHeader(builder, user)).build();
-            return chain.filter(newExchange);
-        });
-    }
-
-    private Mono<AuthLoginUser> getLoginUser(ServerWebExchange exchange, String token) {
+        // 情况二，如果有 Token 令牌，则解析对应 userId 字段，并通过 通过 Header 转发给服务
         // 从缓存中，获取 LoginUser
-
-        Map<Long, String> cacheKey = MapUtil.of(tenantId, token);
-        AuthLoginUser localUser = loginUserCache.getIfPresent(cacheKey);
-        if (localUser != null) {
-            return Mono.just(localUser);
+        String loginUserIdKey = RedisKeyConstant.getAccessTokenKey(token);
+        Object userId = RedisUtil.get(loginUserIdKey);
+        if (userId == null) {
+            // 判断请求路径是否是无需登录 TODO
+            return chain.filter(exchange);
         }
-
-        // 缓存不存在，则请求远程服务
-        return checkAccessToken(token).flatMap((Function<String, Mono<AuthLoginUser>>) body -> {
-            AuthLoginUser remoteUser = buildUser(body);
-            if (remoteUser != null) {
-                // 非空，则进行缓存
-                loginUserCache.put(null, remoteUser);
-                return Mono.just(remoteUser);
-            }
-            return Mono.empty();
-        });
+        exchange.getAttributes().put(LOGIN_USER_ID_ATTR, userId);
+        return chain.filter(exchange);
     }
 
-    private Mono<String> checkAccessToken(String token) {
-        return webClient.get()
-                .uri(OAuth2TokenApi.URL_CHECK, uriBuilder -> uriBuilder.queryParam("accessToken", token).build())
-                .retrieve().bodyToMono(String.class);
-    }
 
-    private AuthLoginUser buildUser(String body) {
-        // 处理结果，结果不正确
-        CommonResult<OAuth2AccessTokenCheckRespDTO> result = JsonUtils.parseObject(body, CHECK_RESULT_TYPE_REFERENCE);
-        if (result == null) {
-            return null;
-        }
-        if (result.isError()) {
-            // 特殊情况：令牌已经过期（code = 401），需要返回 LOGIN_USER_EMPTY，避免 Token 一直因为缓存，被误判为有效
-            if (Objects.equals(result.getCode(), HttpStatus.UNAUTHORIZED.value())) {
-                return LOGIN_USER_EMPTY;
-            }
-            return null;
-        }
-
-        // 创建登录用户
-        OAuth2AccessTokenCheckRespDTO tokenInfo = result.getData();
-        return new AuthLoginUser().setUserId(tokenInfo.getUserId())
-                .setInfo(tokenInfo.getUserInfo()) // 额外的用户信息
-                .setScopes(tokenInfo.getScopes());
-    }
 
     @Override
     public int getOrder() {

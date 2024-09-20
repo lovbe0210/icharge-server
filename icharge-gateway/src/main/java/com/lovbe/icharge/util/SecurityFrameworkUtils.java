@@ -22,14 +22,14 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class SecurityFrameworkUtils {
 
-    private static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private static final String AUTHORIZATION_BEARER = "Bearer";
+    public static final String AUTHORIZATION_BEARER = "Bearer";
 
-    private static final String LOGIN_USER_HEADER = "login-user";
+    public static final String LOGIN_USER_HEADER = "login-user";
 
-    private static final String LOGIN_USER_ID_ATTR = "login-user-id";
-    private static final String LOGIN_USER_TYPE_ATTR = "login-user-type";
+    public static final String LOGIN_USER_ID_ATTR = "login-user-id";
+    public static final String LOGIN_USER_TYPE_ATTR = "login-user-type";
 
     private SecurityFrameworkUtils() {}
 
