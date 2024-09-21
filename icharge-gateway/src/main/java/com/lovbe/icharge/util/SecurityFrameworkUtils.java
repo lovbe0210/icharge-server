@@ -2,7 +2,9 @@ package com.lovbe.icharge.util;
 
 import cn.hutool.core.map.MapUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -16,7 +18,7 @@ import org.springframework.web.server.ServerWebExchange;
 @Slf4j
 public class SecurityFrameworkUtils {
 
-    public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String AUTHORIZATION_HEADER = "token";
 
     public static final String AUTHORIZATION_BEARER = "Bearer";
 
@@ -33,16 +35,16 @@ public class SecurityFrameworkUtils {
      * @param exchange 请求
      * @return 认证 Token
      */
-    public static String obtainAuthorization(ServerWebExchange exchange) {
-        String authorization = exchange.getRequest().getHeaders().getFirst(AUTHORIZATION_HEADER);
-        if (!StringUtils.hasText(authorization)) {
-            return null;
+    public static String obtainAuthToken(ServerWebExchange exchange) {
+        MultiValueMap<String, HttpCookie> cookies = exchange.getRequest().getCookies();
+        HttpCookie acToken = cookies.getFirst("ac_token");
+        if (acToken != null) {
+            String value = acToken.getValue();
+            if (!StringUtils.hasText(value)) {
+                return null;
+            }
         }
-        int index = authorization.indexOf(AUTHORIZATION_BEARER + " ");
-        if (index == -1) { // 未找到
-            return null;
-        }
-        return authorization.substring(index + 7).trim();
+        return null;
     }
 
     /**

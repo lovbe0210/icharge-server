@@ -4,12 +4,18 @@ package com.lovbe.icharge.filter.security;
 import cn.hutool.core.util.StrUtil;
 import com.lovbe.icharge.util.RedisUtil;
 import com.lovbe.icharge.util.SecurityFrameworkUtils;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
 
@@ -21,8 +27,14 @@ import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
  *
  * @author 芋道源码
  */
+@RefreshScope
+@Data
 @Component
 public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
+    @Value("${request.white-list}")
+    private String whiteList;
+
+    public Map<String, String> whiteMap = new HashMap<>();
 
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -30,8 +42,12 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         SecurityFrameworkUtils.removeLoginUser(exchange);
 
         // 情况一，如果没有 Token 令牌，则直接继续 filter
-        String token = SecurityFrameworkUtils.obtainAuthorization(exchange);
+        String token = SecurityFrameworkUtils.obtainAuthToken(exchange);
         if (StrUtil.isEmpty(token)) {
+            // 判断请求路径是否是无需登录 TODO
+            String path = exchange.getRequest().getPath().toString();
+            if (path != null && path.contains("/p/"))
+
             return chain.filter(exchange);
         }
 
@@ -40,7 +56,7 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         String loginUserIdKey = RedisUtil.getAccessTokenKey(token);
         Object userId = RedisUtil.get(loginUserIdKey);
         if (userId == null) {
-            // 判断请求路径是否是无需登录 TODO
+
             String string = exchange.getRequest().getPath().toString();
             return chain.filter(exchange);
         }
