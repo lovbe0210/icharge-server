@@ -108,7 +108,7 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <optional>true</optional>
-                <version>1.18.8</version>
+                <version>${lombok.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -176,29 +176,29 @@
                         </excludes>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.0.0</version>
-                    <configuration>
-                        <descriptors>
-                            <descriptor>${basedir}/assembly.xml</descriptor>
-                        </descriptors>
-                        <finalName>${project.artifactId}-${project.version}</finalName>
-                        <outputDirectory>${project.build.directory}</outputDirectory>
-                        <appendAssemblyId>false</appendAssemblyId>
-                        <attach>false</attach>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>assembly</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>single</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
+<!--                <plugin>-->
+<!--                    <groupId>org.apache.maven.plugins</groupId>-->
+<!--                    <artifactId>maven-assembly-plugin</artifactId>-->
+<!--                    <version>3.0.0</version>-->
+<!--                    <configuration>-->
+<!--                        <descriptors>-->
+<!--                            <descriptor>${basedir}/assembly.xml</descriptor>-->
+<!--                        </descriptors>-->
+<!--                        <finalName>${project.artifactId}-${project.version}</finalName>-->
+<!--                        <outputDirectory>${project.build.directory}</outputDirectory>-->
+<!--                        <appendAssemblyId>false</appendAssemblyId>-->
+<!--                        <attach>false</attach>-->
+<!--                    </configuration>-->
+<!--                    <executions>-->
+<!--                        <execution>-->
+<!--                            <id>assembly</id>-->
+<!--                            <phase>package</phase>-->
+<!--                            <goals>-->
+<!--                                <goal>single</goal>-->
+<!--                            </goals>-->
+<!--                        </execution>-->
+<!--                    </executions>-->
+<!--                </plugin>-->
                 <plugin>
                     <groupId>pl.project13.maven</groupId>
                     <artifactId>git-commit-id-plugin</artifactId>

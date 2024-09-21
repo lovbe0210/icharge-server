@@ -43,6 +43,7 @@ import java.util.Map;
 import static cn.hutool.core.date.DatePattern.NORM_DATETIME_MS_FORMATTER;
 
 /**
+ * 执行顺序：2
  * 网关的访问日志过滤器
  *
  * 从功能上，它类似 yudao-spring-boot-starter-web 的 ApiAccessLogFilter 过滤器

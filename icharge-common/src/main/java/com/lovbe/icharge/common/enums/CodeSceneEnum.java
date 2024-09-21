@@ -63,6 +63,6 @@ public enum CodeSceneEnum implements BaseEnum {
 
     @Override
     public Object getCode() {
-        return scene;
+        return this.scene;
     }
 }

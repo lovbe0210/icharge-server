@@ -3,7 +3,6 @@ package com.lovbe.icharge.common.util.validation;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.enums.SysConstant;

@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
 
 /**
+ * 执行顺序：3
  * Token 过滤器，验证 token 的有效性
  * 1. 验证通过时，将 userId、userType、tenantId 通过 Header 转发给服务
  * 2. 验证不通过，还是会转发给服务。因为，接口是否需要登录的校验，还是交给服务自身处理
