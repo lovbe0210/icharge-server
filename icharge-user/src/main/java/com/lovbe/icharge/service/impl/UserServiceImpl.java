@@ -1,5 +1,6 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.net.PassAuth;
 import cn.hutool.core.util.IdUtil;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
@@ -18,6 +19,7 @@ import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,9 @@ public class UserServiceImpl implements UserService {
     private AccountService accountService;
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private BCryptPasswordEncoder cryptPasswordEncoder;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -59,7 +64,6 @@ public class UserServiceImpl implements UserService {
         account = new AccountDo()
                 .setMobile(authUserDTO.getMobile())
                 .setEmail(authUserDTO.getEmail())
-                .setPassword(authUserDTO.getPassword())
                 .setLoginCount(1)
                 .setLastLoginIp(authUserDTO.getUserIp())
                 .setLastLoginTime(LocalDateTime.now());
@@ -124,7 +128,9 @@ public class UserServiceImpl implements UserService {
             throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
         }
 
-        account.setPassword(data.getPassword());
+        // 密码加密入库
+        String encode = cryptPasswordEncoder.encode(data.getPassword());
+        account.setPassword(encode);
         int updated = accountService.updateAccount(account);
         if (updated == 0) {
             account.setPassword("***").setMobile("***").setEmail("***");
