@@ -3,9 +3,8 @@ package com.lovbe.icharge.filter.logging;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.common.utils.StringUtils;
-import com.lovbe.icharge.common.util.JsonUtils;
-import com.lovbe.icharge.common.util.servlet.ServletUtils;
+import com.lovbe.icharge.util.WebFrameworkUtils;
+import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
@@ -79,19 +78,19 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
         values.put("schema", gatewayLog.getSchema());
         values.put("requestUrl", gatewayLog.getRequestUrl());
         values.put("queryParams", gatewayLog.getQueryParams().toSingleValueMap());
-        values.put("requestBody", JsonUtils.isJson(gatewayLog.getRequestBody()) ? // 保证 body 的展示好看
+        values.put("requestBody", JSONUtil.isTypeJSON(gatewayLog.getRequestBody()) ? // 保证 body 的展示好看
                 JSONUtil.parse(gatewayLog.getRequestBody()) : gatewayLog.getRequestBody());
-        values.put("requestHeaders", JsonUtils.toJsonString(gatewayLog.getRequestHeaders().toSingleValueMap()));
+        values.put("requestHeaders", JSONUtil.toJsonStr(gatewayLog.getRequestHeaders().toSingleValueMap()));
         values.put("userIp", gatewayLog.getUserIp());
-        values.put("responseBody", JsonUtils.isJson(gatewayLog.getResponseBody()) ? // 保证 body 的展示好看
+        values.put("responseBody", JSONUtil.isTypeJSON(gatewayLog.getResponseBody()) ? // 保证 body 的展示好看
                 JSONUtil.parse(gatewayLog.getResponseBody()) : gatewayLog.getResponseBody());
         values.put("responseHeaders", gatewayLog.getResponseHeaders() != null ?
-                JsonUtils.toJsonString(gatewayLog.getResponseHeaders().toSingleValueMap()) : null);
+                JSONUtil.toJsonStr(gatewayLog.getResponseHeaders().toSingleValueMap()) : null);
         values.put("httpStatus", gatewayLog.getHttpStatus());
         values.put("startTime", LocalDateTimeUtil.format(gatewayLog.getStartTime(), NORM_DATETIME_MS_FORMATTER));
         values.put("endTime", LocalDateTimeUtil.format(gatewayLog.getEndTime(), NORM_DATETIME_MS_FORMATTER));
         values.put("duration", gatewayLog.getDuration() != null ? gatewayLog.getDuration() + " ms" : null);
-        log.info("[writeAccessLog][网关日志：{}]", JsonUtils.toJsonPrettyString(values));
+        log.info("[writeAccessLog][网关日志：{}]", JSONUtil.toJsonPrettyStr(values));
     }
 
     @Override
@@ -112,7 +111,7 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
         gatewayLog.setQueryParams(request.getQueryParams());
         gatewayLog.setRequestHeaders(request.getHeaders());
         gatewayLog.setStartTime(LocalDateTime.now());
-        gatewayLog.setUserIp(ServletUtils.getClientIP());
+        gatewayLog.setUserIp(WebFrameworkUtils.getClientIP(exchange));
 
         // 继续 filter 过滤
         MediaType mediaType = request.getHeaders().getContentType();

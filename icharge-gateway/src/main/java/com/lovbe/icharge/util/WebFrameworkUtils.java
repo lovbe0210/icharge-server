@@ -4,7 +4,7 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.extra.servlet.ServletUtil;
-import com.lovbe.icharge.common.util.JsonUtils;
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -63,7 +63,7 @@ public class WebFrameworkUtils {
         return response.writeWith(Mono.fromSupplier(() -> {
             DataBufferFactory bufferFactory = response.bufferFactory();
             try {
-                return bufferFactory.wrap(JsonUtils.toJsonByte(object));
+                return bufferFactory.wrap(JSONUtil.toJsonStr(object).getBytes("UTF-8"));
             } catch (Exception ex) {
                 ServerHttpRequest request = exchange.getRequest();
                 log.error("[writeJSON][uri({}/{}) 发生异常]", request.getURI(), request.getMethod(), ex);
