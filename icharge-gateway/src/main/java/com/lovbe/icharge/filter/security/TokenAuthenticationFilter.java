@@ -9,16 +9,15 @@ import com.lovbe.icharge.util.SecurityFrameworkUtils;
 import com.lovbe.icharge.util.WebFrameworkUtils;
 import jakarta.annotation.Resource;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
@@ -40,21 +39,27 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
     @Resource
     private GatewayConfigProperties configProperties;
 
+    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
+
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, GatewayFilterChain chain) {
         // 移除 login-user 的请求头，避免伪造模拟
         SecurityFrameworkUtils.removeLoginUser(exchange);
 
-        // 情况一，如果没有 Token 令牌，则直接继续 filter
         String token = SecurityFrameworkUtils.obtainAuthToken(exchange);
         if (StrUtil.isEmpty(token)) {
-            // 判断请求路径是否是无需登录 TODO
+            // 判断请求路径是否是无需登录
             String path = exchange.getRequest().getPath().toString();
             Set<String> whiteList = configProperties.getWhiteList();
-            if (path == null || !whiteList.contains(path)) {
+            if (CollectionUtils.isEmpty(whiteList)) {
                 return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
             }
-            return chain.filter(exchange);
+            for (String whiteUrl : whiteList) {
+                if (antPathMatcher.match(whiteUrl, path)) {
+                    return chain.filter(exchange);
+                }
+            }
+            return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
         }
 
         // 情况二，如果有 Token 令牌，则解析对应 userId 字段，并通过 通过 Header 转发给服务
@@ -62,12 +67,12 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         String loginUserIdKey = RedisUtil.getAccessTokenKey(token);
         Object userId = RedisUtil.get(loginUserIdKey);
         if (userId == null) {
-
-            String string = exchange.getRequest().getPath().toString();
-            return chain.filter(exchange);
+            return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
         }
-        exchange.getAttributes().put(LOGIN_USER_ID_ATTR, userId);
-        return chain.filter(exchange);
+        // 将 userid 设置到 login-user-id 的请求头
+        ServerWebExchange newExchange = exchange.mutate()
+                .request(builder -> SecurityFrameworkUtils.setLoginUserHeader(builder, String.valueOf(userId))).build();
+        return chain.filter(newExchange);
     }
 
     @Override

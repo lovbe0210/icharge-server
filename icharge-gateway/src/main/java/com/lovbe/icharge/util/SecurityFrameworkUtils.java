@@ -1,6 +1,7 @@
 package com.lovbe.icharge.util;
 
 import cn.hutool.core.map.MapUtil;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -70,5 +71,21 @@ public class SecurityFrameworkUtils {
      */
     public static Long getLoginUserId(ServerWebExchange exchange) {
         return MapUtil.getLong(exchange.getAttributes(), LOGIN_USER_ID_ATTR);
+    }
+
+    /**
+     * 将 user 并设置到 login-user 的请求头，使用 json 存储值
+     *
+     * @param builder 请求
+     * @param userId 用户id
+     */
+    @SneakyThrows
+    public static void setLoginUserHeader(ServerHttpRequest.Builder builder, String userId) {
+        try {
+            builder.header(LOGIN_USER_ID_ATTR, userId);
+        } catch (Exception ex) {
+            log.error("[setLoginUserHeader] --- 设置请求头userId: {}失败，errorInfo：{}", userId, ex.toString());
+            throw ex;
+        }
     }
 }
