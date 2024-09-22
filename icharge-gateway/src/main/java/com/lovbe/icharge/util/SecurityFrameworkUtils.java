@@ -37,14 +37,12 @@ public class SecurityFrameworkUtils {
      */
     public static String obtainAuthToken(ServerWebExchange exchange) {
         MultiValueMap<String, HttpCookie> cookies = exchange.getRequest().getCookies();
-        HttpCookie acToken = cookies.getFirst("ac_token");
+        HttpCookie acToken = cookies.getFirst("icharge_actoken");
+        String token = null;
         if (acToken != null) {
-            String value = acToken.getValue();
-            if (!StringUtils.hasText(value)) {
-                return null;
-            }
+            token = acToken.getValue();
         }
-        return null;
+        return token;
     }
 
     /**

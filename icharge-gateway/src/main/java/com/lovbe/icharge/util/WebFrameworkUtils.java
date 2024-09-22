@@ -31,24 +31,6 @@ public class WebFrameworkUtils {
     private WebFrameworkUtils() {}
 
     /**
-     * 将 Gateway 请求中的 header，设置到 HttpHeaders 中
-     *
-     * @param tenantId 租户编号
-     * @param httpHeaders WebClient 的请求
-     */
-    public static void setTenantIdHeader(Long tenantId, HttpHeaders httpHeaders) {
-        if (tenantId == null) {
-            return;
-        }
-        httpHeaders.set(HEADER_TENANT_ID, String.valueOf(tenantId));
-    }
-
-    public static Long getTenantId(ServerWebExchange exchange) {
-        String tenantId = exchange.getRequest().getHeaders().getFirst(HEADER_TENANT_ID);
-        return NumberUtil.isNumber(tenantId) ? Long.valueOf(tenantId) : null;
-    }
-
-    /**
      * 返回 JSON 字符串
      *
      * @param exchange 响应

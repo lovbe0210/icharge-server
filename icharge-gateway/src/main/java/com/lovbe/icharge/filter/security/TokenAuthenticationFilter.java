@@ -2,8 +2,12 @@ package com.lovbe.icharge.filter.security;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.lovbe.icharge.config.GatewayConfigProperties;
+import com.lovbe.icharge.entity.ResponseBean;
 import com.lovbe.icharge.util.RedisUtil;
 import com.lovbe.icharge.util.SecurityFrameworkUtils;
+import com.lovbe.icharge.util.WebFrameworkUtils;
+import jakarta.annotation.Resource;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -14,8 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
 
@@ -27,14 +31,14 @@ import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
  *
  * @author 芋道源码
  */
-@RefreshScope
 @Data
 @Component
 public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
-    @Value("${request.white-list}")
-    private String whiteList;
-
-    public Map<String, String> whiteMap = new HashMap<>();
+    /**
+     * 接口请求白名单，无需校验token
+     */
+    @Resource
+    private GatewayConfigProperties configProperties;
 
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -46,8 +50,10 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         if (StrUtil.isEmpty(token)) {
             // 判断请求路径是否是无需登录 TODO
             String path = exchange.getRequest().getPath().toString();
-            if (path != null && path.contains("/p/"))
-
+            Set<String> whiteList = configProperties.getWhiteList();
+            if (path == null || !whiteList.contains(path)) {
+                return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
+            }
             return chain.filter(exchange);
         }
 
