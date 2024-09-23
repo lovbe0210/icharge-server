@@ -17,6 +17,6 @@ public class AuthMobileLoginReqVo {
     @Mobile
     private String mobile;
 
-    @Password
+    @NotBlank(message = "用户名或密码错误")
     private String password;
 }

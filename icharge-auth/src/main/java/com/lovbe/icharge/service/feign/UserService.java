@@ -8,7 +8,7 @@ import com.lovbe.icharge.common.model.entity.LoginUser;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
-@FeignClient(name = "icharge-user", fallback = UserServiceFeignFallback.class)
+@FeignClient(name = "user", fallback = UserServiceFeignFallback.class)
 public interface UserService {
 
     @PostMapping("/api/user/createUserIfAbsent")

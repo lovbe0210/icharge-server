@@ -8,26 +8,26 @@ package com.lovbe.icharge.common.exception;
 public interface ServiceErrorCodes {
 
     // ========== 用户相关  1003 ============
-    ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(100301, "手机号未注册用户，请注册后再进行登录");
-    ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(100302, "邮箱未注册用户，请注册后再进行登录");
-    ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(100303, "没有找到匹配的账户");
-    ErrorCode USER_MOBILE_USED = new ErrorCode(100304, "修改手机失败，该手机号({})已经被使用");
-    ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(100305, "用户积分余额不足");
-    ErrorCode MOBILE_NOT_EXIST = new ErrorCode(100306, "手机号不存在");
-    ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(100307, "验证码发送失败，请稍后再试");
-    ErrorCode USER_ACCOUNT_DISABLED = new ErrorCode(100308, "账号被禁用");
-    ErrorCode ACCOUNT_PASSWORD_RESET_FAILED = new ErrorCode(100309, "密码重置失败，请稍后再试");
+    ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(400, "手机号未注册用户，请注册后再进行登录");
+    ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(400, "邮箱未注册用户，请注册后再进行登录");
+    ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(400, "没有找到匹配的账户");
+    ErrorCode USER_MOBILE_USED = new ErrorCode(400, "修改手机失败，该手机号({})已经被使用");
+    ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(400, "用户积分余额不足");
+    ErrorCode MOBILE_NOT_EXIST = new ErrorCode(400, "手机号不存在");
+    ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(400, "验证码发送失败，请稍后再试");
+    ErrorCode USER_ACCOUNT_DISABLED = new ErrorCode(403, "账号被禁用");
+    ErrorCode ACCOUNT_PASSWORD_RESET_FAILED = new ErrorCode(400, "密码重置失败，请稍后再试");
 
     // ========== AUTH 模块 1004 ==========
-    ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(100401, "登录失败，账号密码不正确");
-    ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(100402, "登录失败，账号被禁用");
-    ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(100403, "登录失败，解析不到三方登录信息");
-    ErrorCode AUTH_MOBILE_USED = new ErrorCode(100404, "手机号已经被使用");
-    ErrorCode AUTH_CODE_EXPIRED = new ErrorCode(100405, "验证码已过期，请重新获取");
-    ErrorCode AUTH_CODE_ERROR = new ErrorCode(100406, "验证码错误");
-    ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(100407, "登录方式不得为空");
-    ErrorCode AUTH_FAILED = new ErrorCode(100408, "登录失败，请稍后再试！");
-    ErrorCode AUTH_ACCOUNT_STATUS_ERROR = new ErrorCode(100309, "账号状态异常，请刷新页面重试");
+    ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(400, "登录失败，账号密码不正确");
+    ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(403, "登录失败，账号被禁用");
+    ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(400, "登录失败，解析不到三方登录信息");
+    ErrorCode AUTH_MOBILE_USED = new ErrorCode(400, "手机号已经被使用");
+    ErrorCode AUTH_CODE_EXPIRED = new ErrorCode(405, "验证码已过期，请重新获取");
+    ErrorCode AUTH_CODE_ERROR = new ErrorCode(400, "验证码错误");
+    ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(400, "登录方式不得为空");
+    ErrorCode AUTH_FAILED = new ErrorCode(400, "登录失败，请稍后再试！");
+    ErrorCode AUTH_ACCOUNT_STATUS_ERROR = new ErrorCode(400, "账号状态异常，请刷新页面重试");
 
     // ========== feign 远程调用相关 ==========
     ErrorCode FEIGN_FAILED_REQUEST = new ErrorCode(1005, "Feign接口请求失败");
