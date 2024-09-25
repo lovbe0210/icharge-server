@@ -1,10 +1,8 @@
 package com.lovbe.icharge.dto.vo;
 
 import com.lovbe.icharge.common.validation.Mobile;
-import com.lovbe.icharge.common.validation.Password;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 /**
  * @description: 手机密码登录
