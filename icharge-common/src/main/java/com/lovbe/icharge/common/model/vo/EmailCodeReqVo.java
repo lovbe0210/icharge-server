@@ -23,5 +23,5 @@ public class EmailCodeReqVo {
 
     @NotNull(message = "验证码发送场景不得为空")
 
-    private CodeSceneEnum codeScene;
+    private CodeSceneEnum scene;
 }

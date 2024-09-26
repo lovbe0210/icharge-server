@@ -5,6 +5,8 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
+import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -17,9 +19,12 @@ public interface UserService {
     @PostMapping("/api/user/getUser/loginPayload")
     ResponseBean<LoginUser> getLoginUserByPayload(BaseRequest<AuthUserDTO> authUserDTO);
 
-    @PostMapping("/useVerifyCode")
+    @PostMapping("/api/user/useVerifyCode")
     ResponseBean useVerifyCode(BaseRequest<SimpleCodeReqDTO> simpleCodeReqDTO);
 
-    @PostMapping("/mobile/code")
+    @PostMapping("/api/user/mobile/code")
     ResponseBean sendSmsCode(BaseRequest<SimpleCodeReqDTO> codeReqDTO);
+
+    @PostMapping("/api/user/email/code")
+    ResponseBean sendEmailCode(BaseRequest<SimpleCodeReqDTO> codeReqDTO);
 }

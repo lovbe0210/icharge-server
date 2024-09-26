@@ -84,7 +84,9 @@ public class ValidationUtils {
             String decodedStr = Base64.decodeStr(bitwised);
             JSONObject parseObj = JSONUtil.parseObj(decodedStr);
             String tn = parseObj.getStr(SysConstant.TN);
-            String redisKey = RedisKeyConstant.geSvToken(tn);
+            String uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
+            String svScene = parseObj.getStr(SysConstant.SV_SCENE);
+            String redisKey = RedisKeyConstant.geSvTokenKey(uniqueId, svScene, tn);
             if (RedisUtil.get(redisKey) == null) {
                 return false;
             }

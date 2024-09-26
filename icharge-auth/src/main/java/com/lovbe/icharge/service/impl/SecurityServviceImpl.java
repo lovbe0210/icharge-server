@@ -36,24 +36,20 @@ public class SecurityServviceImpl implements SecurityService {
             String decodedStr = Base64.decodeStr(ValidationUtils.bitwiseInvert(sign));
             JSONObject parseObj = JSONUtil.parseObj(decodedStr);
             String uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
-            Long timestamp = parseObj.getLong(SysConstant.TIMESTAMP);
-            if (!StringUtils.hasLength(uniqueId) || timestamp == null) {
-                throw new ServiceException("页面唯一标识uniqueId或timestamp为空");
+            String svScene = parseObj.getStr(SysConstant.SV_SCENE);
+            if (!StringUtils.hasLength(uniqueId) || svScene == null) {
+                throw new ServiceException("唯一标识为空");
             }
-            String redisKey = RedisKeyConstant.getSliderVerifyCookie(uniqueId, timestamp);
-            // 页面唯一标识保存
-            Object svToken = RedisUtil.get(redisKey);
-            if (svToken == null) {
-                svToken = IdUtil.simpleUUID();
-            }
-            RedisUtil.set(redisKey, svToken, RedisKeyConstant.EXPIRE_2_HOUR);
+            String svToken = IdUtil.simpleUUID();
             // 保存滑块验证cookie
-            String svTokenKey = RedisKeyConstant.geSvToken((String) svToken);
+            String svTokenKey = RedisKeyConstant.geSvTokenKey(uniqueId, svScene, svToken);
             RedisUtil.set(svTokenKey, svToken, RedisKeyConstant.EXPIRE_1_HOUR);
-            Map<String, Object> map = MapUtil.of(SysConstant.ID, uniqueId);
-            map.put(SysConstant.TN, svToken);
+            Map<String, Object> map = MapUtil.of(SysConstant.TN, svToken);
             return ResponseBean.ok(map);
-        }catch (Exception e) {
+        } catch (ServiceException e) {
+            log.error("[身份验证] --- 获取页面埋点cookie参数解析错误, errorInfo: {}", e.toString());
+            throw e;
+        } catch (Exception e) {
             log.error("[身份验证] --- 获取页面埋点cookie参数解析错误, errorInfo: {}", e.toString());
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
         }

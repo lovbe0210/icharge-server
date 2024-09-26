@@ -20,6 +20,7 @@ public class SysConstant {
 
     public static final String TIMESTAMP = "timestamp";
     public static final String UNIQUE_ID = "unique_id";
+    public static final String SV_SCENE = "sv_scene";
     public static final String ID = "id";
     public static final String TN = "tn";
 }

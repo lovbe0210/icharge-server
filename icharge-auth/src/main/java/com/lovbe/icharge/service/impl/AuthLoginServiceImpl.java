@@ -11,6 +11,8 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
+import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
+import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
@@ -43,7 +45,7 @@ public class AuthLoginServiceImpl implements AuthService {
         SimpleCodeReqDTO simpleCodeReqDTO = new SimpleCodeReqDTO()
                 .setMobile(data.getMobile())
                 .setCode(data.getCode())
-                .setScene(CodeSceneEnum.MOBILE_LOGIN)
+                .setScene(CodeSceneEnum.MOBILE_LOGIN.getScene())
                 .setUsedIp(userIp);
         userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
 
@@ -79,7 +81,7 @@ public class AuthLoginServiceImpl implements AuthService {
         SimpleCodeReqDTO simpleCodeReqDTO = new SimpleCodeReqDTO()
                 .setEmail(data.getEmail())
                 .setCode(data.getCode())
-                .setScene(CodeSceneEnum.EMAIL_LOGIN)
+                .setScene(CodeSceneEnum.EMAIL_LOGIN.getScene())
                 .setUsedIp(userIp);
         userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
 
@@ -105,6 +107,26 @@ public class AuthLoginServiceImpl implements AuthService {
         ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(new BaseRequest<>(authUserDTO));
         // 创建 Token 令牌，记录登录日志
         return getAuthLoginRespVo(userInfoResp, data.getEmail(), data.getPassword(), LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD);
+    }
+
+    @Override
+    public void sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo) {
+        SmsCodeReqVo data = reqVo.getData();
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
+                .setMobile(data.getMobile())
+                .setScene(data.getScene())
+                .setSign(data.getSign());
+        userService.sendSmsCode(new BaseRequest<>(codeReqDTO));
+    }
+
+    @Override
+    public void sendEmailCode(BaseRequest<EmailCodeReqVo> reqVo) {
+        EmailCodeReqVo data = reqVo.getData();
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
+                .setEmail(data.getEmail())
+                .setScene(data.getScene().getScene())
+                .setSign(data.getSign());
+        userService.sendEmailCode(new BaseRequest<>(codeReqDTO));
     }
 
     /**

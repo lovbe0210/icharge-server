@@ -17,13 +17,12 @@ public interface GlobalErrorCodes {
     // ========== 客户端错误段 ==========
 
     ErrorCode BAD_REQUEST = new ErrorCode(400, "error request");
-    ErrorCode UNAUTHORIZED = new ErrorCode(401, "账号未登录");
-    ErrorCode FORBIDDEN = new ErrorCode(403, "没有该操作权限");
+    ErrorCode LOCKED = new ErrorCode(400, "请求失败，请稍后重试");
+    ErrorCode TOO_MANY_REQUESTS = new ErrorCode(400, "请求过于频繁，请稍后重试");
+    ErrorCode SLIDER_VERIFY_FAILED = new ErrorCode(400, "滑块验证失败，请稍后重试");
+    ErrorCode UNAUTHORIZED = new ErrorCode(401, "token已过期");
+    ErrorCode FORBIDDEN = new ErrorCode(403, "账号信息已过期请重新登录");
     ErrorCode NOT_FOUND = new ErrorCode(404, "请求未找到");
-    ErrorCode METHOD_NOT_ALLOWED = new ErrorCode(405, "请求参数不正确");
-    ErrorCode LOCKED = new ErrorCode(423, "请求失败，请稍后重试");
-    ErrorCode TOO_MANY_REQUESTS = new ErrorCode(429, "请求过于频繁，请稍后重试");
-    ErrorCode SLIDER_VERIFY_FAILED = new ErrorCode(430, "滑块验证失败，请稍后重试");
 
     // ========== 服务端错误段 ==========
 

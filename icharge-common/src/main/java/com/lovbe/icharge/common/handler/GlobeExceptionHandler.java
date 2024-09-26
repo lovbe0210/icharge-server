@@ -26,7 +26,6 @@ public class GlobeExceptionHandler {
 
     @ExceptionHandler(ServiceException.class)
     public ResponseBean handleBizException(ServiceException ex) {
-        log.error(ex.getMessage(), ex);
         return ResponseBean.error(ex.getCode(), ex.getMessage());
     }
 

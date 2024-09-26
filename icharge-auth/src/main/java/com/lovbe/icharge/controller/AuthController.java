@@ -2,6 +2,8 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
+import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.dto.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
@@ -56,6 +58,19 @@ public class AuthController {
     }
 
     /**
+     * description: 发送短信验证码
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param reqVo
+     * @return ResponseBean
+     */
+    @PostMapping("/mobile/code")
+    public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<SmsCodeReqVo> reqVo) {
+        authService.sendSmsCode(reqVo);
+        return ResponseBean.ok();
+    }
+
+    /**
      * description: 邮箱验证码登录
      * @author: Lvhl
      * @date: 2024/8/2 17:49
@@ -79,6 +94,17 @@ public class AuthController {
         return ResponseBean.ok(authService.emailLogin(reqVo));
     }
 
-
+    /**
+     * description: 发送邮箱验证码
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param reqVo
+     * @return ResponseBean
+     */
+    @PostMapping("/email/code")
+    public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo) {
+        authService.sendEmailCode(reqVo);
+        return ResponseBean.ok();
+    }
 
 }

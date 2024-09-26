@@ -25,7 +25,11 @@ public class SimpleCodeReqDTO {
     /**
      * 使用场景
      */
-    private CodeSceneEnum scene;
+    private Integer scene;
+    /**
+     * 滑块验证码签名
+     */
+    private String sign;
     /**
      * 验证码
      */

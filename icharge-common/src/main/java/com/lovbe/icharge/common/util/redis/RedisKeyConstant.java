@@ -1,6 +1,5 @@
 package com.lovbe.icharge.common.util.redis;
 
-import cn.hutool.crypto.digest.DigestUtil;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 
 /**
@@ -17,6 +16,7 @@ public abstract class RedisKeyConstant {
     public static final long EXPIRE_30_MIN = 60 * 30;
     public static final long EXPIRE_1_HOUR = 60 * 60;
     public static final long EXPIRE_2_HOUR = 60 * 60 * 2;
+    public static final long EXPIRE_3_HOUR = 60 * 60 * 3;
 
     /**
      * 项目前缀
@@ -104,17 +104,6 @@ public abstract class RedisKeyConstant {
         return BASE_PROJECT + AUTH + "code-frequency:" + payload;
     }
 
-    /** 
-     * @description: 获取页面唯一标识
-     * @param: uniqueId
-     * @return: timestamp
-     * @author: lovbe0210
-     * @date: 2024/8/18 14:25
-     */
-    public static String getSliderVerifyCookie(String uniqueId, long timestamp) {
-        return BASE_PROJECT + AUTH + "slider-verify:cookie:" + uniqueId + "-" + timestamp;
-    }
-
     /**
      * @description: 获取滑块验证码
      * @param: uniqueId
@@ -122,8 +111,8 @@ public abstract class RedisKeyConstant {
      * @author: lovbe0210
      * @date: 2024/8/18 14:25
      */
-    public static String geSvToken(String svToken) {
-        return BASE_PROJECT + AUTH + "slider-verify:svToken:" + svToken;
+    public static String geSvTokenKey(String uniqueId, String svScene, String svToken) {
+        return BASE_PROJECT + AUTH + "slider-verify:svToken:" + uniqueId + ":" + svScene + ":" + svToken;
     }
 
 

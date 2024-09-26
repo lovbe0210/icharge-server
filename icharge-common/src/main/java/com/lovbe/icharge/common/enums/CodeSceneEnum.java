@@ -21,8 +21,8 @@ public enum CodeSceneEnum implements BaseEnum {
     MOBILE_UPDATE_EMAIL(6, "update-email-by-mobile", "修改邮箱"),
     MOBILE_UPDATE_PASSWORD(7, "update-password-by-mobile", "使用手机设置/修改密码"),
     EMAIL_UPDATE_PASSWORD(8, "update-password-by-email", "使用邮箱设置/修改密码"),
-    MOBILE_RESET_PASSWORD(9, "reset-password", "忘记密码/手机重置"),
-    EMAIL_RESET_PASSWORD(10, "reset-password", "忘记密码/邮箱重置");
+    MOBILE_RESET_PASSWORD(9, "reset-password-by-mobile", "忘记密码/手机重置"),
+    EMAIL_RESET_PASSWORD(10, "reset-password-by-email", "忘记密码/邮箱重置");
 
     /**
      * 验证场景的编号

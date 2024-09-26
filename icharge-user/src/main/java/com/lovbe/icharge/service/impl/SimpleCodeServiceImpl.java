@@ -33,6 +33,8 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.lovbe.icharge.common.enums.CodeSceneEnum.*;
+
 @Slf4j
 @Service
 @Valid
@@ -44,7 +46,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
 
     @Override
     public void sendSmsCode(SmsCodeReqVo reqVo) {
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setMobile(reqVo.getMobile()).setScene(reqVo.getCodeScene()).setUsedIp(ServletUtils.getClientIP());
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setMobile(reqVo.getMobile()).setScene(reqVo.getScene()).setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
         checkCodeSceneValidate(codeReqDTO);
         // 判断能否创建验证码
@@ -57,7 +59,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     @Override
     public void sendEmailCode(EmailCodeReqVo reqVo) {
         // 判断并创建验证码
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setEmail(reqVo.getEmail()).setScene(reqVo.getCodeScene()).setUsedIp(ServletUtils.getClientIP());
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setEmail(reqVo.getEmail()).setScene(reqVo.getScene().getScene()).setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
         checkCodeSceneValidate(codeReqDTO);
         // 判断能否创建验证码
@@ -69,17 +71,17 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
 
     @Override
     public void useVerifyCode(@Valid SimpleCodeReqDTO reqDTO) throws ServiceException {
-        String key = RedisKeyConstant.getVerifyCode(reqDTO.getScene(), reqDTO.getMobile(), reqDTO.getEmail());
+        String key = RedisKeyConstant.getVerifyCode(CodeSceneEnum.getCodeByScene(reqDTO.getScene()), reqDTO.getMobile(), reqDTO.getEmail());
         // 查询redis
         String code = (String) RedisUtil.get(key);
         if (!StringUtils.hasLength(code)) {
-            String incrKey = RedisKeyConstant.getVerifyCount(reqDTO.getScene(), reqDTO.getMobile(), reqDTO.getEmail());
+            String incrKey = RedisKeyConstant.getVerifyCount(CodeSceneEnum.getCodeByScene(reqDTO.getScene()), reqDTO.getMobile(), reqDTO.getEmail());
             RedisUtil.incr(incrKey, 1);
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);
         }
 
         if (!Objects.equals(reqDTO.getCode(), code)) {
-            String incrKey = RedisKeyConstant.getVerifyCount(reqDTO.getScene(), reqDTO.getMobile(), reqDTO.getEmail());
+            String incrKey = RedisKeyConstant.getVerifyCount(CodeSceneEnum.getCodeByScene(reqDTO.getScene()), reqDTO.getMobile(), reqDTO.getEmail());
             RedisUtil.incr(incrKey, 1);
             saveErrorLog(reqDTO, ServiceErrorCodes.AUTH_CODE_ERROR);
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
@@ -96,7 +98,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      */
     public void sendSimpleCode(SimpleCodeReqDTO codeReqDTO) {
         // 校验短信模板是否合法
-        VCodeTemplateDO template = validateSmsTemplate(codeReqDTO.getScene());
+        VCodeTemplateDO template = validateSmsTemplate(CodeSceneEnum.getCodeByScene(codeReqDTO.getScene()));
 
         // 构建有序的模板参数。为什么放在这个位置，是提前保证模板参数的正确性，而不是到了插入发送日志
         List<Map<String, Object>> newTemplateParams = buildTemplateParams(template, codeReqDTO);
@@ -129,7 +131,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      * @date: 2024/8/16 16:50
      */
     private String canCreateCode(SimpleCodeReqDTO codeReqDTO) {
-        boolean isMobile = CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene());
+        boolean isMobile = CodeSceneEnum.sceneIsMobile(CodeSceneEnum.getCodeByScene(codeReqDTO.getScene()));
         String payload = isMobile ? codeReqDTO.getMobile() : codeReqDTO.getEmail();
         String codeExpireKey = RedisKeyConstant.getCodeFrequencyKey(payload);
         Map<Object, Object> codeExpireMap = RedisUtil.hgetMap(codeExpireKey);
@@ -220,7 +222,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      */
     private void checkCodeSceneValidate(SimpleCodeReqDTO codeReqDTO) {
         LambdaQueryWrapper<AccountDo> queryWrapper = new LambdaQueryWrapper<>();
-        if (CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene())) {
+        if (CodeSceneEnum.sceneIsMobile(CodeSceneEnum.getCodeByScene(codeReqDTO.getScene()))) {
             queryWrapper.eq(AccountDo::getMobile, codeReqDTO.getMobile());
         } else {
             queryWrapper.eq(AccountDo::getEmail, codeReqDTO.getEmail());
@@ -229,7 +231,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         if (accountDo != null) {
             codeReqDTO.setUserId(accountDo.getUid());
         }
-        switch (codeReqDTO.getScene()) {
+        switch (CodeSceneEnum.getCodeByScene(codeReqDTO.getScene())) {
             // 未注册不可发验证码
             case BIND_MOBILE:
                 if (accountDo == null || !StringUtils.isEmpty(accountDo.getMobile())) {

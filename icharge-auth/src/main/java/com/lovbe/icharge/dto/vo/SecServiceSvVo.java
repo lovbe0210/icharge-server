@@ -15,9 +15,6 @@ public class SecServiceSvVo {
     private String sign;
     // 干扰项
     @NotBlank(message = "error request")
-    private String xa;
-    // 干扰项
-    @NotBlank(message = "error request")
     private String xt;
     // 干扰项
     @NotBlank(message = "error request")

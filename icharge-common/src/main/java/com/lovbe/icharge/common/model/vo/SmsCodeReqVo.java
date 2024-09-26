@@ -23,5 +23,5 @@ public class SmsCodeReqVo {
     private String sign;
 
     @NotNull(message = "验证码发送场景不得为空")
-    private CodeSceneEnum codeScene;
+    private Integer scene;
 }
