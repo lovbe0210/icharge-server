@@ -17,7 +17,7 @@ import java.util.List;
  * @Description: 验证码模板Do
  */
 @Data
-@TableName(value = "p_simple_code_template")
+@TableName(value = "p_simple_code_template", autoResultMap = true)
 public class VCodeTemplateDO extends BaseEntity {
     // ========= 模板相关字段 =========
     /**

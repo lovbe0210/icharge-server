@@ -1,6 +1,8 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -116,7 +118,13 @@ public class AuthLoginServiceImpl implements AuthService {
                 .setMobile(data.getMobile())
                 .setScene(data.getScene())
                 .setSign(data.getSign());
-        userService.sendSmsCode(new BaseRequest<>(codeReqDTO));
+        ResponseBean responseBean = userService.sendSmsCode(new BaseRequest<>(codeReqDTO));
+        if (!responseBean.isResult()) {
+            int code = responseBean.getCode();
+            if (code == 400) {
+                throw new ServiceException(responseBean.getMessage());
+            }
+        }
     }
 
     @Override

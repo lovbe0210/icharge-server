@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,7 +67,8 @@ public class AuthController {
      * @return ResponseBean
      */
     @PostMapping("/mobile/code")
-    public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<SmsCodeReqVo> reqVo) {
+    public ResponseBean sendSmsCode(@RequestBody BaseRequest<SmsCodeReqVo> reqVo) {
+        Assert.notNull(reqVo.getData(), GlobalErrorCodes.BAD_REQUEST.getMsg());
         authService.sendSmsCode(reqVo);
         return ResponseBean.ok();
     }

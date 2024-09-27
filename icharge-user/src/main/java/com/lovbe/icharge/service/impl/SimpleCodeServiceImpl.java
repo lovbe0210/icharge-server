@@ -46,7 +46,10 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
 
     @Override
     public void sendSmsCode(SmsCodeReqVo reqVo) {
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setMobile(reqVo.getMobile()).setScene(reqVo.getScene()).setUsedIp(ServletUtils.getClientIP());
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
+                .setMobile(reqVo.getMobile())
+                .setScene(reqVo.getScene())
+                .setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
         checkCodeSceneValidate(codeReqDTO);
         // 判断能否创建验证码
@@ -111,11 +114,11 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         if (sendResult.isResult()) {
             logDesc = "验证码发送成功";
         } else {
-            logDesc = "验证码发送失败， errorInfo: " + sendResult.getMark() + "sendLogId: " + sendResult.getSendLogId();
+            logDesc = "验证码发送失败， errorInfo: " + sendResult.getMark() + "，sendLogId: " + sendResult.getSendLogId();
         }
         recordVerifyCodeLog(codeReqDTO.getUserId(), codeReqDTO.getEmail(), logDesc);
 
-        // 记录完日志，如果发送失败抛出异常
+        // TODO 记录完日志，如果发送失败抛出异常
         if (sendResult.isResult()) {
             log.error("[发送验证码] --- {}", logDesc);
             throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
@@ -131,14 +134,14 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      * @date: 2024/8/16 16:50
      */
     private String canCreateCode(SimpleCodeReqDTO codeReqDTO) {
-        boolean isMobile = CodeSceneEnum.sceneIsMobile(CodeSceneEnum.getCodeByScene(codeReqDTO.getScene()));
+        boolean isMobile = CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene());
         String payload = isMobile ? codeReqDTO.getMobile() : codeReqDTO.getEmail();
         String codeExpireKey = RedisKeyConstant.getCodeFrequencyKey(payload);
         Map<Object, Object> codeExpireMap = RedisUtil.hgetMap(codeExpireKey);
         String code = RandomUtil.randomNumbers(6);
 
-        // 如果1小时内的发送次数小于3，则不做限制
-        if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2) {
+        // TODO 如果1小时内的发送次数小于3，则不做限制
+        if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2000000000) {
             // hash中的value用于存放key的失效时间和延长倍数
             String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000 + "_0";
             RedisUtil.hset(codeExpireKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR);
@@ -148,9 +151,9 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         // 三次之后的频率限制以30分钟为基数
         Object recentExpireValue = codeExpireMap.values().stream().sorted((ev1, ev2) -> {
             String et1 = ((String) ev1).split("_")[0];
-            String et2 = ((String) ev1).split("_")[0];
+            String et2 = ((String) ev2).split("_")[0];
             return Math.toIntExact(Long.valueOf(et2) - Long.valueOf(et1));
-        }).findFirst().get();
+        }).collect(Collectors.toList()).get(0);
         String[] split = ((String) recentExpireValue).split("_");
         int multiple = Integer.valueOf(split[1]);
         long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000;
@@ -173,7 +176,11 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      */
     VCodeTemplateDO validateSmsTemplate(CodeSceneEnum sceneEnum) {
         // 获得验证码模板
-        List<VCodeTemplateDO> template = simpleCodeMapper.selectList(new LambdaQueryWrapper<VCodeTemplateDO>().eq(VCodeTemplateDO::getCode, sceneEnum.getTemplateCode()).eq(VCodeTemplateDO::getStatus, CommonStatusEnum.NORMAL.getName()).orderByDesc(VCodeTemplateDO::getUpdateTime));
+        List<VCodeTemplateDO> template = simpleCodeMapper.selectList(
+                new LambdaQueryWrapper<VCodeTemplateDO>()
+                        .eq(VCodeTemplateDO::getCode, sceneEnum.getTemplateCode())
+                        .eq(VCodeTemplateDO::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                        .orderByDesc(VCodeTemplateDO::getUpdateTime));
         // 验证码模板不存在
         if (CollectionUtils.isEmpty(template)) {
             log.error("[发送短信] --- 系统错误，未获取到场景：{}的模板内容", sceneEnum.getDescription());
@@ -222,7 +229,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      */
     private void checkCodeSceneValidate(SimpleCodeReqDTO codeReqDTO) {
         LambdaQueryWrapper<AccountDo> queryWrapper = new LambdaQueryWrapper<>();
-        if (CodeSceneEnum.sceneIsMobile(CodeSceneEnum.getCodeByScene(codeReqDTO.getScene()))) {
+        if (CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene())) {
             queryWrapper.eq(AccountDo::getMobile, codeReqDTO.getMobile());
         } else {
             queryWrapper.eq(AccountDo::getEmail, codeReqDTO.getEmail());

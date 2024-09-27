@@ -53,12 +53,28 @@ public enum CodeSceneEnum implements BaseEnum {
                 : MOBILE_RESET_PASSWORD.equals(scene);
     }
 
+    public static boolean sceneIsMobile(Integer sceneCode) {
+        return MOBILE_LOGIN.getCode().equals(sceneCode) ? true
+                : BIND_MOBILE.getCode().equals(sceneCode) ? true
+                : EMAIL_UPDATE_MOBILE.getCode().equals(sceneCode) ? true
+                : MOBILE_UPDATE_PASSWORD.getCode().equals(sceneCode) ? true
+                : MOBILE_RESET_PASSWORD.getCode().equals(sceneCode);
+    }
+
     public static boolean sceneIsEmail(CodeSceneEnum scene) {
         return EMAIL_LOGIN.equals(scene) ? true
                 : BIND_EMAIL.equals(scene) ? true
                 : MOBILE_UPDATE_EMAIL.equals(scene) ? true
                 : EMAIL_UPDATE_PASSWORD.equals(scene) ? true
                 : EMAIL_RESET_PASSWORD.equals(scene);
+    }
+
+    public static boolean sceneIsEmail(Integer scene) {
+        return EMAIL_LOGIN.getCode().equals(scene) ? true
+                : BIND_EMAIL.getCode().equals(scene) ? true
+                : MOBILE_UPDATE_EMAIL.getCode().equals(scene) ? true
+                : EMAIL_UPDATE_PASSWORD.getCode().equals(scene) ? true
+                : EMAIL_RESET_PASSWORD.getCode().equals(scene);
     }
 
     @Override
