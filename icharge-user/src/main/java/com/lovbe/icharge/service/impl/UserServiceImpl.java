@@ -1,5 +1,6 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.net.PassAuth;
 import cn.hutool.core.util.IdUtil;
 import com.github.yitter.idgen.YitIdHelper;
@@ -13,6 +14,7 @@ import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.common.util.validation.ValidationUtils;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.mapper.UserMapper;
 import com.lovbe.icharge.service.AccountService;
@@ -96,7 +98,7 @@ public class UserServiceImpl implements UserService {
                     .setLoginOs(authUserDTO.getLoginOs())
                     .setLoginCount(account.getLoginCount()+1)
                     .setUpdateTime(LocalDateTime.now());
-            accountService.updateAccount(account);
+            int updated = accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
             loginUser.setStatus(account.getStatus());
             loginUser.setUid(account.getUid());
@@ -129,8 +131,9 @@ public class UserServiceImpl implements UserService {
         }
 
         // 密码加密入库
-        String encode = cryptPasswordEncoder.encode(data.getPassword());
-        account.setPassword(encode);
+        String decodedPassword = Base64.decodeStr(ValidationUtils.bitwiseInvert(data.getPassword()));
+        String encodePassword = cryptPasswordEncoder.encode(decodedPassword);
+        account.setPassword(encodePassword);
         int updated = accountService.updateAccount(account);
         if (updated == 0) {
             account.setPassword("***").setMobile("***").setEmail("***");

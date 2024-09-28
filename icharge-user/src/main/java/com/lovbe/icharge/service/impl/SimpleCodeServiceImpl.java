@@ -262,6 +262,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
+                break;
             case BIND_EMAIL:
                 if (accountDo == null || !StringUtils.isEmpty(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
@@ -269,6 +270,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
+                break;
             case MOBILE_UPDATE_EMAIL:
             case MOBILE_UPDATE_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getMobile())) {
@@ -277,6 +279,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
+                break;
             case EMAIL_UPDATE_MOBILE:
             case EMAIL_UPDATE_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getEmail())) {
@@ -285,6 +288,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
+                break;
             case MOBILE_RESET_PASSWORD:
                 if (accountDo == null || !StringUtils.hasLength(accountDo.getMobile())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
@@ -292,6 +296,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
                 }
+                break;
             case EMAIL_RESET_PASSWORD:
                 if (accountDo == null || !StringUtils.hasLength(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);

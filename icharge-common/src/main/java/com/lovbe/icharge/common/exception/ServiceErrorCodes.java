@@ -19,7 +19,7 @@ public interface ServiceErrorCodes {
     ErrorCode ACCOUNT_PASSWORD_RESET_FAILED = new ErrorCode(400, "密码重置失败，请稍后再试");
 
     // ========== AUTH 模块 1004 ==========
-    ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(400, "登录失败，账号密码不正确");
+    ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(400, "登录失败，账号或密码不正确");
     ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(403, "登录失败，账号被禁用");
     ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(400, "登录失败，解析不到三方登录信息");
     ErrorCode AUTH_MOBILE_USED = new ErrorCode(400, "手机号已经被使用");

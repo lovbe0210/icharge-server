@@ -220,7 +220,7 @@ public class AuthLoginServiceImpl implements AuthService {
     private boolean isPasswordMatch(String dbPassword, String loginPassword) {
         // 先转码为原始密码
         String decodedPassword = Base64.decodeStr(ValidationUtils.bitwiseInvert(loginPassword));
-        return cryptPasswordEncoder.matches(dbPassword, decodedPassword);
+        return cryptPasswordEncoder.matches(decodedPassword, dbPassword);
     }
 
     /**
