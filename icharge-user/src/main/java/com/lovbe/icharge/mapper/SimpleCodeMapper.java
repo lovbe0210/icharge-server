@@ -1,8 +1,6 @@
 package com.lovbe.icharge.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.lovbe.icharge.common.model.dto.AccountDo;
-import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.dto.VCodeTemplateDO;
 import org.apache.ibatis.annotations.Mapper;
 

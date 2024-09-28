@@ -24,11 +24,11 @@ public class AuthLoginUser {
     /**
      * 访问令牌
      */
-    private String accessToken;
+    private String acToken;
     /**
      * 刷新令牌
      */
-    private String refreshToken;
+    private String rfToken;
 
     /**
      * 仅社交登录、社交绑定时会返回

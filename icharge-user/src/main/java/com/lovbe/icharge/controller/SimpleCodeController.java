@@ -1,6 +1,9 @@
 
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
@@ -9,6 +12,7 @@ import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.service.SimpleCodeService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +37,12 @@ public class SimpleCodeController {
      */
     @PostMapping("/useVerifyCode")
     public ResponseBean useVerifyCode(@RequestBody @Valid BaseRequest<SimpleCodeReqDTO> codeReqDTO) {
+        Integer scene = codeReqDTO.getData().getScene();
+        if (CodeSceneEnum.sceneIsMobile(scene)) {
+            Assert.notNull(codeReqDTO.getData().getMobile(), SysConstant.NOT_EMPTY_MOBILE);
+        }else {
+            Assert.notNull(codeReqDTO.getData().getMobile(), SysConstant.NOT_EMPTY_EMAIL);
+        }
         codeService.useVerifyCode(codeReqDTO.getData());
         return ResponseBean.ok();
     }

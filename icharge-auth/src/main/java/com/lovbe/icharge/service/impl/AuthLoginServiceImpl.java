@@ -1,10 +1,13 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
@@ -18,6 +21,7 @@ import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
+import com.lovbe.icharge.common.util.validation.ValidationUtils;
 import com.lovbe.icharge.dto.vo.*;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.enums.LoginResultEnum;
@@ -27,8 +31,17 @@ import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -38,6 +51,8 @@ public class AuthLoginServiceImpl implements AuthService {
     private UserService userService;
     @Resource
     private CommonService commonService;
+    @Resource
+    private BCryptPasswordEncoder cryptPasswordEncoder;
 
     @Override
     public AuthLoginUser smsLogin(BaseRequest<AuthSmsLoginReqVo> reqVo) {
@@ -49,14 +64,17 @@ public class AuthLoginServiceImpl implements AuthService {
                 .setCode(data.getCode())
                 .setScene(CodeSceneEnum.MOBILE_LOGIN.getScene())
                 .setUsedIp(userIp);
-        userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
+        ResponseBean responseBean = userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
+        if (!responseBean.isResult()) {
+            throw new ServiceException(responseBean.getMessage());
+        }
 
         // 获取用户信息
         AuthUserDTO authUserDTO = new AuthUserDTO()
                 .setMobile(data.getMobile())
                 .setLoginType(LoginLogTypeEnum.LOGIN_SMS_CODE.getType())
                 .setUserIp(userIp);
-        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(new BaseRequest<>());
+        ResponseBean<LoginUser> userInfoResp = userService.createUserIfAbsent(new BaseRequest<>(authUserDTO));
         // 生成token信息
         return getAuthLoginRespVo(userInfoResp, data.getMobile(), null, LoginLogTypeEnum.LOGIN_SMS_CODE);
     }
@@ -137,6 +155,19 @@ public class AuthLoginServiceImpl implements AuthService {
         userService.sendEmailCode(new BaseRequest<>(codeReqDTO));
     }
 
+    @Override
+    public void logout(AuthLoginUser data) {
+        String refreshTokenKey = RedisKeyConstant.getRefreshTokenKey(data.getRfToken());
+        Map<Object, Object> map = RedisUtil.hgetMap(refreshTokenKey);
+        if (!CollectionUtils.isEmpty(map)) {
+            List<String> collect = map.keySet().stream()
+                    .map(key -> RedisKeyConstant.getAccessTokenKey(String.valueOf(key)))
+                    .collect(Collectors.toList());
+            RedisUtil.del(collect.toArray(new String[]{}));
+        }
+        RedisUtil.del(refreshTokenKey);
+    }
+
     /**
      * @description 校验用户身份信息， 生成认证登录信息
      * @param[1] userInfoResp
@@ -186,9 +217,10 @@ public class AuthLoginServiceImpl implements AuthService {
      * @author lovbe0210
      * @date 2024/8/14 22:44
      */
-    private boolean isPasswordMatch(String dataPassword, String password) {
-        // TODO
-        return false;
+    private boolean isPasswordMatch(String dbPassword, String loginPassword) {
+        // 先转码为原始密码
+        String decodedPassword = Base64.decodeStr(ValidationUtils.bitwiseInvert(loginPassword));
+        return cryptPasswordEncoder.matches(dbPassword, decodedPassword);
     }
 
     /**
@@ -210,11 +242,12 @@ public class AuthLoginServiceImpl implements AuthService {
         // refreshToken 30天
         String refreshToken = IdUtil.fastSimpleUUID();
         key = RedisKeyConstant.getRefreshTokenKey(refreshToken);
-        RedisUtil.set(key, userId, RedisKeyConstant.EXPIRE_30_MIN);
+        RedisUtil.hset(key, SysConstant.USERID, userId, RedisKeyConstant.EXPIRE_30_DAY);
+        RedisUtil.hset(key, accessToken, accessToken, RedisKeyConstant.EXPIRE_30_DAY);
         // 构建返回结果
         return AuthLoginUser.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .acToken(accessToken)
+                .rfToken(refreshToken)
                 .userId(userId)
                 .build();
     }

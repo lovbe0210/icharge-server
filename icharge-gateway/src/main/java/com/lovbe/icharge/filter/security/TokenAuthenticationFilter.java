@@ -18,6 +18,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
@@ -46,23 +47,22 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         // 移除 login-user 的请求头，避免伪造模拟
         SecurityFrameworkUtils.removeLoginUser(exchange);
 
+        // 判断请求路径是否是无需登录
         String token = SecurityFrameworkUtils.obtainAuthToken(exchange);
-        if (StrUtil.isEmpty(token)) {
-            // 判断请求路径是否是无需登录
-            String path = exchange.getRequest().getPath().toString();
-            Set<String> whiteList = configProperties.getWhiteList();
-            if (CollectionUtils.isEmpty(whiteList)) {
-                return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
+        Set<String> whiteList = configProperties.getWhiteList();
+        whiteList = CollectionUtils.isEmpty(whiteList) ? Collections.EMPTY_SET : whiteList;
+        String path = exchange.getRequest().getPath().toString();
+        for (String whiteUrl : whiteList) {
+            if (antPathMatcher.match(whiteUrl, path)) {
+                return chain.filter(exchange);
             }
-            for (String whiteUrl : whiteList) {
-                if (antPathMatcher.match(whiteUrl, path)) {
-                    return chain.filter(exchange);
-                }
-            }
-            return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
         }
 
-        // 情况二，如果有 Token 令牌，则解析对应 userId 字段，并通过 通过 Header 转发给服务
+        // token判断
+        if (StrUtil.isEmpty(token)) {
+            return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
+        }
+        // 如果有 Token 令牌，则解析对应 userId 字段，并通过 通过 Header 转发给服务
         // 从缓存中，获取 LoginUser
         String loginUserIdKey = RedisUtil.getAccessTokenKey(token);
         Object userId = RedisUtil.get(loginUserIdKey);

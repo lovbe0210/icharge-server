@@ -194,19 +194,12 @@ public class ServletUtils {
      * @date 2024/8/16 0:41
      */
     public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginUser loginRespVo) {
-        Cookie accessToken = new Cookie("ichagre_token",String.valueOf(loginRespVo.getAccessToken()));
+        Cookie accessToken = new Cookie("icharge_actoken", loginRespVo.getAcToken());
         accessToken.setDomain(domain);
-        accessToken.setPath("/");
+        accessToken.setPath("/api/*");
         accessToken.setMaxAge(60 * 30);
         accessToken.setSecure(true);
         accessToken.setHttpOnly(true);
         response.addCookie(accessToken);
-        Cookie refreshToken = new Cookie("ichagre_rtoken",String.valueOf(loginRespVo.getRefreshToken()));
-        refreshToken.setDomain(domain);
-        refreshToken.setPath("/");
-        refreshToken.setMaxAge(60 * 60 * 24 * 30);
-        refreshToken.setSecure(true);
-        response.addCookie(refreshToken);
-
     }
 }

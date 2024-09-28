@@ -64,4 +64,12 @@ public interface AuthService {
      * @date 2024/9/26 23:38
      */
     void sendEmailCode(BaseRequest<EmailCodeReqVo> reqVo);
+
+    /**
+     * @description 退出登录
+     * @param[1] data
+     * @author lovbe0210
+     * @date 2024/9/28 22:43
+     */
+    void logout(AuthLoginUser data);
 }

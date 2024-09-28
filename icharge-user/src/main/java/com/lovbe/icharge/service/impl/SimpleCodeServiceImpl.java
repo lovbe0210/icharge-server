@@ -74,21 +74,32 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
 
     @Override
     public void useVerifyCode(@Valid SimpleCodeReqDTO reqDTO) throws ServiceException {
-        String key = RedisKeyConstant.getVerifyCode(CodeSceneEnum.getCodeByScene(reqDTO.getScene()), reqDTO.getMobile(), reqDTO.getEmail());
+        // 记录验证码使用次数
+        String payload = CodeSceneEnum.sceneIsMobile(reqDTO.getScene()) ? reqDTO.getMobile() : reqDTO.getEmail();
+        String incrKey = RedisKeyConstant.getVerifyCountKey(payload);
+        RedisUtil.incr(incrKey, 1);
+        String codeControlKey = RedisKeyConstant.getCodeControlKey(payload);
         // 查询redis
-        String code = (String) RedisUtil.get(key);
-        if (!StringUtils.hasLength(code)) {
-            String incrKey = RedisKeyConstant.getVerifyCount(CodeSceneEnum.getCodeByScene(reqDTO.getScene()), reqDTO.getMobile(), reqDTO.getEmail());
-            RedisUtil.incr(incrKey, 1);
+        String codeExpire = RedisUtil.hget(codeControlKey, reqDTO.getCode());
+        // 验证码是否已过期
+        if (!StringUtils.hasLength(codeExpire)) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
+        }
+        String[] split = codeExpire.split("_");
+        Long expire = Long.valueOf(split[1]);
+        if (System.currentTimeMillis() > expire) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);
         }
 
-        if (!Objects.equals(reqDTO.getCode(), code)) {
-            String incrKey = RedisKeyConstant.getVerifyCount(CodeSceneEnum.getCodeByScene(reqDTO.getScene()), reqDTO.getMobile(), reqDTO.getEmail());
-            RedisUtil.incr(incrKey, 1);
-            saveErrorLog(reqDTO, ServiceErrorCodes.AUTH_CODE_ERROR);
+        // 验证码是否已被使用
+        if (Integer.valueOf(split[0]) == 1) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
         }
+
+        // 更新验证码使用状态
+        split[0] = "1";
+        String newExpire = StringUtils.arrayToDelimitedString(split, "_");
+        RedisUtil.hset(codeControlKey, reqDTO.getCode(), newExpire);
         // TODO 记录日志
     }
 
@@ -122,12 +133,15 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         if (sendResult.isResult()) {
             log.error("[发送验证码] --- {}", logDesc);
             throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
+        } else {
+            log.error("[--------------- code: {} -----------------]", codeReqDTO.getCode());
         }
     }
 
 
     /**
      * @description: 判断能否发送验证码
+     *  redis中的hashValue由3段组成，分别代表当前code有没有被使用、过期时间、频率控制倍数
      * @param: AuthCodeReqDTO
      * @return: String
      * @author: lovbe0210
@@ -136,33 +150,34 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     private String canCreateCode(SimpleCodeReqDTO codeReqDTO) {
         boolean isMobile = CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene());
         String payload = isMobile ? codeReqDTO.getMobile() : codeReqDTO.getEmail();
-        String codeExpireKey = RedisKeyConstant.getCodeFrequencyKey(payload);
-        Map<Object, Object> codeExpireMap = RedisUtil.hgetMap(codeExpireKey);
+        String codeControlKey = RedisKeyConstant.getCodeControlKey(payload);
+        Map<Object, Object> codeExpireMap = RedisUtil.hgetMap(codeControlKey);
         String code = RandomUtil.randomNumbers(6);
 
         // TODO 如果1小时内的发送次数小于3，则不做限制
         if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2000000000) {
             // hash中的value用于存放key的失效时间和延长倍数
-            String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000 + "_0";
-            RedisUtil.hset(codeExpireKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR);
+            String expireValue = "0_" + (System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000) + "_0";
+            RedisUtil.hset(codeControlKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR);
             return code;
         }
 
-        // 三次之后的频率限制以30分钟为基数
+        // 三次之后的频率限制以30分钟为基数，然后取幂次结果
         Object recentExpireValue = codeExpireMap.values().stream().sorted((ev1, ev2) -> {
-            String et1 = ((String) ev1).split("_")[0];
-            String et2 = ((String) ev2).split("_")[0];
+            String et1 = ((String) ev1).split("_")[1];
+            String et2 = ((String) ev2).split("_")[1];
             return Math.toIntExact(Long.valueOf(et2) - Long.valueOf(et1));
         }).collect(Collectors.toList()).get(0);
         String[] split = ((String) recentExpireValue).split("_");
-        int multiple = Integer.valueOf(split[1]);
-        long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000;
+        int multiple = Integer.valueOf(split[2]);
+        // 这里需要减去之前加的过期时间10分钟
+        long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000 - RedisKeyConstant.EXPIRE_10_MIN * 1000;
         if (System.currentTimeMillis() <= canSendTime) {
             recordVerifyCodeLog(codeReqDTO.getUserId(), payload, GlobalErrorCodes.TOO_MANY_REQUESTS.getMsg());
             throw new ServiceException(GlobalErrorCodes.TOO_MANY_REQUESTS);
         }
-        String expireValue = System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000 + "_" + (++multiple);
-        RedisUtil.hset(codeExpireKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR * (++multiple));
+        String expireValue = "0_" + (System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000) + "_" + (1 << multiple++);
+        RedisUtil.hset(codeControlKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR * (multiple));
         recordVerifyCodeLog(codeReqDTO.getUserId(), payload, "success");
         return code;
     }
@@ -247,7 +262,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
-                break;
             case BIND_EMAIL:
                 if (accountDo == null || !StringUtils.isEmpty(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
@@ -255,7 +269,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
-                break;
             case MOBILE_UPDATE_EMAIL:
             case MOBILE_UPDATE_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getMobile())) {
@@ -264,7 +277,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
-                break;
             case EMAIL_UPDATE_MOBILE:
             case EMAIL_UPDATE_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getEmail())) {
@@ -273,7 +285,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
-                break;
             case MOBILE_RESET_PASSWORD:
                 if (accountDo == null || !StringUtils.hasLength(accountDo.getMobile())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
@@ -281,7 +292,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
                 }
-                break;
             case EMAIL_RESET_PASSWORD:
                 if (accountDo == null || !StringUtils.hasLength(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
@@ -289,7 +299,6 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
                 }
-                break;
         }
     }
 

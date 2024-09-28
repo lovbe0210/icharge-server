@@ -110,14 +110,14 @@ public class UserServiceImpl implements UserService {
         // 校验验证码是否正确
         boolean isMobile = CodeSceneEnum.sceneIsMobile(data.getScene());
         String payload = isMobile ? data.getMobile() : data.getEmail();
-        String codeExpireKey = RedisKeyConstant.getCodeFrequencyKey(payload);
+        String codeExpireKey = RedisKeyConstant.getCodeControlKey(payload);
         Object codeExpire = RedisUtil.hget(codeExpireKey, data.getVerifyCode());
         if (codeExpire == null) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
         }
-        // 前半截为过期时间
+        // 中间的为过期时间
         String[] split = ((String) codeExpire).split("_");
-        Long expire = Long.valueOf(split[0]);
+        Long expire = Long.valueOf(split[1]);
         if (System.currentTimeMillis() > expire) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);
         }

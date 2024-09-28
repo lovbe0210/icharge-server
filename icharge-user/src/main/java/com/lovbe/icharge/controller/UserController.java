@@ -1,6 +1,7 @@
 package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
@@ -54,9 +55,9 @@ public class UserController {
         ForgetPasswordDTO pwdDtoData = forgetPwdDto.getData();
         boolean isMobile = CodeSceneEnum.sceneIsMobile(pwdDtoData.getScene());
         if (isMobile) {
-            Assert.notNull(pwdDtoData.getMobile(), "手机号不得为空");
+            Assert.notNull(pwdDtoData.getMobile(), SysConstant.NOT_EMPTY_MOBILE);
         }else {
-            Assert.notNull(pwdDtoData.getEmail(), "邮箱不得为空");
+            Assert.notNull(pwdDtoData.getEmail(), SysConstant.NOT_EMPTY_EMAIL);
         }
         userService.resetUserPwd(forgetPwdDto.getData());
         return ResponseBean.ok();

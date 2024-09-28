@@ -10,11 +10,14 @@ import com.lovbe.icharge.dto.vo.*;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,7 +47,7 @@ public class AuthController {
     public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo, HttpServletResponse response) {
         AuthLoginUser loginRespVo = authService.smsLogin(reqVo);
         ServletUtils.setLoginCookie(domain, response, loginRespVo);
-        return ResponseBean.ok("登录成功");
+        return ResponseBean.ok(loginRespVo);
     }
 
     /**
@@ -107,6 +110,24 @@ public class AuthController {
     @PostMapping("/email/code")
     public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo) {
         authService.sendEmailCode(reqVo);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 推出登录
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param reqVo
+     * @return ResponseBean
+     */
+    @PostMapping("/logout")
+    public ResponseBean logout(@RequestBody BaseRequest<AuthLoginUser> reqVo) {
+        AuthLoginUser data = reqVo.getData();
+        if (data == null || !StringUtils.hasLength(data.getRfToken())) {
+            return ResponseBean.ok();
+        }
+        // 退出登录
+        authService.logout(reqVo.getData());
         return ResponseBean.ok();
     }
 

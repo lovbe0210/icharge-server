@@ -23,4 +23,5 @@ public class SysConstant {
     public static final String SV_SCENE = "sv_scene";
     public static final String ID = "id";
     public static final String TN = "tn";
+    public static final String USERID = "userId";
 }

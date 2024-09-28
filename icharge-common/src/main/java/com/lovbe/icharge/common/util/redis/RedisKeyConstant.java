@@ -17,6 +17,8 @@ public abstract class RedisKeyConstant {
     public static final long EXPIRE_1_HOUR = 60 * 60;
     public static final long EXPIRE_2_HOUR = 60 * 60 * 2;
     public static final long EXPIRE_3_HOUR = 60 * 60 * 3;
+    public static final long EXPIRE_1_DAY = EXPIRE_1_HOUR * 24;
+    public static final long EXPIRE_30_DAY = EXPIRE_1_HOUR * 24 * 30;
 
     /**
      * 项目前缀
@@ -37,7 +39,7 @@ public abstract class RedisKeyConstant {
      * @author lovbe0210
      * @date 2024/8/15 21:20
      */
-    public static String getVerifyCode(CodeSceneEnum scene, String mobile, String email) {
+    public static String getVerifyCode(Integer scene, String mobile, String email) {
         String sub = CodeSceneEnum.sceneIsMobile(scene) ? ("mobile:" + mobile) : ("email:" + email);
         return BASE_PROJECT + AUTH + sub;
     }
@@ -65,9 +67,8 @@ public abstract class RedisKeyConstant {
      * @author lovbe0210
      * @date 2024/8/15 21:43
      */
-    public static String getVerifyCount(CodeSceneEnum scene, String mobile, String email) {
-        String sub = CodeSceneEnum.sceneIsMobile(scene) ? mobile : email;
-        return BASE_PROJECT + AUTH + "verify-count:" + sub;
+    public static String getVerifyCountKey(String payload) {
+        return BASE_PROJECT + AUTH + "verify-count:" + payload;
     }
 
 
@@ -100,8 +101,8 @@ public abstract class RedisKeyConstant {
      * @author: lovbe0210
      * @date: 2024/8/18 14:23
      */
-    public static String getCodeFrequencyKey(String payload) {
-        return BASE_PROJECT + AUTH + "code-frequency:" + payload;
+    public static String getCodeControlKey(String payload) {
+        return BASE_PROJECT + AUTH + "code-control:" + payload;
     }
 
     /**
