@@ -17,6 +17,6 @@ public class AuthEmailLoginReqVo {
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    @Password
+    @NotBlank(message = "用户名或密码错误")
     private String password;
 }

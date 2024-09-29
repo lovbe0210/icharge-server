@@ -19,7 +19,7 @@ public class AuthSmsLoginReqVo {
     private String mobile;
 
     @NotBlank(message = "验证码不能为空")
-    @Length(min = 6, max = 6, message = "验证码长度为6位")
-    @Pattern(regexp = "^[0-9]+$", message = "验证码必须都是数字")
+    @Length(min = 6, max = 6, message = "验证码错误")
+    @Pattern(regexp = "^[0-9]+$", message = "验证码错误")
     private String code;
 }

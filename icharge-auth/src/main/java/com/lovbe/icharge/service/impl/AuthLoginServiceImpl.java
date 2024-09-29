@@ -103,7 +103,10 @@ public class AuthLoginServiceImpl implements AuthService {
                 .setCode(data.getCode())
                 .setScene(CodeSceneEnum.EMAIL_LOGIN.getScene())
                 .setUsedIp(userIp);
-        userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
+        ResponseBean responseBean = userService.useVerifyCode(new BaseRequest<>(simpleCodeReqDTO));
+        if (!responseBean.isResult()) {
+            throw new ServiceException(responseBean.getMessage());
+        }
 
         // 获得注册用户
         AuthUserDTO authUserDTO = new AuthUserDTO()
@@ -152,7 +155,13 @@ public class AuthLoginServiceImpl implements AuthService {
                 .setEmail(data.getEmail())
                 .setScene(data.getScene().getScene())
                 .setSign(data.getSign());
-        userService.sendEmailCode(new BaseRequest<>(codeReqDTO));
+        ResponseBean responseBean = userService.sendEmailCode(new BaseRequest<>(codeReqDTO));
+        if (!responseBean.isResult()) {
+            int code = responseBean.getCode();
+            if (code == 400) {
+                throw new ServiceException(responseBean.getMessage());
+            }
+        }
     }
 
     @Override

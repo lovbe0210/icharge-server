@@ -41,7 +41,7 @@ public class SimpleCodeController {
         if (CodeSceneEnum.sceneIsMobile(scene)) {
             Assert.notNull(codeReqDTO.getData().getMobile(), SysConstant.NOT_EMPTY_MOBILE);
         }else {
-            Assert.notNull(codeReqDTO.getData().getMobile(), SysConstant.NOT_EMPTY_EMAIL);
+            Assert.notNull(codeReqDTO.getData().getEmail(), SysConstant.NOT_EMPTY_EMAIL);
         }
         codeService.useVerifyCode(codeReqDTO.getData());
         return ResponseBean.ok();

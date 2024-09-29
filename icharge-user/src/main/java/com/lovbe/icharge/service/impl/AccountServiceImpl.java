@@ -36,7 +36,7 @@ public class AccountServiceImpl implements AccountService {
         return accountMapper.selectOne(new LambdaQueryWrapper<AccountDo>()
                 .eq(AccountDo::getStatus, "A")
                 .eq(CodeSceneEnum.sceneIsMobile(forgetPasswordDTO.getScene()), AccountDo::getMobile, forgetPasswordDTO.getMobile())
-                .eq(CodeSceneEnum.sceneIsEmail(forgetPasswordDTO.getScene()), AccountDo::getMobile, forgetPasswordDTO.getEmail())
+                .eq(CodeSceneEnum.sceneIsEmail(forgetPasswordDTO.getScene()), AccountDo::getEmail   , forgetPasswordDTO.getEmail())
         );
     }
 
@@ -47,6 +47,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public int updateAccount(AccountDo account) {
-        return accountMapper.updateById(account);
+        int updated = accountMapper.updateById(account);
+        return updated;
     }
 }

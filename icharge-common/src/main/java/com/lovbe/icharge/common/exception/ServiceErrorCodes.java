@@ -10,7 +10,7 @@ public interface ServiceErrorCodes {
     // ========== 用户相关  1003 ============
     ErrorCode USER_MOBILE_NOT_EXISTS = new ErrorCode(400, "手机号未注册用户，请注册后再进行登录");
     ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(400, "邮箱未注册用户，请注册后再进行登录");
-    ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(400, "没有找到匹配的账户");
+    ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(400, "没有找到匹配的账号");
     ErrorCode USER_MOBILE_USED = new ErrorCode(400, "修改手机失败，该手机号({})已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(400, "用户积分余额不足");
     ErrorCode MOBILE_NOT_EXIST = new ErrorCode(400, "手机号不存在");
