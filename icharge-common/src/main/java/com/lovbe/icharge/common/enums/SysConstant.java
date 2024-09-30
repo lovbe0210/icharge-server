@@ -21,6 +21,9 @@ public class SysConstant {
     public static final String TIMESTAMP = "timestamp";
     public static final String UNIQUE_ID = "unique_id";
     public static final String SV_SCENE = "sv_scene";
+    public static final String ACCESS_TOKEN = "icharge_actoken";
+    public static final String REFRESH_TOKEN = "icharge_rftoken";
+    public static final String LOGIN_USER_ID = "x-login-id";
     public static final String ID = "id";
     public static final String TN = "tn";
     public static final String USERID = "userId";

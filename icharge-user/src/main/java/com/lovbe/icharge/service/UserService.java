@@ -1,5 +1,6 @@
 package com.lovbe.icharge.service;
 
+import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
@@ -35,4 +36,13 @@ public interface UserService {
      * @date 2024/9/16 15:21
      */
     void resetUserPwd(ForgetPasswordDTO data);
+
+    /** 
+     * @description: 登陆用户获取用户信息
+     * @param: Long
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/9/30 16:55
+     */
+    ResponseBean getUserInfo(Long userId);
 }

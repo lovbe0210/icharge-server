@@ -21,8 +21,6 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.lovbe.icharge.util.SecurityFrameworkUtils.LOGIN_USER_ID_ATTR;
-
 /**
  * 执行顺序：3
  * Token 过滤器，验证 token 的有效性

@@ -14,7 +14,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-@TableName(value = "p_user", autoResultMap = true)
+@TableName(value = "p_user")
 public class UserInfoDo extends BaseEntity {
     private String username;
     private String level;

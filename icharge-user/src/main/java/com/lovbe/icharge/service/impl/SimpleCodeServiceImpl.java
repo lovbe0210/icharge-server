@@ -294,7 +294,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
                 }
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
+                    throw new ServiceException(ServiceErrorCodes.ACCOUNT_DISABLED);
                 }
                 break;
             case EMAIL_RESET_PASSWORD:
@@ -302,7 +302,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
                 }
                 if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_DISABLED);
+                    throw new ServiceException(ServiceErrorCodes.ACCOUNT_DISABLED);
                 }
         }
     }

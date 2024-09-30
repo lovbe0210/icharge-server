@@ -8,6 +8,7 @@ import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
@@ -140,5 +141,17 @@ public class UserServiceImpl implements UserService {
             log.error("[重置密码] --- 密码重置失败，account: {}", account);
             throw new ServiceException(ServiceErrorCodes.ACCOUNT_PASSWORD_RESET_FAILED);
         }
+    }
+
+    @Override
+    public ResponseBean getUserInfo(Long userId) {
+        UserInfoDo userInfoDo = userMapper.selectById(userId);
+        if (userInfoDo == null) {
+            throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
+        }
+        if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
+        }
+        return ResponseBean.ok(userInfoDo);
     }
 }

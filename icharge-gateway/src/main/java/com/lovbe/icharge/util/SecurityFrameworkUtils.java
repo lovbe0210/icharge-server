@@ -25,7 +25,7 @@ public class SecurityFrameworkUtils {
 
     public static final String LOGIN_USER_HEADER = "login-user";
 
-    public static final String LOGIN_USER_ID_ATTR = "login-user-id";
+    public static final String HEADER_USER_ID = "userId";
     public static final String LOGIN_USER_TYPE_ATTR = "login-user-type";
 
     private SecurityFrameworkUtils() {}
@@ -54,12 +54,12 @@ public class SecurityFrameworkUtils {
      */
     public static ServerWebExchange removeLoginUser(ServerWebExchange exchange) {
         // 如果不包含，直接返回
-        if (!exchange.getRequest().getHeaders().containsKey(LOGIN_USER_HEADER)) {
+        if (!exchange.getRequest().getHeaders().containsKey(HEADER_USER_ID)) {
             return exchange;
         }
         // 如果包含，则移除。参考 RemoveRequestHeaderGatewayFilterFactory 实现
         ServerHttpRequest request = exchange.getRequest().mutate()
-                .headers(httpHeaders -> httpHeaders.remove(LOGIN_USER_HEADER)).build();
+                .headers(httpHeaders -> httpHeaders.remove(HEADER_USER_ID)).build();
         return exchange.mutate().request(request).build();
     }
 
@@ -70,7 +70,7 @@ public class SecurityFrameworkUtils {
      * @return 用户编号
      */
     public static Long getLoginUserId(ServerWebExchange exchange) {
-        return MapUtil.getLong(exchange.getAttributes(), LOGIN_USER_ID_ATTR);
+        return MapUtil.getLong(exchange.getAttributes(), HEADER_USER_ID);
     }
 
     /**
@@ -82,7 +82,7 @@ public class SecurityFrameworkUtils {
     @SneakyThrows
     public static void setLoginUserHeader(ServerHttpRequest.Builder builder, String userId) {
         try {
-            builder.header(LOGIN_USER_ID_ATTR, userId);
+            builder.header(HEADER_USER_ID, userId);
         } catch (Exception ex) {
             log.error("[setLoginUserHeader] --- 设置请求头userId: {}失败，errorInfo：{}", userId, ex.toString());
             throw ex;

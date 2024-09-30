@@ -7,6 +7,7 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.Cookie;
@@ -194,12 +195,19 @@ public class ServletUtils {
      * @date 2024/8/16 0:41
      */
     public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginUser loginRespVo) {
-        Cookie accessToken = new Cookie("icharge_actoken", loginRespVo.getAcToken());
+        Cookie accessToken = new Cookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken());
         accessToken.setDomain(domain);
         accessToken.setPath("/api/*");
         accessToken.setMaxAge(60 * 30);
         accessToken.setSecure(true);
         accessToken.setHttpOnly(true);
         response.addCookie(accessToken);
+        Cookie loginUserId = new Cookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()));
+        accessToken.setDomain(domain);
+        accessToken.setPath("/api/*");
+        accessToken.setMaxAge(60 * 30);
+        accessToken.setSecure(true);
+        accessToken.setHttpOnly(true);
+        response.addCookie(loginUserId);
     }
 }
