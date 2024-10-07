@@ -1,11 +1,15 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.net.PassAuth;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.ResponseBean;
@@ -17,16 +21,22 @@ import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.dto.UpdateUserDTO;
 import com.lovbe.icharge.mapper.UserMapper;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
+import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe
@@ -38,6 +48,8 @@ import java.time.LocalDateTime;
 public class UserServiceImpl implements UserService {
     @Resource
     private AccountService accountService;
+    @Resource
+    private StorageService storageService;
     @Resource
     private UserMapper userMapper;
     @Resource
@@ -54,7 +66,7 @@ public class UserServiceImpl implements UserService {
                     .setLastLoginTime(LocalDateTime.now())
                     .setLoginAgent(authUserDTO.getLoginAgent())
                     .setLoginOs(authUserDTO.getLoginOs())
-                    .setLoginCount(account.getLoginCount()+1)
+                    .setLoginCount(account.getLoginCount() + 1)
                     .setUpdateTime(LocalDateTime.now());
             accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
@@ -76,7 +88,7 @@ public class UserServiceImpl implements UserService {
         accountService.createAccount(account);
         // 创建用户
         UserInfoDo userInfoDo = new UserInfoDo()
-                .setUsername("用户"+ IdUtil.nanoId(4))
+                .setUsername("用户" + IdUtil.nanoId(4))
                 .setDomain(IdUtil.nanoId(6));
         userInfoDo.setUid(uid);
         userInfoDo.setCreateTime(LocalDateTime.now());
@@ -97,7 +109,7 @@ public class UserServiceImpl implements UserService {
                     .setLastLoginTime(LocalDateTime.now())
                     .setLoginAgent(authUserDTO.getLoginAgent())
                     .setLoginOs(authUserDTO.getLoginOs())
-                    .setLoginCount(account.getLoginCount()+1)
+                    .setLoginCount(account.getLoginCount() + 1)
                     .setUpdateTime(LocalDateTime.now());
             int updated = accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
@@ -153,5 +165,28 @@ public class UserServiceImpl implements UserService {
             throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
         }
         return ResponseBean.ok(userInfoDo);
+    }
+
+    @Override
+    public void updateUserInfo(Long userId, UpdateUserDTO userDTO) {
+        // 业务参数校验
+        String tags = userDTO.getTagArray();
+        if (tags != null && tags.length() > 200) {
+            throw new ServiceException(GlobalErrorCodes.INTERNAL_SERVER_ERROR);
+        }
+        UserInfoDo userInfo = new UserInfoDo();
+        userInfo.setUid(userId);
+        userInfo.setTags(JSONUtil.toList(tags, Map.class));
+        BeanUtil.copyProperties(userDTO, userInfo);
+        MultipartFile avatarFile = userDTO.getAvatarFile();
+        if (avatarFile != null) {
+            ResponseBean<String> upload = storageService.upload(avatarFile, SysConstant.FILE_SCENE_AVATAR);
+            if (!upload.isResult()) {
+                log.error("[更新用户信息] --- 头像上传失败，errorInfo: {}", upload.getMessage());
+                throw new ServiceException(ServiceErrorCodes.USER_INFO_UPDATE_FAILED);
+            }
+            userInfo.setAvatarUrl(upload.getData());
+        }
+        userMapper.updateById(userInfo);
     }
 }

@@ -27,4 +27,7 @@ public class SysConstant {
     public static final String ID = "id";
     public static final String TN = "tn";
     public static final String USERID = "userId";
+
+
+    public static final String FILE_SCENE_AVATAR = "avatar";
 }

@@ -2,23 +2,19 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
-import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.dto.UpdateUserDTO;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @description: 用户信息相关控制层
@@ -70,5 +66,12 @@ public class UserController {
     @PostMapping("/getUserInfo")
     public ResponseBean getUserInfo(@RequestBody @Validated BaseRequest<UserInfoDTO> userInfoReq) {
         return userService.getUserInfo(userInfoReq.getData().getUserId());
+    }
+
+    @PutMapping("/updateUserInfo")
+    public ResponseBean updateUserInfo(@RequestHeader(name = SysConstant.USERID) Long userId,
+                                       @Validated UpdateUserDTO userDTO) {
+        userService.updateUserInfo(userId, userDTO);
+        return ResponseBean.ok();
     }
 }

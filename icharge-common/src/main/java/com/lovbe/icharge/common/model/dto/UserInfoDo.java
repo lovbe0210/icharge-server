@@ -27,7 +27,7 @@ public class UserInfoDo extends BaseEntity {
     /**
      * 用户等级
      */
-    private int level;
+    private Integer level;
     /**
      * 主页路径
      */
@@ -60,5 +60,5 @@ public class UserInfoDo extends BaseEntity {
     /**
      * 成长值
      */
-    private int growthValue;
+    private Integer growthValue;
 }

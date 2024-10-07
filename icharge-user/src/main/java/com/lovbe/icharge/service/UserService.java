@@ -4,6 +4,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.dto.UpdateUserDTO;
 
 /**
  * @Author: lovbe
@@ -45,4 +46,13 @@ public interface UserService {
      * @date: 2024/9/30 16:55
      */
     ResponseBean getUserInfo(Long userId);
+
+    /**
+     * @description 更新用户信息
+     * @param[1] userId
+     * @param[2] userDTO
+     * @author lovbe0210
+     * @date 2024/10/7 23:30
+     */
+    void updateUserInfo(Long userId, UpdateUserDTO userDTO);
 }

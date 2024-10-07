@@ -5,8 +5,6 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
-import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 

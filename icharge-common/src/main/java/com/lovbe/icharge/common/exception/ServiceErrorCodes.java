@@ -19,6 +19,7 @@ public interface ServiceErrorCodes {
     ErrorCode ACCOUNT_DISABLED = new ErrorCode(405, "账号被禁用");
     ErrorCode USER_DISABLED = new ErrorCode(405, "用户被禁用");
     ErrorCode ACCOUNT_PASSWORD_RESET_FAILED = new ErrorCode(400, "密码重置失败，请稍后再试");
+    ErrorCode USER_INFO_UPDATE_FAILED = new ErrorCode(400, "更新失败，请稍后再试");
 
     // ========== AUTH 模块 ==========
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(400, "登录失败，账号或密码不正确");

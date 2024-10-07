@@ -15,8 +15,6 @@ public class IchargeStorageApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(IchargeStorageApplication.class, args);
-        OssStorageService storageService = OssStorageFactory.getStorageService();
-        System.out.println(storageService);
     }
 
 }

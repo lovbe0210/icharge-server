@@ -56,7 +56,11 @@ public class MinioStorageService extends OssStorageService {
         } catch (Exception e) {
             log.error("[文件上传]--minio上传文件失败，errorInfo：{}", e.toString());
         }
-        return StrUtil.addPrefixIfNot(path, "/");
+        return new StringBuilder("/")
+                .append(this.bucketName)
+                .append("/")
+                .append(path)
+                .toString();
     }
 
     @Override
