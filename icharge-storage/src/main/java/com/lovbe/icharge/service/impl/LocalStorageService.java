@@ -1,9 +1,9 @@
-package com.lovbe.icharge.storage.service;
+package com.lovbe.icharge.service.impl;
 
 
 import cn.hutool.core.io.FileUtil;
-import com.lovbe.icharge.storage.config.OssStorageConfig;
-import com.lovbe.icharge.storage.service.OssStorageService;
+import com.lovbe.icharge.config.OssStorageConfig;
+import com.lovbe.icharge.service.OssStorageService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -31,17 +31,6 @@ public class LocalStorageService extends OssStorageService {
         log.info("文件上传路径：{}", file.getAbsolutePath());
         FileUtil.writeFromStream(inputStream, file);
         return getUrl(path);
-    }
-
-    @Override
-    public String upload(byte[] data, String path) {
-        File file = FileUtil.file(config.getUploadFolder() + File.separator + path);
-        //目录是否存在
-        if (!FileUtil.exist(file.getParent())) {
-            FileUtil.mkdir(file.getParent());
-        }
-        FileUtil.writeBytes(data, file);
-        return config.getDomain() + "/" + path;
     }
 
     @Override

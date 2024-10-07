@@ -1,4 +1,4 @@
-package com.lovbe.icharge.storage.enums;
+package com.lovbe.icharge.enums;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,9 +35,9 @@ public enum OssTypeEnum {
      */
     LOCAL(3),
     /**
-     * 通用S3协议
+     * Minio本地存储
      */
-    S3(4);
+    MINIO(4);
 
 
     @JsonValue

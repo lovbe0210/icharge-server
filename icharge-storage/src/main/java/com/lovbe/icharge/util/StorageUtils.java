@@ -1,4 +1,4 @@
-package com.lovbe.icharge.storage.util;
+package com.lovbe.icharge.util;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;

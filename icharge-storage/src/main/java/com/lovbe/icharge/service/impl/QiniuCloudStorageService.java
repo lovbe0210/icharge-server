@@ -1,9 +1,11 @@
-package com.lovbe.icharge.storage.service;
+package com.lovbe.icharge.service.impl;
 
 
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.StrUtil;
 import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.storage.config.OssStorageConfig;
+import com.lovbe.icharge.config.OssStorageConfig;
+import com.lovbe.icharge.service.OssStorageService;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import com.qiniu.storage.*;
@@ -29,25 +31,19 @@ public class QiniuCloudStorageService extends OssStorageService {
 
     }
 
-
     @Override
     public String upload(InputStream inputStream, String path) {
         byte[] bytes = IoUtil.readBytes(inputStream);
-        return this.upload(bytes, path);
-    }
-
-    @Override
-    public String upload(byte[] data, String path) {
         try {
             String token = auth.uploadToken(config.getBucketName());
-            Response res = uploadManager.put(data, path, token);
+            Response res = uploadManager.put(bytes, path, token);
             if (!res.isOK()) {
                 throw new ServiceException("上传七牛出错：" + res);
             }
         } catch (Exception e) {
             throw new ServiceException("上传文件失败，请核对七牛配置信息");
         }
-        return fullPath(path);
+        return StrUtil.addPrefixIfNot(path, "/");
     }
 
     @Override

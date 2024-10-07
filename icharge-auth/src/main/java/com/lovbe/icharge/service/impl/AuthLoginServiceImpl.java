@@ -1,10 +1,7 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSON;
-import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -35,12 +32,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.annotation.Validated;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 
@@ -165,8 +159,8 @@ public class AuthLoginServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(AuthLoginUser data) {
-        String refreshTokenKey = RedisKeyConstant.getRefreshTokenKey(data.getRfToken());
+    public void logout(String rfToken) {
+        String refreshTokenKey = RedisKeyConstant.getRefreshTokenKey(rfToken);
         Map<Object, Object> map = RedisUtil.hgetMap(refreshTokenKey);
         if (!CollectionUtils.isEmpty(map)) {
             List<String> collect = map.keySet().stream()
@@ -175,6 +169,27 @@ public class AuthLoginServiceImpl implements AuthService {
             RedisUtil.del(collect.toArray(new String[]{}));
         }
         RedisUtil.del(refreshTokenKey);
+    }
+
+    @Override
+    public AuthLoginUser refreshToken(String rfToken) {
+        String refreshTokenKey = RedisKeyConstant.getRefreshTokenKey(rfToken);
+        Map<Object, Object> map = RedisUtil.hgetMap(refreshTokenKey);
+        if (CollectionUtils.isEmpty(map)) {
+            throw new ServiceException(GlobalErrorCodes.ACCOUNT_LOGIN_EXPIRED);
+        }
+        // 设置accessToken的过期时间为30分钟
+        String acToken = IdUtil.fastSimpleUUID();
+        String accessTokenKey = RedisKeyConstant.getAccessTokenKey(acToken);
+        RedisUtil.set(accessTokenKey, map.get(SysConstant.USERID), RedisKeyConstant.EXPIRE_30_MIN);
+        // 只有当剩余时间大于60s时才回写accessToken，否则可能会造成refreshToken永久有效
+        Long expire = RedisUtil.getExpire(refreshTokenKey);
+        if (expire != null && expire > 60) {
+            RedisUtil.hsetIfAbsent(refreshTokenKey, acToken, acToken);
+        }
+        return new AuthLoginUser()
+                .setUserId((Long) map.get(SysConstant.USERID))
+                .setAcToken(acToken);
     }
 
     /**

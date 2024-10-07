@@ -71,5 +71,14 @@ public interface AuthService {
      * @author lovbe0210
      * @date 2024/9/28 22:43
      */
-    void logout(AuthLoginUser data);
+    void logout(String rfToken);
+
+    /**
+     * @description 通过refreshToken获取一个新的accessToken
+     * @param[1] rfToken
+     * @return AuthLoginUser
+     * @author lovbe0210
+     * @date 2024/10/7 19:08
+     */
+    AuthLoginUser refreshToken(String rfToken);
 }

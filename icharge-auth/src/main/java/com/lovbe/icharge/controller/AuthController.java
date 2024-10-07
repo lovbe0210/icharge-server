@@ -1,6 +1,8 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
@@ -13,6 +15,8 @@ import com.lovbe.icharge.dto.vo.AuthMobileLoginReqVo;
 import com.lovbe.icharge.dto.vo.AuthSmsLoginReqVo;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +25,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -45,10 +50,11 @@ public class AuthController {
      * @return ResponseBean
      */
     @PostMapping("/sms/login")
-    public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo, HttpServletResponse response) {
-        AuthLoginUser loginRespVo = authService.smsLogin(reqVo);
-        ServletUtils.setLoginCookie(domain, response, loginRespVo);
-        return ResponseBean.ok(loginRespVo);
+    public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo,
+                                 HttpServletResponse response) {
+        AuthLoginUser loginUser = authService.smsLogin(reqVo);
+        ServletUtils.setLoginCookie(domain, response, loginUser);
+        return ResponseBean.ok(loginUser);
     }
 
     /**
@@ -59,8 +65,11 @@ public class AuthController {
      * @return ResponseBean
      */
     @PostMapping("/mobile/login")
-    public ResponseBean mobileLogin(@RequestBody @Valid BaseRequest<AuthMobileLoginReqVo> reqVo) {
-        return ResponseBean.ok(authService.mobileLogin(reqVo));
+    public ResponseBean mobileLogin(@RequestBody @Valid BaseRequest<AuthMobileLoginReqVo> reqVo,
+                                    HttpServletResponse response) {
+        AuthLoginUser loginUser = authService.mobileLogin(reqVo);
+        ServletUtils.setLoginCookie(domain, response, loginUser);
+        return ResponseBean.ok(loginUser);
     }
 
     /**
@@ -85,8 +94,11 @@ public class AuthController {
      * @return ResponseBean
      */
     @PostMapping("/emailCode/login")
-    public ResponseBean emailCodeLogin(@RequestBody @Valid BaseRequest<AuthEmailCodeLoginReqVo> reqVo) {
-        return ResponseBean.ok(authService.emailCodeLogin(reqVo));
+    public ResponseBean emailCodeLogin(@RequestBody @Valid BaseRequest<AuthEmailCodeLoginReqVo> reqVo,
+                                       HttpServletResponse response) {
+        AuthLoginUser loginUser = authService.emailCodeLogin(reqVo);
+        ServletUtils.setLoginCookie(domain, response, loginUser);
+        return ResponseBean.ok(loginUser);
     }
 
     /**
@@ -97,8 +109,11 @@ public class AuthController {
      * @return ResponseBean
      */
     @PostMapping("/email/login")
-    public ResponseBean emailLogin(@RequestBody @Valid BaseRequest<AuthEmailLoginReqVo> reqVo) {
-        return ResponseBean.ok(authService.emailLogin(reqVo));
+    public ResponseBean emailLogin(@RequestBody @Valid BaseRequest<AuthEmailLoginReqVo> reqVo,
+                                   HttpServletResponse response) {
+        AuthLoginUser loginUser = authService.emailLogin(reqVo);
+        ServletUtils.setLoginCookie(domain, response, loginUser);
+        return ResponseBean.ok(loginUser);
     }
 
     /**
@@ -118,17 +133,26 @@ public class AuthController {
      * description: 推出登录
      * @author: Lvhl
      * @date: 2024/8/2 17:49
-     * @param reqVo
+     * @param rfToken
      * @return ResponseBean
      */
     @PostMapping("/logout")
-    public ResponseBean logout(@RequestBody BaseRequest<AuthLoginUser> reqVo) {
-        AuthLoginUser data = reqVo.getData();
-        if (data == null || !StringUtils.hasLength(data.getRfToken())) {
-            return ResponseBean.ok();
-        }
-        // 退出登录
-        authService.logout(reqVo.getData());
+    public ResponseBean logout(@RequestHeader("icharge-rt") String rfToken) {
+        authService.logout(rfToken);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 推出登录
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param rfToken
+     * @return ResponseBean
+     */
+    @PostMapping("/t/refresh")
+    public ResponseBean refreshToken(@RequestHeader("icharge-rt") String rfToken, HttpServletResponse response) {
+        AuthLoginUser loginUser = authService.refreshToken(rfToken);
+        ServletUtils.setLoginCookie(domain, response, loginUser);
         return ResponseBean.ok();
     }
 

@@ -4,6 +4,8 @@ import cn.hutool.core.io.IoUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.*;
@@ -22,9 +24,8 @@ import java.util.function.Supplier;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "spring.data.redis.enable", havingValue = "true", matchIfMissing = true)
 public final class RedisUtil {
-
-
     /**
      * redistemplate
      */
@@ -66,7 +67,7 @@ public final class RedisUtil {
      * @return 时间(秒) 返回0代表为永久有效
      * 47
      */
-    public static long getExpire(String key) {
+    public static Long getExpire(String key) {
         return redisTemplate.getExpire(key, TimeUnit.SECONDS);
     }
 

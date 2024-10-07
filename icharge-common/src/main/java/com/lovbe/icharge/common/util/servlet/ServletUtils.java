@@ -197,17 +197,17 @@ public class ServletUtils {
     public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginUser loginRespVo) {
         Cookie accessToken = new Cookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken());
         accessToken.setDomain(domain);
-        accessToken.setPath("/api/*");
+        accessToken.setPath("/api/");
         accessToken.setMaxAge(60 * 30);
         accessToken.setSecure(true);
         accessToken.setHttpOnly(true);
         response.addCookie(accessToken);
         Cookie loginUserId = new Cookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()));
-        accessToken.setDomain(domain);
-        accessToken.setPath("/api/*");
-        accessToken.setMaxAge(60 * 30);
-        accessToken.setSecure(true);
-        accessToken.setHttpOnly(true);
+        loginUserId.setDomain(domain);
+        loginUserId.setPath("/");
+        loginUserId.setMaxAge(60 * 30);
+        loginUserId.setSecure(true);
+        loginUserId.setHttpOnly(true);
         response.addCookie(loginUserId);
     }
 }

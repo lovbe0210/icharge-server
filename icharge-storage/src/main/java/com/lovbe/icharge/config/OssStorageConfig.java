@@ -1,7 +1,7 @@
-package com.lovbe.icharge.storage.config;
+package com.lovbe.icharge.config;
 
 
-import com.lovbe.icharge.storage.enums.OssTypeEnum;
+import com.lovbe.icharge.enums.OssTypeEnum;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

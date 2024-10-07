@@ -126,6 +126,11 @@
                 <artifactId>qiniu-java-sdk</artifactId>
                 <version>7.11.0</version>
             </dependency>
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>8.5.7</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

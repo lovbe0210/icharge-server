@@ -1,8 +1,8 @@
-package com.lovbe.icharge.storage.service;
+package com.lovbe.icharge.service;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
-import com.lovbe.icharge.storage.config.OssStorageConfig;
+import com.lovbe.icharge.config.OssStorageConfig;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
@@ -30,15 +30,6 @@ public abstract class OssStorageService {
      * @return 文件地址
      */
     public abstract String upload(InputStream is, String path);
-
-    /**
-     * 文件上传
-     *
-     * @param data 文件 上传路径
-     * @param path 相对于存储系统的路径
-     * @return 文件地址
-     */
-    public abstract String upload(byte[] data, String path);
 
     /**
      * description: 文件下载
@@ -77,24 +68,12 @@ public abstract class OssStorageService {
     public abstract void delete(String path);
 
     /**
-     * 获取完整路径 包括前缀等
-     *
-     * @param filePath 文件1
-     */
-    public String fullPath(String filePath) {
-        if(StringUtils.hasLength(config.getPrefixPath())) {
-            filePath = config.getPrefixPath() + StrUtil.addPrefixIfNot(filePath, "/");
-        }
-        return filePath;
-    }
-
-    /**
      * 获取可访问链接
      *
      * @return url
      */
     public String getUrl(String filePath) {
-        return StrUtil.addPrefixIfNot(fullPath(filePath), "/");
+        return StrUtil.addPrefixIfNot(filePath, "/");
     }
 
 }
