@@ -15,6 +15,7 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -175,12 +176,13 @@ public class UserServiceImpl implements UserService {
             throw new ServiceException(GlobalErrorCodes.INTERNAL_SERVER_ERROR);
         }
         UserInfoDo userInfo = new UserInfoDo();
+        userInfo.setUpdateTime(LocalDateTime.now());
         userInfo.setUid(userId);
         userInfo.setTags(JSONUtil.toList(tags, Map.class));
         BeanUtil.copyProperties(userDTO, userInfo);
         MultipartFile avatarFile = userDTO.getAvatarFile();
         if (avatarFile != null) {
-            ResponseBean<String> upload = storageService.upload(avatarFile, SysConstant.FILE_SCENE_AVATAR);
+            ResponseBean<String> upload = storageService.upload(new FileUploadDTO(avatarFile, SysConstant.FILE_SCENE_AVATAR));
             if (!upload.isResult()) {
                 log.error("[更新用户信息] --- 头像上传失败，errorInfo: {}", upload.getMessage());
                 throw new ServiceException(ServiceErrorCodes.USER_INFO_UPDATE_FAILED);
