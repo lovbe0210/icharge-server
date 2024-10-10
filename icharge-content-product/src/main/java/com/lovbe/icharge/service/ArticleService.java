@@ -8,5 +8,5 @@ import com.lovbe.icharge.entity.vo.ArticleVO;
  * @Description: 文档相关service
  */
 public interface ArticleService {
-    ArticleVO createBlankDoc(String userId);
+    ArticleVO createBlankDoc(long userId);
 }

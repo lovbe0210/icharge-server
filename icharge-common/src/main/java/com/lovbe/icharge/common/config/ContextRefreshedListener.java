@@ -1,8 +1,5 @@
 package com.lovbe.icharge.common.config;
 
-import cn.hutool.core.lang.Singleton;
-import cn.hutool.core.lang.Snowflake;
-import cn.hutool.core.util.IdUtil;
 import com.github.yitter.contract.IdGeneratorOptions;
 import com.github.yitter.idgen.YitIdHelper;
 import lombok.extern.slf4j.Slf4j;

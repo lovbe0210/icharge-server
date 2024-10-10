@@ -1,15 +1,10 @@
 package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.AuthUserDTO;
-import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.service.ArticleService;
 import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,7 +26,7 @@ public class ArticleController {
      * @return ResponseBean<LoginUser>
      */
     @PostMapping("/createBlankDoc")
-    public ResponseBean<ArticleVO> createBlankDoc(@RequestHeader("userId") String userId) {
+    public ResponseBean<ArticleVO> createBlankDoc(@RequestHeader("userId") long userId) {
         return ResponseBean.ok(articleService.createBlankDoc(userId));
     }
 }

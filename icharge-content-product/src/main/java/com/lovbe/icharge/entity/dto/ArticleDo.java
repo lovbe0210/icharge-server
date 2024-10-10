@@ -1,6 +1,8 @@
 package com.lovbe.icharge.entity.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -8,7 +10,7 @@ import lombok.experimental.Accessors;
 import java.util.List;
 import java.util.Map;
 
-@TableName(value = "c_article")
+@TableName(value = "c_article", autoResultMap = true)
 @Data
 @Accessors(chain = true)
 public class ArticleDo extends BaseEntity {
@@ -43,6 +45,7 @@ public class ArticleDo extends BaseEntity {
     /**
      * 文章标签
      */
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private List<Map> tags;
     /**
      * 是否公开访问 0否1是
