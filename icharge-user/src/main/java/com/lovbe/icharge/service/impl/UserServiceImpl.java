@@ -36,6 +36,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -64,11 +65,11 @@ public class UserServiceImpl implements UserService {
         if (account != null) {
             // 记录登录日志
             account.setLastLoginIp(authUserDTO.getUserIp())
-                    .setLastLoginTime(LocalDateTime.now())
+                    .setLastLoginTime(new Date())
                     .setLoginAgent(authUserDTO.getLoginAgent())
                     .setLoginOs(authUserDTO.getLoginOs())
                     .setLoginCount(account.getLoginCount() + 1)
-                    .setUpdateTime(LocalDateTime.now());
+                    .setUpdateTime(new Date());
             accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
             loginUser.setStatus(account.getStatus());
@@ -82,18 +83,18 @@ public class UserServiceImpl implements UserService {
                 .setEmail(authUserDTO.getEmail())
                 .setLoginCount(1)
                 .setLastLoginIp(authUserDTO.getUserIp())
-                .setLastLoginTime(LocalDateTime.now());
+                .setLastLoginTime(new Date());
         account.setUid(uid);
-        account.setCreateTime(LocalDateTime.now());
-        account.setUpdateTime(LocalDateTime.now());
+        account.setCreateTime(new Date());
+        account.setUpdateTime(new Date());
         accountService.createAccount(account);
         // 创建用户
         UserInfoDo userInfoDo = new UserInfoDo()
                 .setUsername("用户" + IdUtil.nanoId(4))
                 .setDomain(IdUtil.nanoId(6));
         userInfoDo.setUid(uid);
-        userInfoDo.setCreateTime(LocalDateTime.now());
-        userInfoDo.setUpdateTime(LocalDateTime.now());
+        userInfoDo.setCreateTime(new Date());
+        userInfoDo.setUpdateTime(new Date());
         userMapper.insert(userInfoDo);
         LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
         loginUser.setStatus(CommonStatusEnum.NORMAL.getStatus());
@@ -107,11 +108,11 @@ public class UserServiceImpl implements UserService {
         if (account != null) {
             // 记录登录日志
             account.setLastLoginIp(authUserDTO.getUserIp())
-                    .setLastLoginTime(LocalDateTime.now())
+                    .setLastLoginTime(new Date())
                     .setLoginAgent(authUserDTO.getLoginAgent())
                     .setLoginOs(authUserDTO.getLoginOs())
                     .setLoginCount(account.getLoginCount() + 1)
-                    .setUpdateTime(LocalDateTime.now());
+                    .setUpdateTime(new Date());
             int updated = accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
             loginUser.setStatus(account.getStatus());
@@ -176,7 +177,7 @@ public class UserServiceImpl implements UserService {
             throw new ServiceException(GlobalErrorCodes.INTERNAL_SERVER_ERROR);
         }
         UserInfoDo userInfo = new UserInfoDo();
-        userInfo.setUpdateTime(LocalDateTime.now());
+        userInfo.setUpdateTime(new Date());
         userInfo.setUid(userId);
         userInfo.setTags(JSONUtil.toList(tags, Map.class));
         BeanUtil.copyProperties(userDTO, userInfo);

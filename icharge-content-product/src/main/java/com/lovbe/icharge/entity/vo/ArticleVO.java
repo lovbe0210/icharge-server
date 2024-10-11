@@ -19,19 +19,27 @@ public class ArticleVO extends BaseEntity {
     /**
      * 最新内容版本id
      */
-    private String tmpContentId;
+    private String latestContentId;
     /**
-     * 已发布内容版本id
+     * 最新版本内容
      */
-    private String publishedContentId;
+    private String latestContent;
     /**
      * 所属用户id
      */
     private Long userId;
     /**
+     * 字数
+     */
+    private int wordsNum;
+    /**
      * 所属专栏
      */
     private Long columnId;
+    /**
+     * 专栏名称
+     */
+    private String columnName;
     /**
      * 文章摘要
      */

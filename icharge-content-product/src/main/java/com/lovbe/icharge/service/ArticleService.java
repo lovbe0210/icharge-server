@@ -9,4 +9,6 @@ import com.lovbe.icharge.entity.vo.ArticleVO;
  */
 public interface ArticleService {
     ArticleVO createBlankDoc(long userId);
+
+    ArticleVO getArticleForEdit(String articleId, long userId);
 }

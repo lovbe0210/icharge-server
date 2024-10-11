@@ -16,7 +16,7 @@ public class AccountDo extends BaseEntity {
     private String email;
     private String password;
     private Integer loginCount;
-    private LocalDateTime lastLoginTime;
+    private Date lastLoginTime;
     private String lastLoginIp;
     private String loginAgent;
     private String loginOs;

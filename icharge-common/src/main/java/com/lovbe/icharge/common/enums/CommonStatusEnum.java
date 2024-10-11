@@ -15,7 +15,7 @@ public enum CommonStatusEnum implements BaseEnum {
 
     NORMAL("A", "启用"),
     DELETE("D", "删除"),
-    DISABLE("S", "停用/封禁/审核不通过");
+    DISABLE("S", "停用/违规封禁/审核不通过");
 
     /**
      * 状态值
@@ -34,7 +34,7 @@ public enum CommonStatusEnum implements BaseEnum {
         return ObjUtil.equal(DELETE.status, status);
     }
 
-    public static boolean isDISABLE(String status) {
+    public static boolean isDisable(String status) {
         return ObjUtil.equal(DISABLE.status, status);
     }
 

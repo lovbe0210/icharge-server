@@ -10,34 +10,24 @@ import lombok.experimental.Accessors;
 import java.util.List;
 import java.util.Map;
 
-@TableName(value = "c_article", autoResultMap = true)
+/**
+ * 专栏
+ * @Author lovbe0210
+ * @Version 1.0
+ * @createDate 2024/10/11 22:19
+ */
+@TableName(value = "c_column")
 @Data
 @Accessors(chain = true)
-public class ArticleDo extends BaseEntity {
+public class ColumnDo extends BaseEntity {
     /**
-     * 文章标题
+     * 专栏标题
      */
     private String title;
-    /**
-     * 最新内容版本id
-     */
-    private String latestContentId;
-    /**
-     * 已发布内容版本id
-     */
-    private String publishedContentId;
     /**
      * 所属用户id
      */
     private Long userId;
-    /**
-     * 所属专栏
-     */
-    private Long columnId;
-    /**
-     * 字数
-     */
-    private int wordsNum;
     /**
      * 文章摘要
      */
@@ -47,16 +37,19 @@ public class ArticleDo extends BaseEntity {
      */
     private String coverUrl;
     /**
-     * 文章标签
+     * 目录内容id
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<Map> tags;
+    private String dirContentId;
     /**
      * 是否公开访问 0否1是
      */
     private int isPublic;
     /**
-     * 发布状态 0未发布 1审核中 2审核失败 3已发布
+     * 是否开启评论功能 0否1是
      */
-    private int publishStatus;
+    private int enableComment;
+    /**
+     * 是否自动发布 0否1是 需要在公开访问时才能发布
+     */
+    private int autoPublish;
 }

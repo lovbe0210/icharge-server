@@ -38,7 +38,9 @@ public interface ServiceErrorCodes {
     //========== 公共模块 ==========
     ErrorCode FILE_UPLOAD_FAILED = new ErrorCode(400, "文件上传失败，请稍后再试");
 
-    //========== 积分配置 1-004-007-000 ==========
+    //========== 文章内容 ==========
+    ErrorCode ARTICLE_NOT_EXIST = new ErrorCode(400, "文章不存在已被删除");
+    ErrorCode ARTICLE_STATUS_ERROR = new ErrorCode(400, "文章违规屏蔽，不可浏览或编辑");
 
     //========== 积分记录 1-004-008-000 ==========
     ErrorCode POINT_RECORD_BIZ_NOT_SUPPORT = new ErrorCode(1_004_008_000, "用户积分记录业务类型不支持");
