@@ -1,8 +1,14 @@
 package com.lovbe.icharge.entity.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe0210
@@ -51,7 +57,8 @@ public class ArticleVO extends BaseEntity {
     /**
      * 文章标签
      */
-    private String tagsArray;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<Map> tags = new ArrayList<>();
     /**
      * 是否公开访问 0否1是
      */

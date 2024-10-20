@@ -27,6 +27,7 @@ public class UpdateUserDTO {
     /**
      * 标签
      */
+    @Length(max = 200, message = "标签格式错误")
     private String tagArray;
     /**
      * 简介

@@ -21,11 +21,11 @@ public class ArticleDo extends BaseEntity {
     /**
      * 最新内容版本id
      */
-    private String latestContentId;
+    private Long latestContentId;
     /**
      * 已发布内容版本id
      */
-    private String publishedContentId;
+    private Long publishedContentId;
     /**
      * 所属用户id
      */
@@ -37,7 +37,7 @@ public class ArticleDo extends BaseEntity {
     /**
      * 字数
      */
-    private int wordsNum;
+    private Integer wordsNum;
     /**
      * 文章摘要
      */
@@ -54,9 +54,9 @@ public class ArticleDo extends BaseEntity {
     /**
      * 是否公开访问 0否1是
      */
-    private int isPublic;
+    private Integer isPublic;
     /**
      * 发布状态 0未发布 1审核中 2审核失败 3已发布
      */
-    private int publishStatus;
+    private Integer publishStatus;
 }

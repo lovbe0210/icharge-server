@@ -2,6 +2,7 @@ package com.lovbe.icharge.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.entity.dto.ColumnDo;
+import com.lovbe.icharge.entity.dto.ContentDo;
 import org.apache.ibatis.annotations.Mapper;
 
 
@@ -12,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @createDate 2024/8/13 23:11
  */
 @Mapper
-public interface ContentMapper extends BaseMapper<ContentMapper> {
+public interface ContentMapper extends BaseMapper<ContentDo> {
 
 }

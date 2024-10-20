@@ -17,7 +17,6 @@ public class SysConstant {
     public static final String SUCCESS = "success";
     public static final String FAILED = "failed";
 
-
     public static final String TIMESTAMP = "timestamp";
     public static final String UNIQUE_ID = "unique_id";
     public static final String SV_SCENE = "sv_scene";
@@ -28,6 +27,7 @@ public class SysConstant {
     public static final String TN = "tn";
     public static final String USERID = "userId";
 
-
     public static final String FILE_SCENE_AVATAR = "avatar";
+    public static final String UPDATE_TIME = "updateTime";
+    public static final String CONTENT_ID = "contentId";
 }

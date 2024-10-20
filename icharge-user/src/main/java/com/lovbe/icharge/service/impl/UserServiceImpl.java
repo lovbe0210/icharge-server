@@ -33,6 +33,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -172,14 +173,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateUserInfo(Long userId, UpdateUserDTO userDTO) {
         // 业务参数校验
-        String tags = userDTO.getTagArray();
-        if (tags != null && tags.length() > 200) {
-            throw new ServiceException(GlobalErrorCodes.INTERNAL_SERVER_ERROR);
-        }
         UserInfoDo userInfo = new UserInfoDo();
         userInfo.setUpdateTime(new Date());
         userInfo.setUid(userId);
-        userInfo.setTags(JSONUtil.toList(tags, Map.class));
+        String tags = userDTO.getTagArray();
+        if (StringUtils.hasLength(tags)) {
+            userInfo.setTags(JSONUtil.toList(tags, Map.class));
+        }
         BeanUtil.copyProperties(userDTO, userInfo);
         MultipartFile avatarFile = userDTO.getAvatarFile();
         if (avatarFile != null) {
