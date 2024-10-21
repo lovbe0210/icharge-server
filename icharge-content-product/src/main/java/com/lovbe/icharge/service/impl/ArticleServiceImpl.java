@@ -3,6 +3,7 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -10,6 +11,7 @@ import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleDo;
 import com.lovbe.icharge.entity.dto.ContentDTO;
@@ -21,11 +23,14 @@ import com.lovbe.icharge.mapper.ContentMapper;
 import com.lovbe.icharge.service.ArticleService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe0210
@@ -109,6 +114,30 @@ public class ArticleServiceImpl implements ArticleService {
         articleMapper.updateById(articleDo);
         map.put(SysConstant.CONTENT_ID, uid);
         return map;
+    }
+
+    @Override
+    public List<ArticleVO> getMyArticleList(BaseRequest<RequestListDTO> requestDto, long userId) {
+        RequestListDTO data = requestDto.getData();
+        LambdaQueryWrapper<ArticleDo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ArticleDo::getUserId, userId)
+                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .like(data != null && StringUtils.hasLength(data.getKeywords()), ArticleDo::getTitle, data.getKeywords());
+        if (data != null && data.getSort() != null) {
+            queryWrapper.orderByDesc(data.getSort() == 1, ArticleDo::getUpdateTime);
+            queryWrapper.orderByDesc(data.getSort() == 2, ArticleDo::getCreateTime);
+        }else {
+            queryWrapper.orderByAsc(ArticleDo::getUid);
+        }
+        List<ArticleDo> selectList = articleMapper.selectList(queryWrapper);
+        if (!CollectionUtils.isEmpty(selectList)) {
+            return selectList.stream().map(articleDo -> {
+                ArticleVO articleVO = new ArticleVO();
+                BeanUtil.copyProperties(articleDo, articleVO);
+                return articleVO;
+            }).collect(Collectors.toList());
+        }
+        return List.of();
     }
 
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {

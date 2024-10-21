@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public class ArticleDo extends BaseEntity {
      * 文章标签
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<Map> tags;
+    private List<Map> tags = new ArrayList<>();
     /**
      * 是否公开访问 0否1是
      */

@@ -46,7 +46,7 @@ public class ArticleDTO {
      */
     private String coverUrl;
     /**
-     * 文章标签
+     * 文章标签 单个标签10字符
      */
     @Length(max = 200, message = "标签格式错误")
     private String tagsArray;

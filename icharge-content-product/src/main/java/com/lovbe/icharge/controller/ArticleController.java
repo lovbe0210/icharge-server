@@ -3,7 +3,9 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
+import com.lovbe.icharge.entity.dto.ArticleDo;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.service.ArticleService;
@@ -11,6 +13,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,7 +52,7 @@ public class ArticleController {
     }
 
     /**
-     * description: 获取文档信息用于编辑
+     * description: 更新文档信息
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param articleEntity
@@ -68,6 +71,7 @@ public class ArticleController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param contentEntity
+     * @param userId
      * @return ResponseBean<LoginUser>
      */
     @PostMapping("/article/content")
@@ -75,5 +79,20 @@ public class ArticleController {
                                                  @RequestHeader("userId") long userId) {
         Map content = articleService.updateContent(contentEntity, userId);
         return ResponseBean.ok(content);
+    }
+
+    /**
+     * description: 更新文档内容
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param requestDto
+     * @param userId
+     * @return ResponseBean<LoginUser>
+     */
+    @PostMapping("/articleList")
+    public ResponseBean<ArticleVO> getMyArticleList(@RequestBody @Valid BaseRequest<RequestListDTO> requestDto,
+                                                 @RequestHeader("userId") long userId) {
+        List<ArticleVO> articleList = articleService.getMyArticleList(requestDto, userId);
+        return ResponseBean.ok(articleList);
     }
 }
