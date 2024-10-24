@@ -24,4 +24,4 @@ spring:
         namespace: ${spring.cloud.nacos.namespace}
 #        ip: "2409:8962:37c:7a02:ceeb:e37e:5c16:c658"
 #        ip: 127.0.0.1
-        ip: 10.2.2.107
+        ip: 10.2.2.104

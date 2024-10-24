@@ -20,12 +20,10 @@ public interface ArticleMapper extends BaseMapper<ArticleDo> {
     @Select(value = """
             SELECT
             	ca.*,
-            	cc.title column_name,
-            	ct.content latest_content
+            	cc.title column_name
             FROM
             	c_article ca
             	LEFT JOIN c_column cc ON ca.column_id = cc.uid
-            	LEFT JOIN c_content ct ON ca.latest_content_id = ct.uid
             WHERE
             	ca.uid = #{articleId}
                 AND ca.user_id = #{userId}

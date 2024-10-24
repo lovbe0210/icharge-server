@@ -27,10 +27,6 @@ public class ArticleVO extends BaseEntity {
      */
     private String latestContentId;
     /**
-     * 最新版本内容
-     */
-    private String latestContent;
-    /**
      * 所属用户id
      */
     private Long userId;
@@ -51,9 +47,21 @@ public class ArticleVO extends BaseEntity {
      */
     private String summary;
     /**
+     * 是否自动生成摘要
+     */
+    private int autoSummary = 1;
+    /**
      * 封面地址
      */
     private String coverUrl;
+    /**
+     * 一级分类
+     */
+    private String firstCategory;
+    /**
+     * 二级分类
+     */
+    private String secondCategory;
     /**
      * 文章标签
      */

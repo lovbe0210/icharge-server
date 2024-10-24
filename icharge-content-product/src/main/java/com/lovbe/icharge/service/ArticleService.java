@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.vo.ArticleVO;
+import com.lovbe.icharge.entity.vo.ContentVO;
 
 import java.util.List;
 import java.util.Map;
@@ -61,4 +62,14 @@ public interface ArticleService {
      * @date 2024/10/21 22:00
      */
     List<ArticleVO> getMyArticleList(BaseRequest<RequestListDTO> requestDto, long userId);
+
+    /**
+     * @description 获取文档内容
+     * @param[1] articleId
+     * @param[2] userId
+     * @return ContentVO
+     * @author lovbe0210
+     * @date 2024/10/24 17:39
+     */
+    ContentVO getContent(Long articleId, long userId);
 }

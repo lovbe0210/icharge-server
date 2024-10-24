@@ -1,13 +1,12 @@
 package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
-import com.lovbe.icharge.entity.dto.ArticleDo;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.vo.ArticleVO;
+import com.lovbe.icharge.entity.vo.ContentVO;
 import com.lovbe.icharge.service.ArticleService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -67,6 +66,21 @@ public class ArticleController {
     }
 
     /**
+     * description: 获取文档内容
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param articleId
+     * @param userId
+     * @return ResponseBean<LoginUser>
+     */
+    @PostMapping("/content/{articleId}")
+    public ResponseBean<ArticleVO> getContent(@PathVariable("articleId") Long articleId,
+                                              @RequestHeader("userId") long userId) {
+        ContentVO content = articleService.getContent(articleId, userId);
+        return ResponseBean.ok(content);
+    }
+
+    /**
      * description: 更新文档内容
      * @author: Lvhl
      * @date: 2024/9/16 11:56
@@ -82,7 +96,7 @@ public class ArticleController {
     }
 
     /**
-     * description: 更新文档内容
+     * description: 获取文档列表
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param requestDto

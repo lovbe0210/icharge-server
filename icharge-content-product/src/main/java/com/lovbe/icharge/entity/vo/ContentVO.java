@@ -1,15 +1,19 @@
-package com.lovbe.icharge.entity.dto;
+package com.lovbe.icharge.entity.vo;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @Author: lovbe0210
  * @Date: 2024/10/20 16:09
  * @Description: 文档内容
  */
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
-public class ContentDTO {
+public class ContentVO {
     /**
      * 内容id
      */
@@ -18,18 +22,6 @@ public class ContentDTO {
      * 文档内容
      */
     private Object content;
-    /**
-     * 字数
-     */
-    private int wordsNum;
-    /**
-     * 摘要
-     */
-    private String summary;
-    /**
-     * 封面
-     */
-    private String coverUrl;
     /**
      * 文档所属用户id
      */

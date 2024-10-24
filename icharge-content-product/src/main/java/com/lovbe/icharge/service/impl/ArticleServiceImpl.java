@@ -17,6 +17,7 @@ import com.lovbe.icharge.entity.dto.ArticleDo;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.dto.ContentDo;
 import com.lovbe.icharge.entity.vo.ArticleVO;
+import com.lovbe.icharge.entity.vo.ContentVO;
 import com.lovbe.icharge.mapper.ArticleMapper;
 import com.lovbe.icharge.mapper.ColumnMapper;
 import com.lovbe.icharge.mapper.ContentMapper;
@@ -107,6 +108,15 @@ public class ArticleServiceImpl implements ArticleService {
             map.put(SysConstant.CONTENT_ID, uid);
             return map;
         }
+        // 是否需要更新摘要
+        if (articleDo.getAutoSummary() == 1) {
+            articleDo.setSummary(contentDTO.getSummary());
+        }
+        // 是否需要更新封面
+        if (!StringUtils.hasLength(articleDo.getCoverUrl())) {
+            articleDo.setCoverUrl(contentDTO.getCoverUrl());
+        }
+
         articleDo.setUpdateTime(updateTime);
         articleDo.setLatestContentId(uid)
                 .setWordsNum(contentDTO.getWordsNum())
@@ -138,6 +148,18 @@ public class ArticleServiceImpl implements ArticleService {
             }).collect(Collectors.toList());
         }
         return List.of();
+    }
+
+    @Override
+    public ContentVO getContent(Long articleId, long userId) {
+        ArticleDo articleDo = articleMapper.selectById(articleId);
+        checkArticleStatus(userId, articleDo);
+        ContentDo contentDo = contentMapper.selectById(articleDo.getLatestContentId());
+        if (contentDo == null) {
+            return null;
+        }
+        ContentVO contentVO = new ContentVO(articleDo.getLatestContentId(), contentDo.getContent(), articleId);
+        return contentVO;
     }
 
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {

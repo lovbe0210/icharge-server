@@ -44,6 +44,10 @@ public class ArticleDo extends BaseEntity {
      */
     private String summary;
     /**
+     * 是否自动生成摘要 0否1是
+     */
+    private int autoSummary = 1;
+    /**
      * 封面地址
      */
     private String coverUrl;
