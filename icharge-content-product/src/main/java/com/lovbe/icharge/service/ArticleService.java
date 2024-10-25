@@ -37,12 +37,12 @@ public interface ArticleService {
 
     /**
      * @description 更新文档信息
-     * @param[1] articleEntity
+     * @param[1] articleDTO
      * @param[2] userId
      * @author lovbe0210
      * @date 2024/10/20 16:03
      */
-    void updateArticle(BaseRequest<ArticleDTO> articleEntity, long userId);
+    void updateArticle(ArticleDTO articleDTO, long userId);
 
     /**
      * @return long

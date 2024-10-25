@@ -73,8 +73,7 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public void updateArticle(BaseRequest<ArticleDTO> articleEntity, long userId) {
-        ArticleDTO articleDTO = articleEntity.getData();
+    public void updateArticle(ArticleDTO articleDTO, long userId) {
         ArticleDo articleDo = articleMapper.selectById(articleDTO.getUid());
         checkArticleStatus(userId, articleDo);
         String tags = articleDTO.getTagsArray();

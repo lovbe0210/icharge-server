@@ -10,6 +10,7 @@ import com.lovbe.icharge.entity.vo.ContentVO;
 import com.lovbe.icharge.service.ArticleService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +31,7 @@ public class ArticleController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param userId
-     * @return ResponseBean<LoginUser>
+     * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/createBlankDoc")
     public ResponseBean<ArticleVO> createBlankDoc(@RequestHeader("userId") long userId) {
@@ -42,7 +43,7 @@ public class ArticleController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param userId
-     * @return ResponseBean<LoginUser>
+     * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/{articleId}")
     public ResponseBean<ArticleVO> getArticleForEdit(@PathVariable("articleId") String articleId,
@@ -54,14 +55,14 @@ public class ArticleController {
      * description: 更新文档信息
      * @author: Lvhl
      * @date: 2024/9/16 11:56
-     * @param articleEntity
+     * @param articleDTO
      * @param userId
-     * @return ResponseBean<LoginUser>
+     * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/update")
-    public ResponseBean<ArticleVO> updateArticle(@RequestBody @Valid BaseRequest<ArticleDTO> articleEntity,
+    public ResponseBean<ArticleVO> updateArticle(@Validated ArticleDTO articleDTO,
                                                  @RequestHeader("userId") long userId) {
-        articleService.updateArticle(articleEntity, userId);
+        articleService.updateArticle(articleDTO, userId);
         return ResponseBean.ok();
     }
 
@@ -71,7 +72,7 @@ public class ArticleController {
      * @date: 2024/9/16 11:56
      * @param articleId
      * @param userId
-     * @return ResponseBean<LoginUser>
+     * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/content/{articleId}")
     public ResponseBean<ArticleVO> getContent(@PathVariable("articleId") Long articleId,
@@ -86,7 +87,7 @@ public class ArticleController {
      * @date: 2024/9/16 11:56
      * @param contentEntity
      * @param userId
-     * @return ResponseBean<LoginUser>
+     * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/content")
     public ResponseBean<ArticleVO> updateContent(@RequestBody @Valid BaseRequest<ContentDTO> contentEntity,
@@ -101,7 +102,7 @@ public class ArticleController {
      * @date: 2024/9/16 11:56
      * @param requestDto
      * @param userId
-     * @return ResponseBean<LoginUser>
+     * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/articleList")
     public ResponseBean<ArticleVO> getMyArticleList(@RequestBody @Valid BaseRequest<RequestListDTO> requestDto,
