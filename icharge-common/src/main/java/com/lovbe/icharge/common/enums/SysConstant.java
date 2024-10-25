@@ -28,6 +28,7 @@ public class SysConstant {
     public static final String USERID = "userId";
 
     public static final String FILE_SCENE_AVATAR = "avatar";
+    public static final String FILE_SCENE_COVER = "cover";
     public static final String UPDATE_TIME = "updateTime";
     public static final String CONTENT_ID = "contentId";
 }

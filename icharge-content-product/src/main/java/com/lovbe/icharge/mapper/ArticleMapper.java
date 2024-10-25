@@ -1,12 +1,8 @@
 package com.lovbe.icharge.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.entity.dto.ArticleDo;
-import com.lovbe.icharge.entity.vo.ArticleVO;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 
 /**
@@ -17,16 +13,4 @@ import org.apache.ibatis.annotations.Select;
  */
 @Mapper
 public interface ArticleMapper extends BaseMapper<ArticleDo> {
-    @Select(value = """
-            SELECT
-            	ca.*,
-            	cc.title column_name
-            FROM
-            	c_article ca
-            	LEFT JOIN c_column cc ON ca.column_id = cc.uid
-            WHERE
-            	ca.uid = #{articleId}
-                AND ca.user_id = #{userId}
-            """)
-    ArticleVO selectArticleForEdit(@Param("userId") long userId, @Param("articleId") String articleId);
 }

@@ -5,9 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
-
-import java.util.List;
-import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @Author: lovbe0210
@@ -42,9 +40,17 @@ public class ArticleDTO {
     @Length(max = 150, message = "文档摘要不得超过150字")
     private String summary;
     /**
+     * 自动生成摘要 0否1是
+     */
+    private Integer autoSummary;
+    /**
      * 封面地址
      */
     private String coverUrl;
+    /**
+     * 封面图片
+     */
+    private MultipartFile coverFile;
     /**
      * 文章标签 单个标签10字符
      */
@@ -55,4 +61,12 @@ public class ArticleDTO {
      */
     @Digits(integer = 1, fraction = 0, message = "文档访问权限状态错误")
     private int isPublic;
+    /**
+     * 一级分类
+     */
+    private String firstCategory;
+    /**
+     * 二级分类
+     */
+    private String secondCategory;
 }

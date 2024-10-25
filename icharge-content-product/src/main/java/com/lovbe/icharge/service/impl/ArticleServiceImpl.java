@@ -11,21 +11,24 @@ import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
-import com.lovbe.icharge.entity.dto.ArticleDTO;
-import com.lovbe.icharge.entity.dto.ArticleDo;
-import com.lovbe.icharge.entity.dto.ContentDTO;
-import com.lovbe.icharge.entity.dto.ContentDo;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ContentVO;
 import com.lovbe.icharge.mapper.ArticleMapper;
 import com.lovbe.icharge.mapper.ColumnMapper;
 import com.lovbe.icharge.mapper.ContentMapper;
 import com.lovbe.icharge.service.ArticleService;
+import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -38,6 +41,7 @@ import java.util.stream.Collectors;
  * @Date: 2024/10/9 23:54
  * @Description: MS
  */
+@Slf4j
 @Service
 public class ArticleServiceImpl implements ArticleService {
     @Resource
@@ -45,6 +49,8 @@ public class ArticleServiceImpl implements ArticleService {
     @Resource
     private ContentMapper contentMapper;
     @Resource
+    private StorageService storageService;
+    @Autowired
     private ColumnMapper columnMapper;
 
     @Override
@@ -62,18 +68,31 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public ArticleVO getArticleForEdit(String articleId, long userId) {
-        ArticleVO articlevo = articleMapper.selectArticleForEdit(userId, articleId);
-        if (articlevo == null || !CommonStatusEnum.isNormal(articlevo.getStatus())) {
+        ArticleDo articleDo = articleMapper.selectOne(new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getUid, articleId)
+                .eq(ArticleDo::getUserId, userId));
+        if (articleDo == null || !CommonStatusEnum.isNormal(articleDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
-        if (CommonStatusEnum.isDisable(articlevo.getStatus())) {
+        if (CommonStatusEnum.isDisable(articleDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_STATUS_ERROR);
         }
-        return articlevo;
+        ArticleVO articleVO = new ArticleVO();
+        BeanUtil.copyProperties(articleDo, articleVO);
+        if (articleDo.getColumnId() == null) {
+            return articleVO;
+        }
+        ColumnDo columnDo = columnMapper.selectById(articleDo.getColumnId());
+        if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
+            articleVO.setColumnId(null);
+        }else {
+            articleVO.setColumnName(columnDo.getTitle());
+        }
+        return articleVO;
     }
 
     @Override
-    public void updateArticle(ArticleDTO articleDTO, long userId) {
+    public void updateArticle(boolean simpleUpdate, ArticleDTO articleDTO, long userId) {
         ArticleDo articleDo = articleMapper.selectById(articleDTO.getUid());
         checkArticleStatus(userId, articleDo);
         String tags = articleDTO.getTagsArray();
@@ -82,6 +101,17 @@ public class ArticleServiceImpl implements ArticleService {
         }
         articleDo.setUpdateTime(new Date());
         BeanUtil.copyProperties(articleDTO, articleDo);
+        // 判断是否需要更新封面文件
+        if (!simpleUpdate && articleDTO.getCoverFile() != null) {
+            // 上传文件
+            ResponseBean<String> upload = storageService
+                    .upload(new FileUploadDTO(articleDTO.getCoverFile(), SysConstant.FILE_SCENE_COVER));
+            if (!upload.isResult()) {
+                log.error("[更新文章信息] --- 封面上传失败，errorInfo: {}", upload.getMessage());
+                throw new ServiceException(ServiceErrorCodes.ARTICLE_INFO_UPDATE_FAILED);
+            }
+            articleDo.setCoverUrl(upload.getData());
+        }
         articleMapper.updateById(articleDo);
     }
 
@@ -135,7 +165,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (data != null && data.getSort() != null) {
             queryWrapper.orderByDesc(data.getSort() == 1, ArticleDo::getUpdateTime);
             queryWrapper.orderByDesc(data.getSort() == 2, ArticleDo::getCreateTime);
-        }else {
+        } else {
             queryWrapper.orderByAsc(ArticleDo::getUid);
         }
         List<ArticleDo> selectList = articleMapper.selectList(queryWrapper);

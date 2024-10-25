@@ -37,10 +37,12 @@ public interface ServiceErrorCodes {
 
     //========== 公共模块 ==========
     ErrorCode FILE_UPLOAD_FAILED = new ErrorCode(400, "文件上传失败，请稍后再试");
+    ErrorCode FILE_OUT_SIZE_10 = new ErrorCode(400, "文件上传失败，请选择小于10MB的文件进行上传，");
 
-    //========== 文章内容 ==========
+    //========== 内容生产 ==========
     ErrorCode ARTICLE_NOT_EXIST = new ErrorCode(400, "文章不存在已被删除");
     ErrorCode ARTICLE_STATUS_ERROR = new ErrorCode(400, "文章违规屏蔽，不可浏览或编辑");
+    ErrorCode ARTICLE_INFO_UPDATE_FAILED = new ErrorCode(400, "文章更新失败，请稍后再试");
 
     //========== 积分记录 1-004-008-000 ==========
     ErrorCode POINT_RECORD_BIZ_NOT_SUPPORT = new ErrorCode(1_004_008_000, "用户积分记录业务类型不支持");

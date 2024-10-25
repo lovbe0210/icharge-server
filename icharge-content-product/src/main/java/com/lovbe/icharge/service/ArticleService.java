@@ -42,7 +42,7 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/10/20 16:03
      */
-    void updateArticle(ArticleDTO articleDTO, long userId);
+    void updateArticle(boolean simpleUpdate, ArticleDTO articleDTO, long userId);
 
     /**
      * @return long

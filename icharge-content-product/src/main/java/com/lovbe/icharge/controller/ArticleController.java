@@ -1,5 +1,7 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
@@ -12,6 +14,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -59,10 +62,29 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/update")
+    @PutMapping("/article/update")
     public ResponseBean<ArticleVO> updateArticle(@Validated ArticleDTO articleDTO,
                                                  @RequestHeader("userId") long userId) {
-        articleService.updateArticle(articleDTO, userId);
+        MultipartFile coverFile = articleDTO.getCoverFile();
+        if (coverFile != null && coverFile.getSize() > 10 * 1024 * 1024) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        }
+        articleService.updateArticle(false, articleDTO, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 更新文档信息(包含封面文件)
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param baseRequest
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/article/simpleUpdate")
+    public ResponseBean<ArticleVO> simpleUpdateArticle(@RequestBody @Valid BaseRequest<ArticleDTO> baseRequest,
+                                                 @RequestHeader("userId") long userId) {
+        articleService.updateArticle(true, baseRequest.getData(), userId);
         return ResponseBean.ok();
     }
 

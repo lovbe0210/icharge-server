@@ -52,6 +52,14 @@ public class ArticleDo extends BaseEntity {
      */
     private String coverUrl;
     /**
+     * 一级分类
+     */
+    private String firstCategory;
+    /**
+     * 二级分类
+     */
+    private String secondCategory;
+    /**
      * 文章标签
      */
     @TableField(typeHandler = JacksonTypeHandler.class)
