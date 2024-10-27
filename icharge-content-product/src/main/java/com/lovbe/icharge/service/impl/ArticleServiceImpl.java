@@ -161,7 +161,8 @@ public class ArticleServiceImpl implements ArticleService {
         LambdaQueryWrapper<ArticleDo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ArticleDo::getUserId, userId)
                 .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
-                .like(data != null && StringUtils.hasLength(data.getKeywords()), ArticleDo::getTitle, data.getKeywords());
+                .like(data != null && StringUtils.hasLength(data.getKeywords()), ArticleDo::getTitle, data.getKeywords())
+                .orderByDesc(ArticleDo::getSort);
         if (data != null && data.getSort() != null) {
             queryWrapper.orderByDesc(data.getSort() == 1, ArticleDo::getUpdateTime);
             queryWrapper.orderByDesc(data.getSort() == 2, ArticleDo::getCreateTime);
@@ -189,6 +190,14 @@ public class ArticleServiceImpl implements ArticleService {
         }
         ContentVO contentVO = new ContentVO(articleDo.getLatestContentId(), contentDo.getContent(), articleId);
         return contentVO;
+    }
+
+    @Override
+    public void updateArticleTop(BaseRequest<ArticleDTO> requestDto, long userId) {
+        ArticleDTO articleDTO = requestDto.getData();
+        ArticleDo articleDo = articleMapper.selectById(articleDTO.getUid());
+        checkArticleStatus(userId, articleDo);
+        articleMapper.updateArticleTop(articleDTO.getUid());
     }
 
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {

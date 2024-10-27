@@ -55,7 +55,7 @@ public class ArticleController {
     }
 
     /**
-     * description: 更新文档信息
+     * description: 更新文档信息(包含封面文件)
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param articleDTO
@@ -74,7 +74,7 @@ public class ArticleController {
     }
 
     /**
-     * description: 更新文档信息(包含封面文件)
+     * description: 更新文档信息
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param baseRequest
@@ -131,5 +131,20 @@ public class ArticleController {
                                                  @RequestHeader("userId") long userId) {
         List<ArticleVO> articleList = articleService.getMyArticleList(requestDto, userId);
         return ResponseBean.ok(articleList);
+    }
+
+    /**
+     * description: 文章置顶/取消置顶
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param requestDto
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/article/setTop")
+    public ResponseBean<ArticleVO> updateArticleTop(@RequestBody @Valid BaseRequest<ArticleDTO> requestDto,
+                                                    @RequestHeader("userId") long userId) {
+        articleService.updateArticleTop(requestDto, userId);
+        return ResponseBean.ok();
     }
 }

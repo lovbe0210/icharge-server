@@ -60,6 +60,10 @@ public class ArticleDo extends BaseEntity {
      */
     private String secondCategory;
     /**
+     * 排序字段，用于判断是否置顶
+     */
+    private Integer sort;
+    /**
      * 文章标签
      */
     @TableField(typeHandler = JacksonTypeHandler.class)

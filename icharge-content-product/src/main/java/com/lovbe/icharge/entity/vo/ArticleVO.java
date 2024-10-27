@@ -1,8 +1,5 @@
 package com.lovbe.icharge.entity.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -51,6 +48,10 @@ public class ArticleVO extends BaseEntity {
      * 是否自动生成摘要
      */
     private int autoSummary = 1;
+    /**
+     * 是否置顶 当sort为空则不是置顶文章
+     */
+    private Integer sort;
     /**
      * 封面地址
      */

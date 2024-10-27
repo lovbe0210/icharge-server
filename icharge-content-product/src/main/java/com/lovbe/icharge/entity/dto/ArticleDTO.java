@@ -19,7 +19,6 @@ public class ArticleDTO {
     /**
      * 文章标题
      */
-    @NotBlank(message = "文档标题不得为空")
     @Length(max = 50, message = "文档标题不得超过50字")
     private String title;
     /**

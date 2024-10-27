@@ -72,4 +72,13 @@ public interface ArticleService {
      * @date 2024/10/24 17:39
      */
     ContentVO getContent(Long articleId, long userId);
+
+    /**
+     * @description 文章置顶/取消置顶
+     * @param[1] requestDto
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/10/27 19:52
+     */
+    void updateArticleTop(BaseRequest<ArticleDTO> requestDto, long userId);
 }
