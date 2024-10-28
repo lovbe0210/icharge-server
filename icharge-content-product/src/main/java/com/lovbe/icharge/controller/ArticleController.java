@@ -147,4 +147,34 @@ public class ArticleController {
         articleService.updateArticleTop(requestDto, userId);
         return ResponseBean.ok();
     }
+
+    /**
+     * description: 文章发布
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param articleId
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/article/publish/{articleId}")
+    public ResponseBean<ArticleVO> publishArticle(@PathVariable("articleId") Long articleId,
+                                                  @RequestHeader("userId") long userId) {
+        articleService.publishArticle(articleId, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 文章删除
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param articleId
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/article/delete/{articleId}")
+    public ResponseBean<ArticleVO> deleteArticle(@PathVariable("articleId") Long articleId,
+                                                  @RequestHeader("userId") long userId) {
+        articleService.deleteArticle(articleId, userId);
+        return ResponseBean.ok();
+    }
 }

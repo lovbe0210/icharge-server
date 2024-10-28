@@ -200,6 +200,37 @@ public class ArticleServiceImpl implements ArticleService {
         articleMapper.updateArticleTop(articleDTO.getUid());
     }
 
+    @Override
+    public void publishArticle(Long articleId, long userId) {
+        ArticleDo articleDo = articleMapper.selectById(articleId);
+        checkArticleStatus(userId, articleDo);
+        // 如果是私有状态则发布失败
+        if (articleDo.getIsPublic() != null && articleDo.getIsPublic() == 0) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED);
+        }
+        // 判断状态：如果是未审核，则更新为1,如果是审核中则提示无需发布，如果是审核失败，可重新发布
+        Integer publishStatus = articleDo.getPublishStatus();
+        if (publishStatus != null && publishStatus == 1) {
+            return;
+        }
+        articleDo.setPublishStatus(1);
+        // TODO 发消息进行文章内容审核
+        articleMapper.updateById(articleDo);
+    }
+
+    @Override
+    public void deleteArticle(Long articleId, long userId) {
+        ArticleDo articleDo = articleMapper.selectById(articleId);
+        if (articleDo == null) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
+        }
+        if (articleDo.getUserId() != userId) {
+            throw new ServiceException(GlobalErrorCodes.LOCKED);
+        }
+        articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        articleMapper.updateById(articleDo);
+    }
+
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);

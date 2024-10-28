@@ -81,4 +81,22 @@ public interface ArticleService {
      * @date 2024/10/27 19:52
      */
     void updateArticleTop(BaseRequest<ArticleDTO> requestDto, long userId);
+
+    /**
+     * @description 文章发布
+     * @param[1] articleId
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/10/29 0:05
+     */
+    void publishArticle(Long articleId, long userId);
+
+    /**
+     * @description 文章删除
+     * @param[1] articleId
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/10/29 0:27
+     */
+    void deleteArticle(Long articleId, long userId);
 }
