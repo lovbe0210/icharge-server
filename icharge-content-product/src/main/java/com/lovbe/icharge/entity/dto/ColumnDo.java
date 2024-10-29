@@ -29,9 +29,9 @@ public class ColumnDo extends BaseEntity {
      */
     private Long userId;
     /**
-     * 文章摘要
+     * 专栏简介
      */
-    private String summary;
+    private String synopsis;
     /**
      * 封面地址
      */

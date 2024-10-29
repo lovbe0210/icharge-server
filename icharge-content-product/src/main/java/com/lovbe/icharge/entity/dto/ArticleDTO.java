@@ -1,8 +1,6 @@
 package com.lovbe.icharge.entity.dto;
 
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.web.multipart.MultipartFile;
@@ -58,7 +56,8 @@ public class ArticleDTO {
     /**
      * 是否公开访问 0否1是
      */
-    @Digits(integer = 1, fraction = 0, message = "文档访问权限状态错误")
+    @Min(value = 0, message = "文档访问权限状态错误")
+    @Max(value = 1, message = "文档访问权限状态错误")
     private int isPublic;
     /**
      * 一级分类

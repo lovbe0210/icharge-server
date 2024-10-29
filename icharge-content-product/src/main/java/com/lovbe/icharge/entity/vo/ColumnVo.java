@@ -1,0 +1,45 @@
+package com.lovbe.icharge.entity.vo;
+
+import com.lovbe.icharge.common.model.base.BaseEntity;
+import lombok.Data;
+
+/**
+ * @Author: lovbe0210
+ * @Date: 2024/10/29 22:36
+ * @Description: 专栏
+ */
+@Data
+public class ColumnVo extends BaseEntity {
+    /**
+     * 专栏标题
+     */
+    private String title;
+    /**
+     * 专栏简介
+     */
+    private String synopsis;
+    /**
+     * 所属用户id
+     */
+    private Long userId;
+    /**
+     * 封面地址
+     */
+    private String coverUrl;
+    /**
+     * 目录数据id
+     */
+    private Long dirContentId;
+    /**
+     * 是否公开访问 0否1是
+     */
+    private int isPublic;
+    /**
+     * 是否开启评论功能 0否1是
+     */
+    private int enableComment;
+    /**
+     * 是否自动发布 0否1是 需要在公开访问时才能发布
+     */
+    private int autoPublish;
+}
