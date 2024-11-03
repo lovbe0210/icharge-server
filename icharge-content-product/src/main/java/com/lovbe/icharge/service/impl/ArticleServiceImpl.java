@@ -14,12 +14,12 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.dao.ArticleDao;
+import com.lovbe.icharge.dao.ColumnDao;
+import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ContentVO;
-import com.lovbe.icharge.mapper.ArticleMapper;
-import com.lovbe.icharge.mapper.ColumnMapper;
-import com.lovbe.icharge.mapper.ContentMapper;
 import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -45,13 +44,13 @@ import java.util.stream.Collectors;
 @Service
 public class ArticleServiceImpl implements ArticleService {
     @Resource
-    private ArticleMapper articleMapper;
+    private ArticleDao articleDao;
     @Resource
-    private ContentMapper contentMapper;
+    private ContentDao contentDao;
     @Resource
     private StorageService storageService;
     @Autowired
-    private ColumnMapper columnMapper;
+    private ColumnDao columnDao;
 
     @Override
     public ArticleVO createBlankDoc(long userId) {
@@ -60,7 +59,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .setCreateTime(new Date())
                 .setUpdateTime(new Date());
         articleDo.setUserId(userId).setTitle("无标题文档");
-        articleMapper.insertOrUpdate(articleDo);
+        articleDao.insertOrUpdate(articleDo);
         ArticleVO articleVO = new ArticleVO();
         BeanUtil.copyProperties(articleDo, articleVO);
         return articleVO;
@@ -68,7 +67,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public ArticleVO getArticleForEdit(String articleId, long userId) {
-        ArticleDo articleDo = articleMapper.selectOne(new LambdaQueryWrapper<ArticleDo>()
+        ArticleDo articleDo = articleDao.selectOne(new LambdaQueryWrapper<ArticleDo>()
                 .eq(ArticleDo::getUid, articleId)
                 .eq(ArticleDo::getUserId, userId));
         if (articleDo == null || !CommonStatusEnum.isNormal(articleDo.getStatus())) {
@@ -82,7 +81,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDo.getColumnId() == null) {
             return articleVO;
         }
-        ColumnDo columnDo = columnMapper.selectById(articleDo.getColumnId());
+        ColumnDo columnDo = columnDao.selectById(articleDo.getColumnId());
         if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
             articleVO.setColumnId(null);
         }else {
@@ -93,7 +92,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public void updateArticle(boolean simpleUpdate, ArticleDTO articleDTO, long userId) {
-        ArticleDo articleDo = articleMapper.selectById(articleDTO.getUid());
+        ArticleDo articleDo = articleDao.selectById(articleDTO.getUid());
         checkArticleStatus(userId, articleDo);
         String tags = articleDTO.getTagsArray();
         if (StringUtils.hasLength(tags)) {
@@ -112,13 +111,13 @@ public class ArticleServiceImpl implements ArticleService {
             }
             articleDo.setCoverUrl(upload.getData());
         }
-        articleMapper.updateById(articleDo);
+        articleDao.updateById(articleDo);
     }
 
     @Override
     public Map updateContent(BaseRequest<ContentDTO> contentEntity, long userId) {
         ContentDTO contentDTO = contentEntity.getData();
-        ArticleDo articleDo = articleMapper.selectById(contentDTO.getArticleId());
+        ArticleDo articleDo = articleDao.selectById(contentDTO.getArticleId());
         checkArticleStatus(userId, articleDo);
         ContentDo contentDo = new ContentDo();
         Long uid = contentDTO.getUid();
@@ -130,7 +129,7 @@ public class ArticleServiceImpl implements ArticleService {
         }
         contentDo.setUid(uid).setUpdateTime(updateTime);
         contentDo.setContent(JSONUtil.toJsonStr(contentDTO.getContent()));
-        contentMapper.insertOrUpdate(contentDo);
+        contentDao.insertOrUpdate(contentDo);
 
         // 判断是否需要更新文档信息
         if (articleDo.getWordsNum() == 0 && contentDTO.getWordsNum() == 0) {
@@ -150,7 +149,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleDo.setLatestContentId(uid)
                 .setWordsNum(contentDTO.getWordsNum())
                 .setPublishStatus(0);
-        articleMapper.updateById(articleDo);
+        articleDao.updateById(articleDo);
         map.put(SysConstant.CONTENT_ID, uid);
         return map;
     }
@@ -169,7 +168,7 @@ public class ArticleServiceImpl implements ArticleService {
         } else {
             queryWrapper.orderByAsc(ArticleDo::getUid);
         }
-        List<ArticleDo> selectList = articleMapper.selectList(queryWrapper);
+        List<ArticleDo> selectList = articleDao.selectList(queryWrapper);
         if (!CollectionUtils.isEmpty(selectList)) {
             return selectList.stream().map(articleDo -> {
                 ArticleVO articleVO = new ArticleVO();
@@ -182,9 +181,9 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public ContentVO getContent(Long articleId, long userId) {
-        ArticleDo articleDo = articleMapper.selectById(articleId);
+        ArticleDo articleDo = articleDao.selectById(articleId);
         checkArticleStatus(userId, articleDo);
-        ContentDo contentDo = contentMapper.selectById(articleDo.getLatestContentId());
+        ContentDo contentDo = contentDao.selectById(articleDo.getLatestContentId());
         if (contentDo == null) {
             return null;
         }
@@ -195,14 +194,14 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public void updateArticleTop(BaseRequest<ArticleDTO> requestDto, long userId) {
         ArticleDTO articleDTO = requestDto.getData();
-        ArticleDo articleDo = articleMapper.selectById(articleDTO.getUid());
+        ArticleDo articleDo = articleDao.selectById(articleDTO.getUid());
         checkArticleStatus(userId, articleDo);
-        articleMapper.updateArticleTop(articleDTO.getUid());
+        articleDao.updateArticleTop(articleDTO.getUid());
     }
 
     @Override
     public void publishArticle(Long articleId, long userId) {
-        ArticleDo articleDo = articleMapper.selectById(articleId);
+        ArticleDo articleDo = articleDao.selectById(articleId);
         checkArticleStatus(userId, articleDo);
         // 如果是私有状态则发布失败
         if (articleDo.getIsPublic() != null && articleDo.getIsPublic() == 0) {
@@ -215,12 +214,12 @@ public class ArticleServiceImpl implements ArticleService {
         }
         articleDo.setPublishStatus(1);
         // TODO 发消息进行文章内容审核
-        articleMapper.updateById(articleDo);
+        articleDao.updateById(articleDo);
     }
 
     @Override
     public void deleteArticle(Long articleId, long userId) {
-        ArticleDo articleDo = articleMapper.selectById(articleId);
+        ArticleDo articleDo = articleDao.selectById(articleId);
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
@@ -228,7 +227,7 @@ public class ArticleServiceImpl implements ArticleService {
             throw new ServiceException(GlobalErrorCodes.LOCKED);
         }
         articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
-        articleMapper.updateById(articleDo);
+        articleDao.updateById(articleDo);
     }
 
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {

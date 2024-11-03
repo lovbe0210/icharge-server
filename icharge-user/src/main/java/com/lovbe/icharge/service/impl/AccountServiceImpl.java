@@ -6,7 +6,7 @@ import com.lovbe.icharge.common.enums.LoginLogTypeEnum;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
-import com.lovbe.icharge.mapper.AccountMapper;
+import com.lovbe.icharge.dao.AccountMapper;
 import com.lovbe.icharge.service.AccountService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;

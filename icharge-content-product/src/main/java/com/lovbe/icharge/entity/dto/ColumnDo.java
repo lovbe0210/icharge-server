@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @TableName(value = "c_column")
 @Data
+@NoArgsConstructor
 @Accessors(chain = true)
 public class ColumnDo extends BaseEntity {
     /**
@@ -39,7 +41,7 @@ public class ColumnDo extends BaseEntity {
     /**
      * 目录内容id
      */
-    private String dirContentId;
+    private Long dirContentId;
     /**
      * 是否公开访问 0否1是
      */
@@ -52,4 +54,9 @@ public class ColumnDo extends BaseEntity {
      * 是否自动发布 0否1是 需要在公开访问时才能发布
      */
     private int autoPublish;
+    /**
+     * 文章列表
+     */
+    @TableField(exist = false)
+    private List<ArticleDo> articleList;
 }

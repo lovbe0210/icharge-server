@@ -1,7 +1,10 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.base.BaseEntity;
+import com.lovbe.icharge.entity.dto.ArticleDo;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210
@@ -42,4 +45,8 @@ public class ColumnVo extends BaseEntity {
      * 是否自动发布 0否1是 需要在公开访问时才能发布
      */
     private int autoPublish;
+    /**
+     * 文章列表
+     */
+    private List<ArticleDo> articleList;
 }

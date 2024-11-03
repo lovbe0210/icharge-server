@@ -1,4 +1,4 @@
-package com.lovbe.icharge.mapper;
+package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.entity.dto.ArticleDo;
@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Update;
  * @createDate 2024/8/13 23:11
  */
 @Mapper
-public interface ArticleMapper extends BaseMapper<ArticleDo> {
+public interface ArticleDao extends BaseMapper<ArticleDo> {
     @Update(value = """
                     UPDATE c_article
                     SET sort = CASE WHEN sort IS NULL 

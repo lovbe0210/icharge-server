@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.ColumnDao">
+
+    <!-- 获取专栏列表 -->
+    <select id="selectList" resultMap="columnListMap">
+        SELECT
+            c.uid,
+            c.title,
+            c.synopsis,
+            c.cover_url,
+            c.dir_content_id,
+            c.is_public,
+            c.enable_comment,
+            c.auto_publish,
+            c.create_time,
+            c.update_time,
+            a.uid article_id,
+            a.title article_name,
+            a.update_time article_update_timer,
+            a.create_time article_create_timer
+        FROM `c_column` c
+        LEFT JOIN c_article a ON c.uid = a.column_id
+            AND a.`status` = 'A'
+        WHERE
+            c.user_id = #{userId}
+          AND c.`status` = 'A'
+        ORDER BY
+            c.update_time DESC,
+            a.update_time DESC
+    </select>
+
+    <resultMap id="columnListMap" type="com.lovbe.icharge.entity.dto.ColumnDo" autoMapping="false">
+        <id column="uid" property="uid"/>
+        <result column="title" property="title" javaType="java.lang.String"/>
+        <result column="user_id" property="userId"/>
+        <result column="synopsis" property="synopsis"/>
+        <result column="cover_url" property="coverUrl"/>
+        <result column="dir_content_id" property="dirContentId"/>
+        <result column="title" property="isPublic"/>
+        <result column="title" property="enableComment"/>
+        <result column="title" property="autoPublish"/>
+        <collection property="articleList" column="article_id" ofType="com.lovbe.icharge.entity.dto.ArticleDo">
+            <id column="article_id" property="uid"/>
+            <result column="article_name" property="title"/>
+            <result column="article_update_timer" property="updateTime"/>
+            <result column="article_create_timer" property="createTime"/>
+        </collection>
+    </resultMap>
+</mapper>

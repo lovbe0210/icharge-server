@@ -1,7 +1,7 @@
-package com.lovbe.icharge.mapper;
+package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.lovbe.icharge.common.model.dto.VCodeTemplateDO;
+import com.lovbe.icharge.common.model.dto.AccountDo;
 import org.apache.ibatis.annotations.Mapper;
 
 
@@ -12,6 +12,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @createDate 2024/8/13 23:11
  */
 @Mapper
-public interface SimpleCodeMapper extends BaseMapper<VCodeTemplateDO> {
+public interface AccountMapper extends BaseMapper<AccountDo> {
 
 }

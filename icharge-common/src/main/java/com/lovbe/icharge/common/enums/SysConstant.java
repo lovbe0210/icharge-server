@@ -31,4 +31,6 @@ public class SysConstant {
     public static final String FILE_SCENE_COVER = "cover";
     public static final String UPDATE_TIME = "updateTime";
     public static final String CONTENT_ID = "contentId";
+
+    public static final long SIZE_10MB = 10 * 1024 * 1024;
 }

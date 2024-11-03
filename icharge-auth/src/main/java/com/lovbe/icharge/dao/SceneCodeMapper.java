@@ -1,4 +1,4 @@
-package com.lovbe.icharge.mapper;
+package com.lovbe.icharge.dao;
 
 /**
  * @Author: Administrator

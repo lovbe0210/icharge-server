@@ -1,7 +1,6 @@
-package com.lovbe.icharge.mapper;
+package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.lovbe.icharge.entity.dto.ColumnDo;
 import com.lovbe.icharge.entity.dto.ContentDo;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -13,6 +12,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @createDate 2024/8/13 23:11
  */
 @Mapper
-public interface ContentMapper extends BaseMapper<ContentDo> {
+public interface ContentDao extends BaseMapper<ContentDo> {
 
 }

@@ -3,13 +3,11 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
-import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.ResponseBean;
@@ -23,7 +21,7 @@ import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.dto.UpdateUserDTO;
-import com.lovbe.icharge.mapper.UserMapper;
+import com.lovbe.icharge.dao.UserMapper;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
@@ -32,13 +30,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**

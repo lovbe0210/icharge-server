@@ -2,6 +2,7 @@ package com.lovbe.icharge.entity.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
@@ -20,7 +21,13 @@ public class ColumnDTO {
      * 文章标题
      */
     @Length(max = 30, message = "专栏标题不得超过30字")
+    @NotBlank(message = "专栏标题不得为空")
     private String title;
+    /**
+     * 专栏简介
+     */
+    @Length(max = 255, message = "专栏简介不得超过255字")
+    private String synopsis;
     /**
      * 封面地址
      */
@@ -34,5 +41,17 @@ public class ColumnDTO {
      */
     @Min(value = 0, message = "文档访问权限状态错误")
     @Max(value = 1, message = "文档访问权限状态错误")
-    private int isPublic;
+    private Integer isPublic;
+    /**
+     * 是否开启评论功能 0否1是
+     */
+    @Min(value = 0, message = "评论功能状态错误")
+    @Max(value = 1, message = "评论功能状态错误")
+    private Integer enableComment;
+    /**
+     * 是否自动发布 0否1是 需要在公开访问时才能发布
+     */
+    @Min(value = 0, message = "自动发布状态错误")
+    @Max(value = 1, message = "自动发布状态错误")
+    private Integer autoPublish;
 }

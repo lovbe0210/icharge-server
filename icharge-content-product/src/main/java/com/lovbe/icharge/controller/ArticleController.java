@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
@@ -66,7 +67,7 @@ public class ArticleController {
     public ResponseBean<ArticleVO> updateArticle(@Validated ArticleDTO articleDTO,
                                                  @RequestHeader("userId") long userId) {
         MultipartFile coverFile = articleDTO.getCoverFile();
-        if (coverFile != null && coverFile.getSize() > 10 * 1024 * 1024) {
+        if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_10MB) {
             throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
         }
         articleService.updateArticle(false, articleDTO, userId);

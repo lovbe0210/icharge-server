@@ -1,7 +1,10 @@
 package com.lovbe.icharge.service;
 
+import com.lovbe.icharge.entity.dto.ColumnDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210
@@ -27,4 +30,22 @@ public interface ColumnService {
      * @date 2024/10/29 23:26
      */
     ColumnVo getColumnForEdit(Long columnId, long userId);
+
+    /**
+     * @description 专栏内容编辑
+     * @param[1] columnDTO
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/11/3 17:08
+     */
+    void updateColumn(ColumnDTO columnDTO, long userId);
+
+    /**
+     * @description 获取专栏列表
+     * @param[1] userId
+     * @return List<ColumnVo>
+     * @author lovbe0210
+     * @date 2024/11/3 18:11
+     */
+    List<ColumnVo> getColumnList(long userId);
 }
