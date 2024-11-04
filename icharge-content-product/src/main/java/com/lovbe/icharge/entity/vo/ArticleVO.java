@@ -21,6 +21,10 @@ public class ArticleVO extends BaseEntity {
      */
     private String title;
     /**
+     * 展示路径
+     */
+    private String uri;
+    /**
      * 最新内容版本id
      */
     private String latestContentId;

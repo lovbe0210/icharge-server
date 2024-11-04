@@ -18,6 +18,10 @@ public class ColumnVo extends BaseEntity {
      */
     private String title;
     /**
+     * 展示路径
+     */
+    private String uri;
+    /**
      * 专栏简介
      */
     private String synopsis;

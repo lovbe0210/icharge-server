@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -10,6 +11,8 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
+import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.entity.dto.ArticleDo;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
@@ -19,7 +22,10 @@ import com.lovbe.icharge.entity.vo.ColumnVo;
 import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -39,12 +45,15 @@ public class ColumnServiceImpl implements ColumnService {
     private ColumnDao columnDao;
     @Resource
     private StorageService storageService;
+    @Autowired
+    private ArticleDao articleDao;
 
     @Override
     public ColumnVo createColumn(CreateColumnDTO data, long userId) {
         ColumnDo columnDo = new ColumnDo();
         columnDo.setUid(YitIdHelper.nextId());
-        columnDo.setTitle(data.getTitle())
+        columnDo.setUri(CommonUtils.getBeautifulId())
+                .setTitle(data.getTitle())
                 .setSynopsis(data.getSynopsis())
                 .setIsPublic(data.getIsPublic())
                 .setUserId(userId);
@@ -60,6 +69,11 @@ public class ColumnServiceImpl implements ColumnService {
         checkColumnStatus(userId, columnDo);
         ColumnVo columnVo = new ColumnVo();
         BeanUtil.copyProperties(columnDo, columnVo);
+        // 获取专栏内的文章
+        List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getColumnId, columnId)
+                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        columnVo.setArticleList(selectedList);
         return columnVo;
     }
 
@@ -98,6 +112,14 @@ public class ColumnServiceImpl implements ColumnService {
             BeanUtil.copyProperties(column, columnVo);
             return columnVo;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteColumnInfo(ColumnDTO columnDTO, long userId) {
+        ColumnDo columnDo = columnDao.selectById(columnDTO.getUid());
+        checkColumnStatus(userId, columnDo);
+        columnDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        columnDao.updateById(columnDo);
     }
 
     private static void checkColumnStatus(long userId, ColumnDo columnDo) {

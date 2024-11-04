@@ -3,6 +3,8 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -48,4 +50,13 @@ public interface ColumnService {
      * @date 2024/11/3 18:11
      */
     List<ColumnVo> getColumnList(long userId);
+
+    /**
+     * @description 删除专栏
+     * @param[1] columnRequest
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/11/5 1:08
+     */
+    void deleteColumnInfo(ColumnDTO columnDTO, long userId);
 }

@@ -7,6 +7,7 @@
         SELECT
             c.uid,
             c.title,
+            c.uri,
             c.synopsis,
             c.cover_url,
             c.dir_content_id,
@@ -30,16 +31,17 @@
             a.update_time DESC
     </select>
 
-    <resultMap id="columnListMap" type="com.lovbe.icharge.entity.dto.ColumnDo" autoMapping="false">
+    <resultMap id="columnListMap" type="com.lovbe.icharge.entity.dto.ColumnDo">
         <id column="uid" property="uid"/>
-        <result column="title" property="title" javaType="java.lang.String"/>
+        <result column="title" property="title"/>
+        <result column="uri" property="uri"/>
         <result column="user_id" property="userId"/>
         <result column="synopsis" property="synopsis"/>
         <result column="cover_url" property="coverUrl"/>
         <result column="dir_content_id" property="dirContentId"/>
-        <result column="title" property="isPublic"/>
-        <result column="title" property="enableComment"/>
-        <result column="title" property="autoPublish"/>
+        <result column="is_public" property="isPublic"/>
+        <result column="enable_comment" property="enableComment"/>
+        <result column="auto_publish" property="autoPublish"/>
         <collection property="articleList" column="article_id" ofType="com.lovbe.icharge.entity.dto.ArticleDo">
             <id column="article_id" property="uid"/>
             <result column="article_name" property="title"/>

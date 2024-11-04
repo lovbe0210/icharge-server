@@ -1,6 +1,8 @@
 package com.lovbe.icharge.entity.dto;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.model.base.BaseEntity;
@@ -26,6 +28,10 @@ public class ColumnDo extends BaseEntity {
      * 专栏标题
      */
     private String title;
+    /**
+     * 展示路径
+     */
+    private String uri;
     /**
      * 所属用户id
      */

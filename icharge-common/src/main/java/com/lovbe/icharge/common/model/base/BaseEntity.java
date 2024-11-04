@@ -24,7 +24,6 @@ public class BaseEntity<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-
     /**
      * 主键 避免超出长度 前端丢失精度
      */

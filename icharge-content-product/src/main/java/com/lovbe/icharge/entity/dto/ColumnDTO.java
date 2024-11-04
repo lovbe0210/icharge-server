@@ -21,7 +21,6 @@ public class ColumnDTO {
      * 文章标题
      */
     @Length(max = 30, message = "专栏标题不得超过30字")
-    @NotBlank(message = "专栏标题不得为空")
     private String title;
     /**
      * 专栏简介

@@ -14,6 +14,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -58,7 +59,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleDo.setUid(YitIdHelper.nextId())
                 .setCreateTime(new Date())
                 .setUpdateTime(new Date());
-        articleDo.setUserId(userId).setTitle("无标题文档");
+        articleDo.setUserId(userId).setTitle("无标题文档").setUri(CommonUtils.getBeautifulId());
         articleDao.insertOrUpdate(articleDo);
         ArticleVO articleVO = new ArticleVO();
         BeanUtil.copyProperties(articleDo, articleVO);

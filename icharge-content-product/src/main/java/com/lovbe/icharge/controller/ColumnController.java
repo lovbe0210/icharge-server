@@ -59,6 +59,21 @@ public class ColumnController {
     }
 
     /**
+     * description: 专栏删除
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param columnRequest
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/column/delete")
+    public ResponseBean<ArticleVO> deleteColumnInfo(@RequestBody @Valid BaseRequest<ColumnDTO> columnRequest,
+                                                    @RequestHeader("userId") long userId) {
+        columnService.deleteColumnInfo(columnRequest.getData(), userId);
+        return ResponseBean.ok();
+    }
+
+    /**
      * description: 获取专栏信息
      * @author: Lvhl
      * @date: 2024/9/16 11:56
