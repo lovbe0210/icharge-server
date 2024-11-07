@@ -97,7 +97,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/content/{articleId}")
+    @PostMapping("/article/content/{articleId}")
     public ResponseBean<ArticleVO> getContent(@PathVariable("articleId") Long articleId,
                                               @RequestHeader("userId") long userId) {
         ContentVO content = articleService.getContent(articleId, userId);
@@ -112,7 +112,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/content")
+    @PostMapping("/article/updateContent")
     public ResponseBean<ArticleVO> updateContent(@RequestBody @Valid BaseRequest<ContentDTO> contentEntity,
                                                  @RequestHeader("userId") long userId) {
         Map content = articleService.updateContent(contentEntity, userId);

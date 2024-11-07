@@ -1,5 +1,7 @@
 package com.lovbe.icharge.service;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
 import com.lovbe.icharge.entity.vo.ColumnVo;
@@ -59,4 +61,23 @@ public interface ColumnService {
      * @date 2024/11/5 1:08
      */
     void deleteColumnInfo(ColumnDTO columnDTO, long userId);
+
+    /**
+     * @description 获取专栏目录
+     * @param[1] columnId
+     * @param[2] userId
+     * @return JSONObject
+     * @author lovbe0210
+     * @date 2024/11/7 23:51
+     */
+    JSONArray getColumnDir(Long columnId, long userId);
+
+    /**
+     * @description 专栏目录更新
+     * @param[1] columnDTO
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/11/7 23:53
+     */
+    void updateColumnDir(ColumnDTO columnDTO, long userId);
 }

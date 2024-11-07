@@ -1,5 +1,7 @@
 package com.lovbe.icharge.controller;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
@@ -89,6 +91,21 @@ public class ColumnController {
         return ResponseBean.ok(columnVo);
     }
 
+    /**
+     * description: 获取专栏目录
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param columnId
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/column/dir/{columnId}")
+    public ResponseBean<ArticleVO> getColumnDir(@PathVariable("columnId") Long columnId,
+                                                @RequestHeader("userId") long userId) {
+        JSONArray columnDir = columnService.getColumnDir(columnId, userId);
+        return ResponseBean.ok(columnDir);
+    }
+
 
     /**
      * description: 编辑专栏信息
@@ -106,6 +123,21 @@ public class ColumnController {
             throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
         }
         columnService.updateColumn(columnDTO, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 专栏目录更新
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param columnDTO
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PutMapping("/column/updateDir")
+    public ResponseBean<ArticleVO> updateColumnDir(@Validated ColumnDTO columnDTO,
+                                                   @RequestHeader("userId") long userId) {
+        columnService.updateColumnDir(columnDTO, userId);
         return ResponseBean.ok();
     }
 }

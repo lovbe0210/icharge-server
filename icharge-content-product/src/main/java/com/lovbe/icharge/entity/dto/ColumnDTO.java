@@ -36,6 +36,11 @@ public class ColumnDTO {
      */
     private MultipartFile coverFile;
     /**
+     * 专栏目录json数据
+     */
+    private Long dirContentId;
+    private String dirContent;
+    /**
      * 是否公开访问 0否1是
      */
     @Min(value = 0, message = "文档访问权限状态错误")
