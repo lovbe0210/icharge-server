@@ -2,7 +2,6 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -13,6 +12,7 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.util.CommonUtils;
@@ -20,14 +20,13 @@ import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -142,16 +141,15 @@ public class ColumnServiceImpl implements ColumnService {
                 if (CollectionUtils.isEmpty(parseArray) && CollectionUtils.isEmpty(articleList)) {
                     return new JSONArray();
                 }
+                JSONArray finalParseArray = parseArray;
                 if (CollectionUtils.isEmpty(parseArray) && !CollectionUtils.isEmpty(articleList)) {
-                    parseArray = new JSONArray();
-                    JSONArray finalParseArray = parseArray;
                     articleList.forEach(article -> {
                         JSONObject entries = new JSONObject();
-                        entries.set("id", article.getUid())
-                               .set("type", 1)
-                               .set("title", article.getTitle())
-                               .set("createTime", article.getCreateTime())
-                               .set("updateTime", article.getUpdateTime());
+                        entries.set("uid", article.getUid())
+                                .set("type", 1)
+                                .set("title", article.getTitle())
+                                .set("createTime", article.getCreateTime())
+                                .set("updateTime", article.getUpdateTime());
                         finalParseArray.add(entries);
                     });
                     contentDo.setContent(JSONUtil.toJsonStr(finalParseArray));
@@ -161,8 +159,24 @@ public class ColumnServiceImpl implements ColumnService {
                 Iterator<Object> iterator = parseArray.iterator();
                 while (iterator.hasNext()) {
                     Object node = iterator.next();
-                    checkNodeInfo ((JSONObject) node, iterator, articleMap);
+                    checkNodeInfo((JSONObject) node, iterator, articleMap);
                 }
+                // 判断是否还有新建的文章没有添加到目录中去
+                if (articleMap.size() > 0) {
+                    articleMap.values().stream()
+                            .sorted((o1, o2) -> o1.getUpdateTime().compareTo(o2.getUpdateTime()))
+                            .peek(article -> {
+                                JSONObject entries = new JSONObject();
+                                entries.set("uid", article.getUid())
+                                        .set("type", 1)
+                                        .set("title", article.getTitle())
+                                        .set("createTime", article.getCreateTime())
+                                        .set("updateTime", article.getUpdateTime());
+                                finalParseArray.add(0, entries);
+                            })
+                            .collect(Collectors.toList());
+                }
+
                 // 更新目录到数据库
                 contentDo.setContent(JSONUtil.toJsonStr(parseArray));
                 contentDao.updateById(contentDo);
@@ -174,20 +188,21 @@ public class ColumnServiceImpl implements ColumnService {
         return new JSONArray();
     }
 
-    public void checkNodeInfo (JSONObject node, Iterator<Object> iterator, Map<Long, ArticleDo> articleMap) {
+    public void checkNodeInfo(JSONObject node, Iterator<Object> iterator, Map<Long, ArticleDo> articleMap) {
         if (node.getInt("type") == 1) {
             // 文章节点
-            Long id = node.getLong("id");
-            ArticleDo articleDo = articleMap.get(id);
+            Long uid = node.getLong("uid");
+            ArticleDo articleDo = articleMap.get(uid);
             if (articleDo == null) {
                 // 文章已被删除或封禁
                 iterator.remove();
-            }else {
+            } else {
                 node.set("title", articleDo.getTitle())
-                    .set("createTime", articleDo.getCreateTime())
-                    .set("updateTime", articleDo.getUpdateTime());
+                        .set("createTime", articleDo.getCreateTime())
+                        .set("updateTime", articleDo.getUpdateTime());
+                articleMap.remove(uid);
             }
-        }else if (node.getInt("type") == 2){
+        } else if (node.getInt("type") == 2) {
             JSONArray children = node.getJSONArray("children");
             if (CollectionUtils.isEmpty(children)) {
                 return;
@@ -195,7 +210,7 @@ public class ColumnServiceImpl implements ColumnService {
             Iterator<Object> childrenIterator = children.iterator();
             while (childrenIterator.hasNext()) {
                 Object child = childrenIterator.next();
-                checkNodeInfo ((JSONObject) child, childrenIterator, articleMap);
+                checkNodeInfo((JSONObject) child, childrenIterator, articleMap);
             }
         }
     }
@@ -219,6 +234,48 @@ public class ColumnServiceImpl implements ColumnService {
         // 更新专栏信息
         columnDo.setDirContentId(dirContentId);
         columnDao.updateById(columnDo);
+    }
+
+    @Override
+    public void batchOperate(BaseRequest<ColumnOperateDTO> columnRequest, long userId) {
+        ColumnOperateDTO data = columnRequest.getData();
+        List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                .in(ArticleDo::getUid, data.getArticleList()));
+        // 文章状态校验
+        selectedList = selectedList.stream()
+                .filter(articleDo -> Objects.equals(articleDo.getUserId(), userId)
+                        && CommonStatusEnum.isNormal(articleDo.getStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(selectedList)) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
+        }
+        // 批量发布
+        if (SysConstant.ARTICLE_BATCH_PUBLISH.equals(data.getOperateType())) {
+            ColumnDo columnDo = columnDao.selectById(data.getColumnId());
+            if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
+                throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_EXIST);
+            }
+            if (columnDo.getIsPublic() == 0) {
+                throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED);
+            }
+            List<ArticleDo> collect = selectedList.stream()
+                    .filter(articleDo -> CommonStatusEnum.isNormal(articleDo.getStatus()) && articleDo.getPublishStatus() != 3)
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(collect)) {
+                articleDao.batchUpdate(collect, data.getColumnId(), data.getOperateType());
+            }
+            return;
+        }
+        // 批量移出专栏/删除文章
+        if (SysConstant.ARTICLE_BATCH_REMOVE.equals(data.getOperateType()) ||
+                SysConstant.ARTICLE_BATCH_DELETE.equals(data.getOperateType())) {
+            articleDao.batchUpdate(selectedList, data.getColumnId(), data.getOperateType());
+            return;
+        }
+        // 批量导出文章
+        if (SysConstant.ARTICLE_BATCH_EXPORT.equals(data.getOperateType())) {
+            //TODO 导出
+        }
     }
 
     private static void checkColumnStatus(long userId, ColumnDo columnDo) {

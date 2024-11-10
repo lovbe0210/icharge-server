@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.ArticleDao">
+
+    <!-- 批量操作 -->
+    <update id="batchUpdate">
+        UPDATE c_article SET
+        <if test="operateType == 1">
+            publish_status = 1
+        </if>
+        <if test="operateType == 2">
+            column_id = NULL
+        </if>
+        <if test="operateType == 3">
+            column_id = #{columnId}
+        </if>
+        <if test="operateType == 4">
+            status = 'D'
+        </if>
+        WHERE uid IN
+        <foreach collection="articleList" item="article" open="(" close=")" separator=",">
+            #{article.uid}
+        </foreach>
+    </update>
+</mapper>

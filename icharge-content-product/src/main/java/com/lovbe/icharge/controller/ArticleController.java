@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
+import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ContentVO;
@@ -39,7 +40,7 @@ public class ArticleController {
      */
     @PostMapping("/createBlankDoc")
     public ResponseBean<ArticleVO> createBlankDoc(@RequestHeader("userId") long userId) {
-        return ResponseBean.ok(articleService.createBlankDoc(userId));
+        return ResponseBean.ok(articleService.createBlankDoc(null, userId));
     }
 
     /**
@@ -146,6 +147,21 @@ public class ArticleController {
     public ResponseBean<ArticleVO> updateArticleTop(@RequestBody @Valid BaseRequest<ArticleDTO> requestDto,
                                                     @RequestHeader("userId") long userId) {
         articleService.updateArticleTop(requestDto, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 文章批量操作
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param requestDto
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/article/batchOperate")
+    public ResponseBean<ArticleVO> articleBatchOperate(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
+                                                    @RequestHeader("userId") long userId) {
+        articleService.articleBatchOperate(requestDto, userId);
         return ResponseBean.ok();
     }
 

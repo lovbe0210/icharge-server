@@ -2,8 +2,11 @@ package com.lovbe.icharge.service;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
+import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
+import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ColumnVo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -80,4 +83,15 @@ public interface ColumnService {
      * @date 2024/11/7 23:53
      */
     void updateColumnDir(ColumnDTO columnDTO, long userId);
+
+    /**
+     * @description 专栏文章批量操作
+     * @param[1] columnRequest
+     * @param[2] userId
+     * @return int 操作成功数
+     * @author lovbe0210
+     * @date 2024/11/9 1:19
+     */
+    void batchOperate(BaseRequest<ColumnOperateDTO> columnRequest, long userId);
+
 }

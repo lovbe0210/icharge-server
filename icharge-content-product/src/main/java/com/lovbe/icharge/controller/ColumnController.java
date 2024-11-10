@@ -8,9 +8,11 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
+import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -30,6 +32,8 @@ public class ColumnController {
 
     @Resource
     private ColumnService columnService;
+    @Resource
+    private ArticleService articleService;
 
     /**
      * description: 获取专栏列表
@@ -61,6 +65,21 @@ public class ColumnController {
     }
 
     /**
+     * description: 专栏新建文章
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param request
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/column/createArticle")
+    public ResponseBean<ArticleVO> createArticle(@RequestBody @Valid BaseRequest<ColumnDTO> request,
+                                                 @RequestHeader("userId") long userId) {
+        ArticleVO article = articleService.createBlankDoc(request.getData().getUid(), userId);
+        return ResponseBean.ok(article);
+    }
+
+    /**
      * description: 专栏删除
      * @author: Lvhl
      * @date: 2024/9/16 11:56
@@ -83,7 +102,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/column/{columnId}")
+    @GetMapping("/column/{columnId}")
     public ResponseBean<ColumnVo> getColumnForEdit(@PathVariable("columnId") Long columnId,
                                                    @RequestHeader("userId") long userId) {
 
@@ -99,7 +118,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/column/dir/{columnId}")
+    @GetMapping("/column/dir/{columnId}")
     public ResponseBean<ArticleVO> getColumnDir(@PathVariable("columnId") Long columnId,
                                                 @RequestHeader("userId") long userId) {
         JSONArray columnDir = columnService.getColumnDir(columnId, userId);
@@ -130,14 +149,29 @@ public class ColumnController {
      * description: 专栏目录更新
      * @author: Lvhl
      * @date: 2024/9/16 11:56
-     * @param columnDTO
+     * @param request
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PutMapping("/column/updateDir")
-    public ResponseBean<ArticleVO> updateColumnDir(@Validated ColumnDTO columnDTO,
+    @PostMapping("/column/dir/update")
+    public ResponseBean<ArticleVO> updateColumnDir(@RequestBody @Valid BaseRequest<ColumnDTO> request,
                                                    @RequestHeader("userId") long userId) {
-        columnService.updateColumnDir(columnDTO, userId);
+        columnService.updateColumnDir(request.getData(), userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 专栏内容批量操作
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param columnRequest
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/column/batchOperate")
+    public ResponseBean<ArticleVO> batchOperate(@RequestBody @Valid BaseRequest<ColumnOperateDTO> columnRequest,
+                                                @RequestHeader("userId") long userId) {
+        columnService.batchOperate(columnRequest, userId);
         return ResponseBean.ok();
     }
 }

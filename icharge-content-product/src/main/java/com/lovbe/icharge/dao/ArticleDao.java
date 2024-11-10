@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 
 /**
  * 文档相关mapper
@@ -15,6 +17,12 @@ import org.apache.ibatis.annotations.Update;
  */
 @Mapper
 public interface ArticleDao extends BaseMapper<ArticleDo> {
+    /**
+     * @description 文章置顶
+     * @param[1] uid
+     * @author lovbe0210
+     * @date 2024/11/9 16:28
+     */
     @Update(value = """
                     UPDATE c_article
                     SET sort = CASE WHEN sort IS NULL 
@@ -25,4 +33,14 @@ public interface ArticleDao extends BaseMapper<ArticleDo> {
                     WHERE uid = #{uid};
                     """)
     void updateArticleTop(@Param("uid") Long uid);
+
+    /**
+     * @description 批量操作
+     * @param[1] collect
+     * @author lovbe0210
+     * @date 2024/11/9 16:28
+     */
+    void batchUpdate(@Param("articleList") List<ArticleDo> collect,
+                     @Param("columnId") Long columnId,
+                     @Param("operateType") String operateType);
 }

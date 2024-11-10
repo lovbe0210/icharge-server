@@ -24,16 +24,15 @@ import com.lovbe.icharge.entity.vo.ContentVO;
 import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -50,16 +49,19 @@ public class ArticleServiceImpl implements ArticleService {
     private ContentDao contentDao;
     @Resource
     private StorageService storageService;
-    @Autowired
+    @Resource
     private ColumnDao columnDao;
 
     @Override
-    public ArticleVO createBlankDoc(long userId) {
+    public ArticleVO createBlankDoc(Long columnId, long userId) {
         ArticleDo articleDo = new ArticleDo();
         articleDo.setUid(YitIdHelper.nextId())
                 .setCreateTime(new Date())
                 .setUpdateTime(new Date());
-        articleDo.setUserId(userId).setTitle("无标题文档").setUri(CommonUtils.getBeautifulId());
+        articleDo.setUserId(userId)
+                .setTitle("无标题文档")
+                .setColumnId(columnId)
+                .setUri(CommonUtils.getBeautifulId());
         articleDao.insertOrUpdate(articleDo);
         ArticleVO articleVO = new ArticleVO();
         BeanUtil.copyProperties(articleDo, articleVO);
@@ -85,7 +87,7 @@ public class ArticleServiceImpl implements ArticleService {
         ColumnDo columnDo = columnDao.selectById(articleDo.getColumnId());
         if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
             articleVO.setColumnId(null);
-        }else {
+        } else {
             articleVO.setColumnName(columnDo.getTitle());
         }
         return articleVO;
@@ -161,6 +163,7 @@ public class ArticleServiceImpl implements ArticleService {
         LambdaQueryWrapper<ArticleDo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ArticleDo::getUserId, userId)
                 .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .isNull(ArticleDo::getColumnId)
                 .like(data != null && StringUtils.hasLength(data.getKeywords()), ArticleDo::getTitle, data.getKeywords())
                 .orderByDesc(ArticleDo::getSort);
         if (data != null && data.getSort() != null) {
@@ -229,6 +232,34 @@ public class ArticleServiceImpl implements ArticleService {
         }
         articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
         articleDao.updateById(articleDo);
+    }
+
+    @Override
+    public void articleBatchOperate(BaseRequest<ArticleOperateDTO> requestDto, long userId) {
+        ArticleOperateDTO data = requestDto.getData();
+        if (SysConstant.ARTICLE_BATCH_MOVE.equals(data.getOperateType())) {
+            Assert.notNull(data.getColumnId(), "专栏id不得为空");
+        }
+        // 获取文章信息判断用于状态判断
+        List<ArticleDo> articleList = articleDao.selectBatchIds(data.getArticleList());
+        articleList = articleList.stream()
+                .filter(article -> CommonStatusEnum.isNormal(article.getStatus())
+                        && Objects.equals(article.getUserId(), userId))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(articleList)) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
+        }
+        if (SysConstant.ARTICLE_BATCH_PUBLISH.equals(data.getOperateType())) {
+            List<ArticleDo> collect = articleList.stream()
+                    .filter(article -> article.getIsPublic() != null && article.getIsPublic() == 1)
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(collect)) {
+                throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED);
+            }
+            articleDao.batchUpdate(collect, data.getColumnId(), data.getOperateType());
+            return;
+        }
+        articleDao.batchUpdate(articleList, data.getColumnId(), data.getOperateType());
     }
 
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {

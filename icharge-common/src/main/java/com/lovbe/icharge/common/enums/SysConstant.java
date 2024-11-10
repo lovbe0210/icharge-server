@@ -32,5 +32,26 @@ public class SysConstant {
     public static final String UPDATE_TIME = "updateTime";
     public static final String CONTENT_ID = "contentId";
 
+    /**
+     * 文章批量发布
+     */
+    public static final String ARTICLE_BATCH_PUBLISH = "1";
+    /**
+     * 文章批量移动出专栏
+     */
+    public static final String ARTICLE_BATCH_REMOVE = "2";
+    /**
+     * 文章批量移至专栏
+     */
+    public static final String ARTICLE_BATCH_MOVE = "3";
+    /**
+     * 文章批量导出
+     */
+    public static final String ARTICLE_BATCH_EXPORT = "4";
+    /**
+     * 文章批量删除
+     */
+    public static final String ARTICLE_BATCH_DELETE = "5";
+
     public static final long SIZE_10MB = 10 * 1024 * 1024;
 }

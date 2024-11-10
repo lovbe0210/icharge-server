@@ -3,9 +3,11 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
+import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.vo.ArticleVO;
 import com.lovbe.icharge.entity.vo.ContentVO;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -18,12 +20,13 @@ import java.util.Map;
 public interface ArticleService {
     /**
      * @description 创建空白文档
+     * @param[1] columnId
      * @param[1] userId
      * @return ArticleVO
      * @author lovbe0210
      * @date 2024/10/20 16:02
      */
-    ArticleVO createBlankDoc(long userId);
+    ArticleVO createBlankDoc(Long columnId, long userId);
 
     /**
      * @description 获取文档信息用于编辑
@@ -99,4 +102,6 @@ public interface ArticleService {
      * @date 2024/10/29 0:27
      */
     void deleteArticle(Long articleId, long userId);
+
+    void articleBatchOperate(BaseRequest<ArticleOperateDTO> requestDto, long userId);
 }
