@@ -94,4 +94,13 @@ public interface ColumnService {
      */
     void batchOperate(BaseRequest<ColumnOperateDTO> columnRequest, long userId);
 
+    /**
+     * @description 获取专栏文章
+     * @param[1] columnId
+     * @param[2] userId
+     * @return List<ArticleVO>
+     * @author lovbe0210
+     * @date 2024/11/12 23:25
+     */
+    List<ArticleVO> getColumnArticleList(Long columnId, long userId);
 }

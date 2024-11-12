@@ -278,6 +278,22 @@ public class ColumnServiceImpl implements ColumnService {
         }
     }
 
+    @Override
+    public List<ArticleVO> getColumnArticleList(Long columnId, long userId) {
+        List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getColumnId, columnId)
+                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .orderByDesc(ArticleDo::getUpdateTime));
+        if (CollectionUtils.isEmpty(selectedList)) {
+            return List.of();
+        }
+        return selectedList.stream().map(articleDo -> {
+            ArticleVO articleVO = new ArticleVO();
+            BeanUtil.copyProperties(articleDo, articleVO);
+            return articleVO;
+        }).collect(Collectors.toList());
+    }
+
     private static void checkColumnStatus(long userId, ColumnDo columnDo) {
         if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_EXIST);

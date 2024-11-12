@@ -125,6 +125,21 @@ public class ColumnController {
         return ResponseBean.ok(columnDir);
     }
 
+    /**
+     * description: 获取专栏文章
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param columnId
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @GetMapping("/column/article/{columnId}")
+    public ResponseBean<List<ArticleVO>> getColumnArticleList(@PathVariable("columnId") Long columnId,
+                                                @RequestHeader("userId") long userId) {
+        List<ArticleVO> articleList = columnService.getColumnArticleList(columnId, userId);
+        return ResponseBean.ok(articleList);
+    }
+
 
     /**
      * description: 编辑专栏信息
