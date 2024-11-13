@@ -104,4 +104,14 @@ public interface ArticleService {
     void deleteArticle(Long articleId, long userId);
 
     void articleBatchOperate(BaseRequest<ArticleOperateDTO> requestDto, long userId);
+
+    /**
+     * @description 专栏文章复制
+     * @param[1] data
+     * @param[2] userId
+     * @return Map<ArticleVO>
+     * @author lovbe0210
+     * @date 2024/11/13 23:23
+     */
+    Map<Long, ArticleVO> copyArticle(ArticleOperateDTO data, long userId);
 }

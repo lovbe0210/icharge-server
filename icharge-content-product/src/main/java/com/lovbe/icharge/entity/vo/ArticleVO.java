@@ -27,7 +27,7 @@ public class ArticleVO extends BaseEntity {
     /**
      * 最新内容版本id
      */
-    private String latestContentId;
+    private Long latestContentId;
     /**
      * 所属用户id
      */

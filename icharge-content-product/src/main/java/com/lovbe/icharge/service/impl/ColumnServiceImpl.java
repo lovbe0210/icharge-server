@@ -219,7 +219,7 @@ public class ColumnServiceImpl implements ColumnService {
     public void updateColumnDir(ColumnDTO columnDTO, long userId) {
         ColumnDo columnDo = columnDao.selectById(columnDTO.getUid());
         checkColumnStatus(userId, columnDo);
-        Long dirContentId = columnDTO.getDirContentId();
+        Long dirContentId = columnDo.getDirContentId();
         if (dirContentId == null) {
             dirContentId = YitIdHelper.nextId();
         }
@@ -232,6 +232,7 @@ public class ColumnServiceImpl implements ColumnService {
         contentDo.setContent(columnDTO.getDirContent());
         contentDao.insertOrUpdate(contentDo);
         // 更新专栏信息
+        columnDo.setUpdateTime(new Date());
         columnDo.setDirContentId(dirContentId);
         columnDao.updateById(columnDo);
     }

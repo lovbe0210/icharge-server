@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
 import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
@@ -16,11 +17,13 @@ import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe0210
@@ -80,6 +83,24 @@ public class ColumnController {
     }
 
     /**
+     * description: 专栏复制文章
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param requestDto
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/column/copyArticle")
+    public ResponseBean<ArticleVO> copyArticle(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
+                                               @RequestHeader("userId") long userId) {
+
+        ArticleOperateDTO data = requestDto.getData();
+        Assert.notNull(data.getColumnId(), "专栏id不得为空");
+        Map<Long, ArticleVO> copyArticle = articleService.copyArticle(data, userId);
+        return ResponseBean.ok(copyArticle);
+    }
+
+    /**
      * description: 专栏删除
      * @author: Lvhl
      * @date: 2024/9/16 11:56
@@ -133,7 +154,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @GetMapping("/column/article/{columnId}")
+    @GetMapping("/column/articleList/{columnId}")
     public ResponseBean<List<ArticleVO>> getColumnArticleList(@PathVariable("columnId") Long columnId,
                                                 @RequestHeader("userId") long userId) {
         List<ArticleVO> articleList = columnService.getColumnArticleList(columnId, userId);

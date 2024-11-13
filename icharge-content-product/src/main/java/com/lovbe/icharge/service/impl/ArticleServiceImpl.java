@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.hash.Hash;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -28,11 +29,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +46,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@EnableTransactionManagement
 public class ArticleServiceImpl implements ArticleService {
     @Resource
     private ArticleDao articleDao;
@@ -260,6 +265,84 @@ public class ArticleServiceImpl implements ArticleService {
             return;
         }
         articleDao.batchUpdate(articleList, data.getColumnId(), data.getOperateType());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<Long, ArticleVO> copyArticle(ArticleOperateDTO data, long userId) {
+        List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getColumnId, data.getColumnId())
+                .in(ArticleDo::getUid, data.getArticleList())
+                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .orderByDesc(ArticleDo::getUpdateTime));
+        if (CollectionUtils.isEmpty(selectedList)) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
+        }
+        Map<Long, ArticleVO> map = new HashMap<>();
+        Map<Long, Long> newContent = new HashMap<>(selectedList.size());
+        Date createTime = new Date();
+
+        // 复制新文章
+        selectedList.forEach(articleDo -> {
+            Long uid = articleDo.getUid();
+            articleDo.setUid(YitIdHelper.nextId())
+                    .setCreateTime(createTime)
+                    .setUpdateTime(createTime);
+            articleDo.setTitle(articleDo.getTitle() + " 副本")
+                    .setUri(CommonUtils.getBeautifulId())
+                    .setPublishStatus(0)
+                    .setPublishedContentId(null);
+            if (articleDo.getLatestContentId() != null) {
+                long newId = YitIdHelper.nextId();
+                newContent.put(articleDo.getLatestContentId(), newId);
+                articleDo.setLatestContentId(newId);
+            }
+            ArticleVO articleVO = new ArticleVO();
+            BeanUtil.copyProperties(articleDo, articleVO);
+            map.put(uid, articleVO);
+        });
+
+        // 如果内容为空，则直接保存文章返回结果
+        if (newContent.size() == 0) {
+            articleDao.insertOrUpdate(selectedList);
+            return map;
+        }
+
+        // 获取文章内容
+        List<ContentDo> contentDos = contentDao.selectList(new LambdaQueryWrapper<ContentDo>()
+                .in(ContentDo::getUid, newContent.keySet())
+                .eq(ContentDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        Map<Long, ContentDo> contentMap = contentDos.stream()
+                .collect(Collectors.toMap(ContentDo::getUid, Function.identity()));
+        HashSet<Long> newIds = new HashSet<>();
+        newContent.keySet().forEach(oldId -> {
+            ContentDo contentDo = contentMap.get(oldId);
+            if (contentDo != null) {
+                contentDo.setUid(newContent.get(oldId))
+                        .setCreateTime(createTime)
+                        .setUpdateTime(createTime);
+                newIds.add(newContent.get(oldId));
+            }
+        });
+
+        // contentId回填
+        selectedList.forEach(articleDo -> {
+            Long latestContentId = articleDo.getLatestContentId();
+            if (latestContentId != null && !newIds.contains(latestContentId)) {
+                articleDo.setLatestContentId(null);
+            }
+        });
+        map.values().forEach(articleVO -> {
+            Long latestContentId = articleVO.getLatestContentId();
+            if (latestContentId != null && !newIds.contains(latestContentId)) {
+                articleVO.setLatestContentId(null);
+            }
+        });
+
+        // 入库
+        articleDao.insertOrUpdate(selectedList);
+        contentDao.insertOrUpdate(contentDos, 20);
+        return map;
     }
 
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {
