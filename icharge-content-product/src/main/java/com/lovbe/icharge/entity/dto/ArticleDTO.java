@@ -56,8 +56,8 @@ public class ArticleDTO {
     /**
      * 是否公开访问 0否1是
      */
-    @Min(value = 0, message = "文档访问权限状态错误")
-    @Max(value = 1, message = "文档访问权限状态错误")
+    @Min(value = 0, message = "访问权限状态错误")
+    @Max(value = 1, message = "访问权限状态错误")
     private int isPublic;
     /**
      * 一级分类

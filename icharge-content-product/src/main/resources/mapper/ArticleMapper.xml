@@ -14,7 +14,7 @@
         <if test="operateType == 3">
             column_id = #{columnId}
         </if>
-        <if test="operateType == 4">
+        <if test="operateType == 5">
             status = 'D'
         </if>
         WHERE uid IN

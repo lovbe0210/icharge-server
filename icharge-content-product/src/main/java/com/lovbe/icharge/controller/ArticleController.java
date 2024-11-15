@@ -9,8 +9,8 @@ import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
-import com.lovbe.icharge.entity.vo.ArticleVO;
-import com.lovbe.icharge.entity.vo.ContentVO;
+import com.lovbe.icharge.entity.vo.ArticleVo;
+import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -39,7 +39,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/createBlankDoc")
-    public ResponseBean<ArticleVO> createBlankDoc(@RequestHeader("userId") long userId) {
+    public ResponseBean<ArticleVo> createBlankDoc(@RequestHeader("userId") long userId) {
         return ResponseBean.ok(articleService.createBlankDoc(null, userId));
     }
 
@@ -51,7 +51,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/{articleId}")
-    public ResponseBean<ArticleVO> getArticleForEdit(@PathVariable("articleId") String articleId,
+    public ResponseBean<ArticleVo> getArticleForEdit(@PathVariable("articleId") String articleId,
                                                      @RequestHeader("userId") long userId) {
         return ResponseBean.ok(articleService.getArticleForEdit(articleId, userId));
     }
@@ -65,7 +65,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PutMapping("/article/update")
-    public ResponseBean<ArticleVO> updateArticle(@Validated ArticleDTO articleDTO,
+    public ResponseBean<ArticleVo> updateArticle(@Validated ArticleDTO articleDTO,
                                                  @RequestHeader("userId") long userId) {
         MultipartFile coverFile = articleDTO.getCoverFile();
         if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_10MB) {
@@ -84,8 +84,8 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/simpleUpdate")
-    public ResponseBean<ArticleVO> simpleUpdateArticle(@RequestBody @Valid BaseRequest<ArticleDTO> baseRequest,
-                                                 @RequestHeader("userId") long userId) {
+    public ResponseBean<ArticleVo> simpleUpdateArticle(@RequestBody @Valid BaseRequest<ArticleDTO> baseRequest,
+                                                       @RequestHeader("userId") long userId) {
         articleService.updateArticle(true, baseRequest.getData(), userId);
         return ResponseBean.ok();
     }
@@ -99,9 +99,9 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/content/{articleId}")
-    public ResponseBean<ArticleVO> getContent(@PathVariable("articleId") Long articleId,
+    public ResponseBean<ArticleVo> getContent(@PathVariable("articleId") Long articleId,
                                               @RequestHeader("userId") long userId) {
-        ContentVO content = articleService.getContent(articleId, userId);
+        ContentVo content = articleService.getContent(articleId, userId);
         return ResponseBean.ok(content);
     }
 
@@ -114,7 +114,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/updateContent")
-    public ResponseBean<ArticleVO> updateContent(@RequestBody @Valid BaseRequest<ContentDTO> contentEntity,
+    public ResponseBean<ArticleVo> updateContent(@RequestBody @Valid BaseRequest<ContentDTO> contentEntity,
                                                  @RequestHeader("userId") long userId) {
         Map content = articleService.updateContent(contentEntity, userId);
         return ResponseBean.ok(content);
@@ -129,9 +129,9 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/articleList")
-    public ResponseBean<ArticleVO> getMyArticleList(@RequestBody @Valid BaseRequest<RequestListDTO> requestDto,
-                                                 @RequestHeader("userId") long userId) {
-        List<ArticleVO> articleList = articleService.getMyArticleList(requestDto, userId);
+    public ResponseBean<ArticleVo> getMyArticleList(@RequestBody @Valid BaseRequest<RequestListDTO> requestDto,
+                                                    @RequestHeader("userId") long userId) {
+        List<ArticleVo> articleList = articleService.getMyArticleList(requestDto, userId);
         return ResponseBean.ok(articleList);
     }
 
@@ -144,7 +144,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/setTop")
-    public ResponseBean<ArticleVO> updateArticleTop(@RequestBody @Valid BaseRequest<ArticleDTO> requestDto,
+    public ResponseBean<ArticleVo> updateArticleTop(@RequestBody @Valid BaseRequest<ArticleDTO> requestDto,
                                                     @RequestHeader("userId") long userId) {
         articleService.updateArticleTop(requestDto, userId);
         return ResponseBean.ok();
@@ -159,8 +159,8 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/batchOperate")
-    public ResponseBean<ArticleVO> articleBatchOperate(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
-                                                    @RequestHeader("userId") long userId) {
+    public ResponseBean<ArticleVo> articleBatchOperate(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
+                                                       @RequestHeader("userId") long userId) {
         articleService.articleBatchOperate(requestDto, userId);
         return ResponseBean.ok();
     }
@@ -174,7 +174,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/publish/{articleId}")
-    public ResponseBean<ArticleVO> publishArticle(@PathVariable("articleId") Long articleId,
+    public ResponseBean<ArticleVo> publishArticle(@PathVariable("articleId") Long articleId,
                                                   @RequestHeader("userId") long userId) {
         articleService.publishArticle(articleId, userId);
         return ResponseBean.ok();
@@ -189,8 +189,8 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/article/delete/{articleId}")
-    public ResponseBean<ArticleVO> deleteArticle(@PathVariable("articleId") Long articleId,
-                                                  @RequestHeader("userId") long userId) {
+    public ResponseBean<ArticleVo> deleteArticle(@PathVariable("articleId") Long articleId,
+                                                 @RequestHeader("userId") long userId) {
         articleService.deleteArticle(articleId, userId);
         return ResponseBean.ok();
     }

@@ -20,9 +20,8 @@ import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.entity.dto.*;
-import com.lovbe.icharge.entity.vo.ArticleVO;
+import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
-import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
@@ -280,7 +279,7 @@ public class ColumnServiceImpl implements ColumnService {
     }
 
     @Override
-    public List<ArticleVO> getColumnArticleList(Long columnId, long userId) {
+    public List<ArticleVo> getColumnArticleList(Long columnId, long userId) {
         List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
                 .eq(ArticleDo::getColumnId, columnId)
                 .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
@@ -289,7 +288,7 @@ public class ColumnServiceImpl implements ColumnService {
             return List.of();
         }
         return selectedList.stream().map(articleDo -> {
-            ArticleVO articleVO = new ArticleVO();
+            ArticleVo articleVO = new ArticleVo();
             BeanUtil.copyProperties(articleDo, articleVO);
             return articleVO;
         }).collect(Collectors.toList());

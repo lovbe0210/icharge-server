@@ -25,7 +25,7 @@ public class ColumnDTO {
     /**
      * 专栏简介
      */
-    @Length(max = 255, message = "专栏简介不得超过255字")
+    @Length(max = 150, message = "专栏简介不得超过150字")
     private String synopsis;
     /**
      * 封面地址
@@ -43,8 +43,8 @@ public class ColumnDTO {
     /**
      * 是否公开访问 0否1是
      */
-    @Min(value = 0, message = "文档访问权限状态错误")
-    @Max(value = 1, message = "文档访问权限状态错误")
+    @Min(value = 0, message = "访问权限状态错误")
+    @Max(value = 1, message = "访问权限状态错误")
     private Integer isPublic;
     /**
      * 是否开启评论功能 0否1是

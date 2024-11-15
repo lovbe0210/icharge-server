@@ -5,9 +5,8 @@ import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
-import com.lovbe.icharge.entity.vo.ArticleVO;
-import com.lovbe.icharge.entity.vo.ContentVO;
-import jakarta.validation.constraints.NotNull;
+import com.lovbe.icharge.entity.vo.ArticleVo;
+import com.lovbe.icharge.entity.vo.ContentVo;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,7 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/10/20 16:02
      */
-    ArticleVO createBlankDoc(Long columnId, long userId);
+    ArticleVo createBlankDoc(Long columnId, long userId);
 
     /**
      * @description 获取文档信息用于编辑
@@ -36,7 +35,7 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/10/20 16:02
      */
-    ArticleVO getArticleForEdit(String articleId, long userId);
+    ArticleVo getArticleForEdit(String articleId, long userId);
 
     /**
      * @description 更新文档信息
@@ -64,7 +63,7 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/10/21 22:00
      */
-    List<ArticleVO> getMyArticleList(BaseRequest<RequestListDTO> requestDto, long userId);
+    List<ArticleVo> getMyArticleList(BaseRequest<RequestListDTO> requestDto, long userId);
 
     /**
      * @description 获取文档内容
@@ -74,7 +73,7 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/10/24 17:39
      */
-    ContentVO getContent(Long articleId, long userId);
+    ContentVo getContent(Long articleId, long userId);
 
     /**
      * @description 文章置顶/取消置顶
@@ -113,5 +112,5 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/11/13 23:23
      */
-    Map<Long, ArticleVO> copyArticle(ArticleOperateDTO data, long userId);
+    Map<Long, ArticleVo> copyArticle(ArticleOperateDTO data, long userId);
 }

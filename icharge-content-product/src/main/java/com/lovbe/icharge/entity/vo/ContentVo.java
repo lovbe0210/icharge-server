@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ContentVO {
+public class ContentVo {
     /**
      * 内容id
      */

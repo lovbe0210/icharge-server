@@ -1,7 +1,6 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.hash.Hash;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,14 +19,12 @@ import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.entity.dto.*;
-import com.lovbe.icharge.entity.vo.ArticleVO;
-import com.lovbe.icharge.entity.vo.ContentVO;
+import com.lovbe.icharge.entity.vo.ArticleVo;
+import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +55,7 @@ public class ArticleServiceImpl implements ArticleService {
     private ColumnDao columnDao;
 
     @Override
-    public ArticleVO createBlankDoc(Long columnId, long userId) {
+    public ArticleVo createBlankDoc(Long columnId, long userId) {
         ArticleDo articleDo = new ArticleDo();
         articleDo.setUid(YitIdHelper.nextId())
                 .setCreateTime(new Date())
@@ -68,13 +65,13 @@ public class ArticleServiceImpl implements ArticleService {
                 .setColumnId(columnId)
                 .setUri(CommonUtils.getBeautifulId());
         articleDao.insertOrUpdate(articleDo);
-        ArticleVO articleVO = new ArticleVO();
+        ArticleVo articleVO = new ArticleVo();
         BeanUtil.copyProperties(articleDo, articleVO);
         return articleVO;
     }
 
     @Override
-    public ArticleVO getArticleForEdit(String articleId, long userId) {
+    public ArticleVo getArticleForEdit(String articleId, long userId) {
         ArticleDo articleDo = articleDao.selectOne(new LambdaQueryWrapper<ArticleDo>()
                 .eq(ArticleDo::getUid, articleId)
                 .eq(ArticleDo::getUserId, userId));
@@ -84,7 +81,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (CommonStatusEnum.isDisable(articleDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_STATUS_ERROR);
         }
-        ArticleVO articleVO = new ArticleVO();
+        ArticleVo articleVO = new ArticleVo();
         BeanUtil.copyProperties(articleDo, articleVO);
         if (articleDo.getColumnId() == null) {
             return articleVO;
@@ -163,7 +160,7 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public List<ArticleVO> getMyArticleList(BaseRequest<RequestListDTO> requestDto, long userId) {
+    public List<ArticleVo> getMyArticleList(BaseRequest<RequestListDTO> requestDto, long userId) {
         RequestListDTO data = requestDto.getData();
         LambdaQueryWrapper<ArticleDo> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ArticleDo::getUserId, userId)
@@ -180,7 +177,7 @@ public class ArticleServiceImpl implements ArticleService {
         List<ArticleDo> selectList = articleDao.selectList(queryWrapper);
         if (!CollectionUtils.isEmpty(selectList)) {
             return selectList.stream().map(articleDo -> {
-                ArticleVO articleVO = new ArticleVO();
+                ArticleVo articleVO = new ArticleVo();
                 BeanUtil.copyProperties(articleDo, articleVO);
                 return articleVO;
             }).collect(Collectors.toList());
@@ -189,14 +186,14 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public ContentVO getContent(Long articleId, long userId) {
+    public ContentVo getContent(Long articleId, long userId) {
         ArticleDo articleDo = articleDao.selectById(articleId);
         checkArticleStatus(userId, articleDo);
         ContentDo contentDo = contentDao.selectById(articleDo.getLatestContentId());
         if (contentDo == null) {
             return null;
         }
-        ContentVO contentVO = new ContentVO(articleDo.getLatestContentId(), contentDo.getContent(), articleId);
+        ContentVo contentVO = new ContentVo(articleDo.getLatestContentId(), contentDo.getContent(), articleId);
         return contentVO;
     }
 
@@ -269,7 +266,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Map<Long, ArticleVO> copyArticle(ArticleOperateDTO data, long userId) {
+    public Map<Long, ArticleVo> copyArticle(ArticleOperateDTO data, long userId) {
         List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
                 .eq(ArticleDo::getColumnId, data.getColumnId())
                 .in(ArticleDo::getUid, data.getArticleList())
@@ -278,7 +275,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (CollectionUtils.isEmpty(selectedList)) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
-        Map<Long, ArticleVO> map = new HashMap<>();
+        Map<Long, ArticleVo> map = new HashMap<>();
         Map<Long, Long> newContent = new HashMap<>(selectedList.size());
         Date createTime = new Date();
 
@@ -297,7 +294,7 @@ public class ArticleServiceImpl implements ArticleService {
                 newContent.put(articleDo.getLatestContentId(), newId);
                 articleDo.setLatestContentId(newId);
             }
-            ArticleVO articleVO = new ArticleVO();
+            ArticleVo articleVO = new ArticleVo();
             BeanUtil.copyProperties(articleDo, articleVO);
             map.put(uid, articleVO);
         });

@@ -26,7 +26,7 @@ public class CreateColumnDTO {
     /**
      * 是否公开访问 0否1是
      */
-    @Min(value = 0, message = "专栏访问权限状态错误")
-    @Max(value = 1, message = "专栏访问权限状态错误")
+    @Min(value = 0, message = "访问权限状态错误")
+    @Max(value = 1, message = "访问权限状态错误")
     private int isPublic;
 }

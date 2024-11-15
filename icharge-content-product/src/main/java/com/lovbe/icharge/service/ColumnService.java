@@ -1,15 +1,12 @@
 package com.lovbe.icharge.service;
 
 import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
 import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
-import com.lovbe.icharge.entity.vo.ArticleVO;
+import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -102,5 +99,5 @@ public interface ColumnService {
      * @author lovbe0210
      * @date 2024/11/12 23:25
      */
-    List<ArticleVO> getColumnArticleList(Long columnId, long userId);
+    List<ArticleVo> getColumnArticleList(Long columnId, long userId);
 }

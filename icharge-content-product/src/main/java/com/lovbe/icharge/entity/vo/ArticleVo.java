@@ -15,7 +15,7 @@ import java.util.Map;
  */
 @Accessors(chain = true)
 @Data
-public class ArticleVO extends BaseEntity {
+public class ArticleVo extends BaseEntity {
     /**
      * 文章标题
      */

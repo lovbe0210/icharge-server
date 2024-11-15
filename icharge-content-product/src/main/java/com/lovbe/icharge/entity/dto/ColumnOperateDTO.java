@@ -20,7 +20,7 @@ public class ColumnOperateDTO {
     private Long columnId;
 
     /**
-     * 操作类型 1发布操作，2移出专栏，3批量导出，4批量删除
+     * 操作类型 1发布操作，2移出专栏，3移入专栏，4批量导出，5批量删除
      */
     private String operateType;
 
