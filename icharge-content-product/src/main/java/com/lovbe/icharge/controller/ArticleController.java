@@ -50,7 +50,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/{articleId}")
+    @GetMapping("/article/{articleId}")
     public ResponseBean<ArticleVo> getArticleForEdit(@PathVariable("articleId") String articleId,
                                                      @RequestHeader("userId") long userId) {
         return ResponseBean.ok(articleService.getArticleForEdit(articleId, userId));
@@ -128,7 +128,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/articleList")
+    @PostMapping("/article/list")
     public ResponseBean<ArticleVo> getMyArticleList(@RequestBody @Valid BaseRequest<RequestListDTO> requestDto,
                                                     @RequestHeader("userId") long userId) {
         List<ArticleVo> articleList = articleService.getMyArticleList(requestDto, userId);

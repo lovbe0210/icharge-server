@@ -27,7 +27,7 @@ public class RamblyJotDTO {
     /**
      * 文章摘要
      */
-    @Length(max = 255, message = "随笔预览内容不得超过255字")
+    @Length(max = 300, message = "随笔预览内容不得超过255字")
     private String previewContent;
     /**
      * 预览图片
@@ -38,5 +38,5 @@ public class RamblyJotDTO {
      */
     @Min(value = 0, message = "访问权限状态错误")
     @Max(value = 1, message = "访问权限状态错误")
-    private int isPublic = 1;
+    private Integer isPublic = 1;
 }

@@ -35,6 +35,10 @@ public class RamblyJotVo extends BaseEntity {
      */
     private List<String> previewImg;
     /**
+     * 我已点赞,需要关联查库
+     */
+    private int ilike;
+    /**
      * 点赞数
      */
     private Integer likeCount;

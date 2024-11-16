@@ -49,7 +49,11 @@ public class RamblyJotDo extends BaseEntity {
      */
     private Integer commentCount;
     /**
+     * 是否公开可见 0否1是
+     */
+    private Integer isPublic;
+    /**
      * 发布状态 1审核中 2审核失败 3发布成功
      */
-    private int publishStatus;
+    private Integer publishStatus;
 }

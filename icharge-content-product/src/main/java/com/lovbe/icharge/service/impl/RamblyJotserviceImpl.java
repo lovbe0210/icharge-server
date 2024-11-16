@@ -8,10 +8,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.dao.RamblyJotDao;
+import com.lovbe.icharge.entity.dto.ColumnDo;
 import com.lovbe.icharge.entity.dto.ContentDo;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDo;
@@ -25,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -103,5 +106,38 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                     return ramblyJotVo;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteRamblyJot(Long ramblyJotId, long userId) {
+        RamblyJotDo ramblyJotDo = ramblyJotDao.selectById(ramblyJotId);
+        checkRamblyJotStatus(userId, ramblyJotDo);
+
+        Long contentId = ramblyJotDo.getContentId();
+        if (contentId != null){
+            ContentDo contentDo = new ContentDo();
+            contentDo.setUid(contentId);
+            contentDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+            contentDao.updateById(contentDo);
+        }
+        ramblyJotDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        ramblyJotDao.updateById(ramblyJotDo);
+    }
+
+    @Override
+    public void updateRamblyJot(RamblyJotDTO data, long userId) {
+        RamblyJotDo ramblyJotDo = ramblyJotDao.selectById(data.getUid());
+        checkRamblyJotStatus(userId, ramblyJotDo);
+        ramblyJotDo.setIsPublic(data.getIsPublic());
+        ramblyJotDao.updateById(ramblyJotDo);
+    }
+
+    private static void checkRamblyJotStatus(long userId, RamblyJotDo ramblyJotDo) {
+        if (ramblyJotDo == null || !CommonStatusEnum.isNormal(ramblyJotDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.RAMBLY_JOT_NOT_EXIST);
+        }
+        if (ramblyJotDo.getUserId() != userId) {
+            throw new ServiceException(GlobalErrorCodes.LOCKED);
+        }
     }
 }

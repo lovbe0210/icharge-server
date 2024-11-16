@@ -16,6 +16,7 @@ import com.lovbe.icharge.entity.vo.RamblyJotVo;
 import com.lovbe.icharge.service.RamblyJotService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,21 +35,22 @@ public class RamblyJotController {
     private RamblyJotService ramblyJotService;
 
     /**
-     * description: 创建空白文档
+     * description: 获取随笔详情
      * @author: Lvhl
      * @date: 2024/9/16 11:56
+     * @param ramblyJotId
      * @param userId
-     * @return ResponseBean<ArticleVO>
+     * @return ResponseBean<RamblyJotVo>
      */
     @PostMapping("/ramblyjot/{ramblyJotId}")
-    public ResponseBean<RamblyJotVo> getRamblyJotInfo(@PathVariable("articleId") Long ramblyJotId,
+    public ResponseBean<RamblyJotVo> getRamblyJotInfo(@PathVariable("ramblyJotId") Long ramblyJotId,
                                                       @RequestHeader("userId") long userId) {
         return ResponseBean.ok(ramblyJotService.getRamblyJotInfo(userId, ramblyJotId));
     }
 
 
     /**
-     * description: 更新文档信息(包含封面文件)
+     * description: 新建随笔
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param baseRequest
@@ -57,10 +59,29 @@ public class RamblyJotController {
      */
     @PostMapping("/ramblyjot/create")
     public ResponseBean<RamblyJotVo> createRamblyJot(@RequestBody @Valid BaseRequest<RamblyJotDTO> baseRequest,
-                                                 @RequestHeader("userId") long userId) {
+                                                     @RequestHeader("userId") long userId) {
         RamblyJotVo ramblyJotVo = ramblyJotService.createRamblyJot(baseRequest.getData(), userId);
         return ResponseBean.ok(ramblyJotVo);
     }
+
+    /**
+     * description: 更新随笔信息 只修改可见范围
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param baseRequest
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/ramblyjot/update")
+    public ResponseBean<RamblyJotVo> updateRamblyJot(@RequestBody @Valid BaseRequest<RamblyJotDTO> baseRequest,
+                                                     @RequestHeader("userId") long userId) {
+        RamblyJotDTO data = baseRequest.getData();
+        Assert.notNull(data.getUid(), "随笔id不得为空");
+        Assert.notNull(data.getIsPublic(), "可见范围状态不得为空");
+        ramblyJotService.updateRamblyJot(data, userId);
+        return ResponseBean.ok();
+    }
+
 
     /**
      * description: 更新文档信息
@@ -70,8 +91,22 @@ public class RamblyJotController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/ramblyjot/list")
-    public ResponseBean<List<RamblyJotVo>> simpleUpdateArticle(@RequestHeader("userId") long userId) {
+    public ResponseBean<List<RamblyJotVo>> getRamblyJotList(@RequestHeader("userId") long userId) {
         List<RamblyJotVo> ramblyJotList = ramblyJotService.getRamblyJotList(userId);
         return ResponseBean.ok(ramblyJotList);
+    }
+
+    /**
+     * description: 删除随笔
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @PostMapping("/ramblyjot/delete/{ramblyJotId}")
+    public ResponseBean<List<RamblyJotVo>> deleteRamblyJot(@PathVariable("ramblyJotId") Long ramblyJotId,
+                                                           @RequestHeader("userId") long userId) {
+        ramblyJotService.deleteRamblyJot(ramblyJotId, userId);
+        return ResponseBean.ok();
     }
 }
