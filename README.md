@@ -26,13 +26,14 @@ com.lovbe
 ├── icharge-gateway             // 网关模块 [8080]
 ├── icharge-auth                // 认证中心 [9200]
 ├── icharge-common              // 通用模块
+    └── pom.xml                 // 公共依赖管理
 ├── icharge-user                // 用户模块
-├── icharge-content-product          // 内容生产模块
-├── icharge-storage              // 文件存储模块
-├── icharge-social            // 社交模块
-├──pom.xml                    // 依赖管理
+├── icharge-content-product     // 内容生产模块
+├── icharge-storage             // 文件存储模块
+├── icharge-social              // 社交模块
+├── pom.xml                     // 依赖管理
 ~~~
 
 ## 架构图
 
-<img src="https://oscimg.oschina.net/oscnet/up-82e9722ecb846786405a904bafcf19f73f3.png"/>
+![技术架构图.png](https://gitee.com/lovbe0210/it-charge-station/blob/master/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
