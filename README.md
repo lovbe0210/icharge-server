@@ -36,4 +36,4 @@ com.lovbe
 
 ## 架构图
 
-![技术架构图.png](%BC%BC%CA%F5%BC%DC%B9%B9%CD%BC.png)
+![技术结构](./技术架构图.png)
