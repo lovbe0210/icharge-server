@@ -1,13 +1,9 @@
 <p align="center">
-	<img alt="logo" src="https://oscimg.oschina.net/oscnet/up-b99b286755aef70355a7084753f89cdb7c9.png">
+	<svg t="1731815215475" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5447" id="mx_n_1731815215476" width="200" height="200"><path d="M671.266133 41.1648L182.340267 285.525333c-57.992533 29.013333-70.621867 106.496-24.746667 152.405334l244.6336 244.394666c45.8752 45.841067 123.392 33.245867 152.3712-24.746666l244.394667-488.994134c40.891733-81.749333-45.909333-168.277333-127.658667-127.419733" fill="#FF5656" p-id="5448"></path><path d="M351.778133 982.084267l488.994134-244.394667c58.026667-29.013333 70.621867-106.496 24.746666-152.405333L620.885333 340.992c-45.8752-45.909333-123.357867-33.28-152.3712 24.746667l-244.394666 488.925866c-40.8576 81.8176 45.909333 168.311467 127.658666 127.453867" fill="#00B96B" p-id="5449" data-spm-anchor-id="a313x.manage_type_myprojects.0.i3.3be33a81626KS8" class=""></path></svg>
 </p>
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">IT充电站</h1>
 <h4 align="center">基于 Vue/iView UI 和 Spring Boot/Spring Cloud & Alibaba 前后端分离的分布式微服务架构</h4>
-<p align="center">
-	<a href="https://gitee.com/y_project/RuoYi-Cloud/stargazers"><img src="https://gitee.com/y_project/RuoYi-Cloud/badge/star.svg?theme=dark"></a>
-	<a href="https://gitee.com/y_project/RuoYi-Cloud"><img src="https://img.shields.io/badge/RuoYi-v3.6.5-brightgreen.svg"></a>
-	<a href="https://gitee.com/y_project/RuoYi-Cloud/blob/master/LICENSE"><img src="https://img.shields.io/github/license/mashape/apistatus.svg"></a>
-</p>
+
 
 ## 平台简介
 
