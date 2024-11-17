@@ -36,4 +36,4 @@ com.lovbe
 
 ## 架构图
 
-![技术架构图.png](%BC%BC%CA%F5%BC%DC%B9%B9%CD%BC.png)![技术架构图.png](https://gitee.com/lovbe0210/it-charge-station/blob/master/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
+![技术架构图.png](%BC%BC%CA%F5%BC%DC%B9%B9%CD%BC.png)
