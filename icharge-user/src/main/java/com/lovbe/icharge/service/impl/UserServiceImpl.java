@@ -16,6 +16,7 @@ import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
@@ -30,11 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe
@@ -87,7 +92,7 @@ public class UserServiceImpl implements UserService {
         // 创建用户
         UserInfoDo userInfoDo = new UserInfoDo()
                 .setUsername("用户" + IdUtil.nanoId(4))
-                .setDomain(IdUtil.nanoId(6));
+                .setDomain(createDomain(uid));
         userInfoDo.setUid(uid);
         userInfoDo.setCreateTime(new Date());
         userInfoDo.setUpdateTime(new Date());
@@ -109,7 +114,7 @@ public class UserServiceImpl implements UserService {
                     .setLoginOs(authUserDTO.getLoginOs())
                     .setLoginCount(account.getLoginCount() + 1)
                     .setUpdateTime(new Date());
-            int updated = accountService.updateAccount(account);
+            accountService.updateAccount(account);
             LoginUser loginUser = new LoginUser(account.getMobile(), account.getEmail(), account.getPassword());
             loginUser.setStatus(account.getStatus());
             loginUser.setUid(account.getUid());
@@ -186,5 +191,23 @@ public class UserServiceImpl implements UserService {
             userInfo.setAvatarUrl(upload.getData());
         }
         userMapper.updateById(userInfo);
+    }
+
+    /**
+     * @description 获取一个全局唯一的domain
+     * @param[1] userId
+     * @return String
+     * @author lovbe0210
+     * @date 2024/11/17 22:01
+     */
+    public String createDomain(Long userId) {
+        String domainKey = RedisKeyConstant.getDomainKey();
+        String domain = IdUtil.nanoId(6);
+        boolean hsetted = RedisUtil.hsetIfAbsent(domainKey, domain, userId);
+        while (!hsetted) {
+            domain = IdUtil.nanoId(6);
+            hsetted = RedisUtil.hsetIfAbsent(domainKey, domain, userId);
+        }
+        return domain;
     }
 }

@@ -23,6 +23,7 @@ import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
 import com.lovbe.icharge.service.ColumnService;
+import com.lovbe.icharge.service.CommonService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -50,12 +51,14 @@ public class ColumnServiceImpl implements ColumnService {
     private ArticleDao articleDao;
     @Resource
     private ContentDao contentDao;
+    @Resource
+    private CommonService commonService;
 
     @Override
     public ColumnVo createColumn(CreateColumnDTO data, long userId) {
         ColumnDo columnDo = new ColumnDo();
         columnDo.setUid(YitIdHelper.nextId());
-        columnDo.setUri(CommonUtils.getBeautifulId())
+        columnDo.setUri(commonService.getBeautifulId(userId))
                 .setTitle(data.getTitle())
                 .setSynopsis(data.getSynopsis())
                 .setIsPublic(data.getIsPublic())

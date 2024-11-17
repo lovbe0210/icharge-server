@@ -19,14 +19,14 @@ it充电站，可以是你的私人博客，用来记录你的成长轨迹，也
 
 ~~~
 com.lovbe     
-├── icharge-gateway             // 网关模块 [8080]
-├── icharge-auth                // 认证中心 [9200]
+├── icharge-gateway             // 网关模块 [10210]
+├── icharge-auth                // 认证中心 [10212]
 ├── icharge-common              // 通用模块
     └── pom.xml                 // 公共依赖管理
-├── icharge-user                // 用户模块
-├── icharge-content-product     // 内容生产模块
-├── icharge-storage             // 文件存储模块
-├── icharge-social              // 社交模块
+├── icharge-user                // 用户模块 [10211]
+├── icharge-content-product     // 内容生产模块 [10214]
+├── icharge-storage             // 文件存储模块 [10213]
+├── icharge-social              // 社交模块 [10215]
 ├── pom.xml                     // 依赖管理
 ~~~
 

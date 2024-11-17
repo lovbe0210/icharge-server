@@ -19,6 +19,7 @@ public abstract class RedisKeyConstant {
     public static final long EXPIRE_3_HOUR = 60 * 60 * 3;
     public static final long EXPIRE_1_DAY = EXPIRE_1_HOUR * 24;
     public static final long EXPIRE_30_DAY = EXPIRE_1_HOUR * 24 * 30;
+    public static final long EXPIRE_7_DAY = EXPIRE_1_HOUR * 24 * 7;
 
     /**
      * 项目前缀
@@ -28,6 +29,14 @@ public abstract class RedisKeyConstant {
      * 权限认证服务
      */
     public static final String AUTH = "auth:";
+    /**
+     * 用户服务
+     */
+    public static final String USER = "auth:";
+    /**
+     * 内容生产服务
+     */
+    public static final String CONTENT = "content-product:";
 
 
     /**
@@ -116,5 +125,25 @@ public abstract class RedisKeyConstant {
         return BASE_PROJECT + AUTH + "slider-verify:svToken:" + uniqueId + ":" + svScene + ":" + svToken;
     }
 
+    /**
+     * @description 获取展示用id集合key
+     * @param[1] userId
+     * @return String
+     * @author lovbe0210
+     * @date 2024/11/17 17:28
+     */
+    public static String getBeautifulKey(Long userId) {
+        return BASE_PROJECT + CONTENT + ":beautiful-id:" + userId;
+    }
 
+    /**
+     * @description 获取Domain集合key
+     * @param[1] userId
+     * @return String
+     * @author lovbe0210
+     * @date 2024/11/17 17:28
+     */
+    public static String getDomainKey() {
+        return BASE_PROJECT + USER + ":domain";
+    }
 }

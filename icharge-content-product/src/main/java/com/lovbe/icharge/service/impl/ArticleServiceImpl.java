@@ -15,6 +15,8 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -22,6 +24,7 @@ import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
+import com.lovbe.icharge.service.CommonService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +56,8 @@ public class ArticleServiceImpl implements ArticleService {
     private StorageService storageService;
     @Resource
     private ColumnDao columnDao;
+    @Resource
+    private CommonService commonService;
 
     @Override
     public ArticleVo createBlankDoc(Long columnId, long userId) {
@@ -63,7 +68,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleDo.setUserId(userId)
                 .setTitle("无标题文档")
                 .setColumnId(columnId)
-                .setUri(CommonUtils.getBeautifulId());
+                .setUri(commonService.getBeautifulId(userId));
         articleDao.insertOrUpdate(articleDo);
         ArticleVo articleVO = new ArticleVo();
         BeanUtil.copyProperties(articleDo, articleVO);
@@ -286,7 +291,7 @@ public class ArticleServiceImpl implements ArticleService {
                     .setCreateTime(createTime)
                     .setUpdateTime(createTime);
             articleDo.setTitle(articleDo.getTitle() + " 副本")
-                    .setUri(CommonUtils.getBeautifulId())
+                    .setUri(commonService.getBeautifulId(userId))
                     .setPublishStatus(0)
                     .setPublishedContentId(null);
             if (articleDo.getLatestContentId() != null) {

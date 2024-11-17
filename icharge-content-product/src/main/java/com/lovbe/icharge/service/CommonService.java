@@ -17,4 +17,13 @@ public interface CommonService {
      * @date 2024/10/24 23:52
      */
     List<MenuDTO> getMenuList();
+
+    /**
+     * @description 获取展示用id
+     * @param[1] userId
+     * @return String
+     * @author lovbe0210
+     * @date 2024/11/17 17:17
+     */
+    String getBeautifulId(Long userId);
 }
