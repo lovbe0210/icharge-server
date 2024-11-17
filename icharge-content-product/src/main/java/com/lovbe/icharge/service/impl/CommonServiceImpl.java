@@ -59,4 +59,10 @@ public class CommonServiceImpl implements CommonService {
         }
         return beautifulId;
     }
+
+    @Override
+    public Integer getRouterDirection(String dynamicId, long userId) {
+        Integer type = commonDao.selectUriType(userId, dynamicId);
+        return type;
+    }
 }
