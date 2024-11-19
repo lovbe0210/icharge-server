@@ -12,11 +12,10 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
-import com.lovbe.icharge.common.util.CommonUtils;
-import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
-import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -68,7 +67,7 @@ public class ArticleServiceImpl implements ArticleService {
         articleDo.setUserId(userId)
                 .setTitle("无标题文档")
                 .setColumnId(columnId)
-                .setUri(commonService.getBeautifulId(userId));
+                .setUri(commonService.getBeautifulId());
         articleDao.insertOrUpdate(articleDo);
         ArticleVo articleVO = new ArticleVo();
         BeanUtil.copyProperties(articleDo, articleVO);
@@ -291,7 +290,7 @@ public class ArticleServiceImpl implements ArticleService {
                     .setCreateTime(createTime)
                     .setUpdateTime(createTime);
             articleDo.setTitle(articleDo.getTitle() + " 副本")
-                    .setUri(commonService.getBeautifulId(userId))
+                    .setUri(commonService.getBeautifulId())
                     .setPublishStatus(0)
                     .setPublishedContentId(null);
             if (articleDo.getLatestContentId() != null) {

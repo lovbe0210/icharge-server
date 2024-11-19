@@ -93,7 +93,7 @@ public class AuthController {
      * @param reqVo
      * @return ResponseBean
      */
-    @PostMapping("/emailCode/login")
+    @PostMapping("/email-code/login")
     public ResponseBean emailCodeLogin(@RequestBody @Valid BaseRequest<AuthEmailCodeLoginReqVo> reqVo,
                                        HttpServletResponse response) {
         AuthLoginUser loginUser = authService.emailCodeLogin(reqVo);

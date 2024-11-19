@@ -1,5 +1,6 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -36,33 +37,33 @@ public class CommonServiceImpl implements CommonService {
     }
 
     @Override
-    public String getBeautifulId(Long userId) {
-        String beautifulIdKey = RedisKeyConstant.getBeautifulKey(userId);
-        String beautifulId = CommonUtils.getBeautifulId();
+    public String getBeautifulId() {
+        String beautifulIdKey = RedisKeyConstant.getBeautifulKey();
+        String beautifulId = IdUtil.nanoId(6);
         boolean hasKey = RedisUtil.hasKey(beautifulIdKey);
         Long expire = RedisUtil.getExpire(beautifulIdKey);
         // key不存在或者key存续时间小于60s都认为key不存在，获取数据库最新数据
         if (!hasKey || expire == null || expire < 60) {
             // 获取数据库中当前user下的所有beautifulId
-            List<String> uriList = commonDao.selectUriByUserId(userId);
+            List<String> uriList = commonDao.selectAllUri();
             if (CollectionUtils.isEmpty(uriList)) {
                 uriList = List.of("lovbe");
             }
             RedisUtil.hputAll(beautifulIdKey,
-                    uriList.stream().collect(Collectors.toMap(Function.identity(), null)));
+                    uriList.stream().collect(Collectors.toMap(Function.identity(), Function.identity())));
             RedisUtil.expire(beautifulIdKey, RedisKeyConstant.EXPIRE_7_DAY);
         }
         boolean hsetted = RedisUtil.hsetIfAbsent(beautifulIdKey, beautifulId, null);
         while (!hsetted) {
-            beautifulId = CommonUtils.getBeautifulId();
+            beautifulId =  IdUtil.nanoId(6);
             hsetted = RedisUtil.hsetIfAbsent(beautifulIdKey, beautifulId, null);
         }
         return beautifulId;
     }
 
     @Override
-    public Integer getRouterDirection(String dynamicId, long userId) {
-        Integer type = commonDao.selectUriType(userId, dynamicId);
+    public Integer getRouterDirection(String dynamicId) {
+        Integer type = commonDao.selectUriType(dynamicId);
         return type;
     }
 }

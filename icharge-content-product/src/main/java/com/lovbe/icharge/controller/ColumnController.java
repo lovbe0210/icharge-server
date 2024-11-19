@@ -44,7 +44,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ColumnVo>
      */
-    @PostMapping("/columnList")
+    @GetMapping("/column/list")
     public ResponseBean<List<ColumnVo>> getColumnList(@RequestHeader("userId") long userId) {
         List<ColumnVo> columnList = columnService.getColumnList(userId);
         return ResponseBean.ok(columnList);
@@ -74,7 +74,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/column/createArticle")
+        @PostMapping("/column/article/create")
     public ResponseBean<ArticleVo> createArticle(@RequestBody @Valid BaseRequest<ColumnDTO> request,
                                                  @RequestHeader("userId") long userId) {
         ArticleVo article = articleService.createBlankDoc(request.getData().getUid(), userId);
@@ -89,7 +89,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/column/copyArticle")
+    @PostMapping("/column/article/copy")
     public ResponseBean<ArticleVo> copyArticle(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
                                                @RequestHeader("userId") long userId) {
 
@@ -153,7 +153,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @GetMapping("/column/articleList/{columnId}")
+    @GetMapping("/column/article/list/{columnId}")
     public ResponseBean<List<ArticleVo>> getColumnArticleList(@PathVariable("columnId") Long columnId,
                                                               @RequestHeader("userId") long userId) {
         List<ArticleVo> articleList = columnService.getColumnArticleList(columnId, userId);
@@ -203,7 +203,7 @@ public class ColumnController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/column/batchOperate")
+    @PostMapping("/column/article/operate/batch")
     public ResponseBean<ArticleVo> batchOperate(@RequestBody @Valid BaseRequest<ColumnOperateDTO> columnRequest,
                                                 @RequestHeader("userId") long userId) {
         columnService.batchOperate(columnRequest, userId);

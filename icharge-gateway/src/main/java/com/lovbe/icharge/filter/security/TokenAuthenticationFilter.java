@@ -52,7 +52,18 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getPath().toString();
         for (String whiteUrl : whiteList) {
             if (antPathMatcher.match(whiteUrl, path)) {
-                return chain.filter(exchange);
+                if (StrUtil.isEmpty(token)) {
+                    return chain.filter(exchange);
+                }
+                // 从缓存中，获取 LoginUser
+                String loginUserIdKey = RedisUtil.getAccessTokenKey(token);
+                Object userId = RedisUtil.get(loginUserIdKey);
+                ServerWebExchange newExchange = exchange;
+                if (userId != null) {
+                    newExchange = exchange.mutate()
+                            .request(builder -> SecurityFrameworkUtils.setLoginUserHeader(builder, String.valueOf(userId))).build();
+                }
+                return chain.filter(newExchange);
             }
         }
 
@@ -60,7 +71,7 @@ public class TokenAuthenticationFilter implements GlobalFilter, Ordered {
         if (StrUtil.isEmpty(token)) {
             return WebFrameworkUtils.writeJSON(exchange, ResponseBean.error(401, "Authentication failed"));
         }
-        // 如果有 Token 令牌，则解析对应 userId 字段，并通过 通过 Header 转发给服务
+
         // 从缓存中，获取 LoginUser
         String loginUserIdKey = RedisUtil.getAccessTokenKey(token);
         Object userId = RedisUtil.get(loginUserIdKey);

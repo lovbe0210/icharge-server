@@ -132,8 +132,8 @@ public abstract class RedisKeyConstant {
      * @author lovbe0210
      * @date 2024/11/17 17:28
      */
-    public static String getBeautifulKey(Long userId) {
-        return BASE_PROJECT + CONTENT + ":beautiful-id:" + userId;
+    public static String getBeautifulKey() {
+        return BASE_PROJECT + CONTENT + "beautiful-id";
     }
 
     /**
@@ -144,6 +144,6 @@ public abstract class RedisKeyConstant {
      * @date 2024/11/17 17:28
      */
     public static String getDomainKey() {
-        return BASE_PROJECT + USER + ":domain";
+        return BASE_PROJECT + USER + "domain";
     }
 }

@@ -38,7 +38,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/createBlankDoc")
+    @PostMapping("/createdoc")
     public ResponseBean<ArticleVo> createBlankDoc(@RequestHeader("userId") long userId) {
         return ResponseBean.ok(articleService.createBlankDoc(null, userId));
     }
@@ -83,7 +83,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/simpleUpdate")
+    @PostMapping("/article/update/simple")
     public ResponseBean<ArticleVo> simpleUpdateArticle(@RequestBody @Valid BaseRequest<ArticleDTO> baseRequest,
                                                        @RequestHeader("userId") long userId) {
         articleService.updateArticle(true, baseRequest.getData(), userId);
@@ -98,7 +98,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/content/{articleId}")
+    @GetMapping("/article/content/{articleId}")
     public ResponseBean<ArticleVo> getContent(@PathVariable("articleId") Long articleId,
                                               @RequestHeader("userId") long userId) {
         ContentVo content = articleService.getContent(articleId, userId);
@@ -113,7 +113,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/updateContent")
+    @PostMapping("/article/content/update")
     public ResponseBean<ArticleVo> updateContent(@RequestBody @Valid BaseRequest<ContentDTO> contentEntity,
                                                  @RequestHeader("userId") long userId) {
         Map content = articleService.updateContent(contentEntity, userId);
@@ -143,7 +143,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/setTop")
+    @PostMapping("/article/setop")
     public ResponseBean<ArticleVo> updateArticleTop(@RequestBody @Valid BaseRequest<ArticleDTO> requestDto,
                                                     @RequestHeader("userId") long userId) {
         articleService.updateArticleTop(requestDto, userId);
@@ -158,7 +158,7 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @PostMapping("/article/batchOperate")
+    @PostMapping("/article/operate/batch")
     public ResponseBean<ArticleVo> articleBatchOperate(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
                                                        @RequestHeader("userId") long userId) {
         articleService.articleBatchOperate(requestDto, userId);

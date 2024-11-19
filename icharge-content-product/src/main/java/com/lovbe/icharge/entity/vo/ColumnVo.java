@@ -1,7 +1,7 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.base.BaseEntity;
-import com.lovbe.icharge.entity.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.ArticleDo;
 import lombok.Data;
 
 import java.util.List;

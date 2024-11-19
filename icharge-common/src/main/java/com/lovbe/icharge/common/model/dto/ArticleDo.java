@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity.dto;
+package com.lovbe.icharge.common.model.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;

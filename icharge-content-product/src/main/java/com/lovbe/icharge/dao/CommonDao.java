@@ -17,25 +17,23 @@ import java.util.List;
 public interface CommonDao extends BaseMapper<MenuDTO> {
     @Select(value = """
                     SELECT Distinct uri FROM 
-                    (SELECT uri FROM c_article WHERE user_id = #{userId} AND status = 'A'
+                    (SELECT uri FROM c_article WHERE status = 'A'
                     UNION ALL
-                    SELECT uri FROM c_column WHERE user_id = #{userId} AND status = 'A') result
+                    SELECT uri FROM c_column WHERE status = 'A') result
                     """)
-    List<String> selectUriByUserId(@Param("userId") Long userId);
+    List<String> selectAllUri();
 
     @Select(value = """
                     SELECT min(type) FROM 
                     (SELECT 1 AS type 
                      FROM c_article 
-                     WHERE user_id = #{userId} 
-                       AND status = 'A' 
+                     WHERE status = 'A' 
                        AND uri = #{dynamicId}
                     UNION ALL
                     SELECT 2 AS type 
                     FROM c_column 
-                    WHERE user_id = #{userId} 
-                      AND status = 'A' 
+                    WHERE status = 'A' 
                       AND uri = #{dynamicId}) result
                     """)
-    Integer selectUriType(@Param("userId") long userId, @Param("dynamicId") String dynamicId);
+    Integer selectUriType(@Param("dynamicId") String dynamicId);
 }

@@ -33,8 +33,7 @@ public class CommonController {
      * @return ResponseBean<LoginUser>
      */
     @GetMapping("/router/{dynamicId}")
-    public ResponseBean<Integer> getRouterType(@PathVariable("dynamicId") String dynamicId,
-                                               @RequestHeader("userId") long userId) {
-        return ResponseBean.ok(commonService.getRouterDirection(dynamicId, userId));
+    public ResponseBean<Integer> getRouterType(@PathVariable("dynamicId") String dynamicId) {
+        return ResponseBean.ok(commonService.getRouterDirection(dynamicId));
     }
 }

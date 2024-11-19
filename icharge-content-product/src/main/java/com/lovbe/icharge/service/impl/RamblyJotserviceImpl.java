@@ -2,7 +2,6 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
@@ -13,8 +12,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.dao.RamblyJotDao;
-import com.lovbe.icharge.entity.dto.ColumnDo;
-import com.lovbe.icharge.entity.dto.ContentDo;
+import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDo;
 import com.lovbe.icharge.entity.vo.RamblyJotVo;
@@ -27,7 +25,6 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**

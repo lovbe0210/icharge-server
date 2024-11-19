@@ -42,7 +42,7 @@
         <result column="is_public" property="isPublic"/>
         <result column="enable_comment" property="enableComment"/>
         <result column="auto_publish" property="autoPublish"/>
-        <collection property="articleList" column="article_id" ofType="com.lovbe.icharge.entity.dto.ArticleDo">
+        <collection property="articleList" column="article_id" ofType="com.lovbe.icharge.common.model.dto.ArticleDo">
             <id column="article_id" property="uid"/>
             <result column="article_name" property="title"/>
             <result column="article_update_timer" property="updateTime"/>

@@ -1,28 +1,16 @@
 package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.enums.SysConstant;
-import com.lovbe.icharge.common.exception.ServiceErrorCodes;
-import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.RequestListDTO;
-import com.lovbe.icharge.entity.dto.ArticleDTO;
-import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
-import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
-import com.lovbe.icharge.entity.vo.ArticleVo;
-import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.entity.vo.RamblyJotVo;
 import com.lovbe.icharge.service.RamblyJotService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.util.Assert;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: lovbe0210

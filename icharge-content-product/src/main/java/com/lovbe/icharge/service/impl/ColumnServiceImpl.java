@@ -14,8 +14,9 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
-import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -58,7 +59,7 @@ public class ColumnServiceImpl implements ColumnService {
     public ColumnVo createColumn(CreateColumnDTO data, long userId) {
         ColumnDo columnDo = new ColumnDo();
         columnDo.setUid(YitIdHelper.nextId());
-        columnDo.setUri(commonService.getBeautifulId(userId))
+        columnDo.setUri(commonService.getBeautifulId())
                 .setTitle(data.getTitle())
                 .setSynopsis(data.getSynopsis())
                 .setIsPublic(data.getIsPublic())
