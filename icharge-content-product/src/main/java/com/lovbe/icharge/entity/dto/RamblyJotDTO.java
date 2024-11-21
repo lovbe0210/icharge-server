@@ -21,9 +21,9 @@ public class RamblyJotDTO {
      */
     private Long uid;
     /**
-     *
+     * 随笔内容
      */
-    private String content;
+    private Object content;
     /**
      * 文章摘要
      */

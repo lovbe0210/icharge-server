@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.PublicArticleVo;
+import com.lovbe.icharge.entity.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -52,5 +53,16 @@ public class PublicContentServiceImpl implements PublicContentService {
         }
         articleVo.setContent(contentDo.getContent());
         return articleVo;
+    }
+
+    @Override
+    public RouterInfoVo getRouterDirection(String dynamicId) {
+        RouterInfoVo routerInfo = publicContentDao.selectUriType(dynamicId);
+        return routerInfo;
+    }
+
+    @Override
+    public Object getArticleList(String domain, String userId) {
+        return null;
     }
 }

@@ -2,6 +2,7 @@ package com.lovbe.icharge.service;
 
 
 import com.lovbe.icharge.entity.PublicArticleVo;
+import com.lovbe.icharge.entity.RouterInfoVo;
 
 /**
  * @Author: lovbe0210
@@ -19,4 +20,21 @@ public interface PublicContentService {
      * @date 2024/11/19 0:31
      */
     PublicArticleVo getArticleInfo(String articleId, String userId);
+
+    /**
+     * @description 根据uri判断为1文章还是2专栏
+     * @param[1] dynamicId
+     * @return Integer
+     * @author lovbe0210
+     * @date 2024/11/18 0:53
+     */
+    RouterInfoVo getRouterDirection(String dynamicId);
+
+    /**
+     * 获取文章列表
+     * @param domain
+     * @param userId
+     * @return
+     */
+    Object getArticleList(String domain, String userId);
 }

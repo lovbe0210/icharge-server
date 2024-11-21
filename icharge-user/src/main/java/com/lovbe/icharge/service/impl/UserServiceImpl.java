@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
@@ -171,6 +172,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ResponseBean getUserInfo(String domain) {
+        UserInfoDo userInfoDo = userMapper.selectOne(new LambdaQueryWrapper<UserInfoDo>()
+                .eq(UserInfoDo::getDomain, domain));
+        if (userInfoDo == null) {
+            throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
+        }
+        if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
+        }
+        return ResponseBean.ok(userInfoDo);
+    }
+
+    @Override
     public void updateUserInfo(Long userId, UpdateUserDTO userDTO) {
         // 业务参数校验
         UserInfoDo userInfo = new UserInfoDo();
@@ -194,9 +208,9 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
+     * @return String
      * @description 获取一个全局唯一的domain
      * @param[1] userId
-     * @return String
      * @author lovbe0210
      * @date 2024/11/17 22:01
      */

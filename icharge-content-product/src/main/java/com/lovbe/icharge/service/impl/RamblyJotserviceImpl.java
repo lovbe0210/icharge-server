@@ -77,7 +77,7 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                 .setCreateTime(ramblyJotDo.getCreateTime())
                 .setUpdateTime(ramblyJotDo.getUpdateTime())
                 .setStatus(CommonStatusEnum.NORMAL.getStatus());
-        contentDo.setContent(data.getContent());
+        contentDo.setContent(JSONUtil.toJsonStr(data.getContent()));
         contentDao.insert(contentDo);
         ramblyJotDo.setContentId(contentDo.getUid())
                 .setUserId(userId)

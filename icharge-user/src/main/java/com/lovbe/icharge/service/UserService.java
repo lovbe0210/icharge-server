@@ -46,6 +46,7 @@ public interface UserService {
      * @date: 2024/9/30 16:55
      */
     ResponseBean getUserInfo(Long userId);
+    ResponseBean getUserInfo(String domain);
 
     /**
      * @description 更新用户信息

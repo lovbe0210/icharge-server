@@ -25,13 +25,4 @@ public interface CommonService {
      * @date 2024/11/17 17:17
      */
     String getBeautifulId();
-
-    /**
-     * @description 根据uri判断为1文章还是2专栏
-     * @param[1] dynamicId
-     * @return Integer
-     * @author lovbe0210
-     * @date 2024/11/18 0:53
-     */
-    Integer getRouterDirection(String dynamicId);
 }

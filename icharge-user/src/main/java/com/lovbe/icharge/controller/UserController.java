@@ -63,12 +63,17 @@ public class UserController {
         return ResponseBean.ok();
     }
 
-    @PostMapping("/userInfo")
-    public ResponseBean getUserInfo(@RequestBody @Validated BaseRequest<UserInfoDTO> userInfoReq) {
-        return userService.getUserInfo(userInfoReq.getData().getUserId());
+    @GetMapping("/domain/{domain}")
+    public ResponseBean getUserInfo(@PathVariable("domain")String domain) {
+        return userService.getUserInfo(domain);
     }
 
-    @PutMapping("/userInfo/update")
+    @GetMapping("/id/{userId}")
+    public ResponseBean getUserInfo(@PathVariable("userId")Long userId) {
+        return userService.getUserInfo(userId);
+    }
+
+    @PutMapping("/update")
     public ResponseBean updateUserInfo(@RequestHeader(name = SysConstant.USERID) Long userId,
                                        @Validated UpdateUserDTO userDTO) {
         userService.updateUserInfo(userId, userDTO);

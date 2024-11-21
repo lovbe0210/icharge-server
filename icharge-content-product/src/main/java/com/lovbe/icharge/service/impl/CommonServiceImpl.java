@@ -2,20 +2,17 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
-import com.lovbe.icharge.entity.dto.MenuDTO;
 import com.lovbe.icharge.dao.CommonDao;
+import com.lovbe.icharge.entity.dto.MenuDTO;
 import com.lovbe.icharge.service.CommonService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -59,11 +56,5 @@ public class CommonServiceImpl implements CommonService {
             hsetted = RedisUtil.hsetIfAbsent(beautifulIdKey, beautifulId, null);
         }
         return beautifulId;
-    }
-
-    @Override
-    public Integer getRouterDirection(String dynamicId) {
-        Integer type = commonDao.selectUriType(dynamicId);
-        return type;
     }
 }

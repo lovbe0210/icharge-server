@@ -2,6 +2,7 @@ package com.lovbe.icharge.dao;
 
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
+import com.lovbe.icharge.entity.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -36,4 +37,18 @@ public interface PublicContentDao {
                     SELECT * FROM c_content WHERE uid = #{contentId} AND status = 'A';
                     """)
     ContentDo selectContent(@Param("contentId") Long latestContentId);
+
+    @Select(value = """
+                    SELECT min(type) type, userId FROM 
+                    (SELECT 1 AS type, user_id AS userId 
+                     FROM c_article 
+                     WHERE status = 'A' 
+                       AND uri = #{dynamicId}
+                    UNION ALL
+                    SELECT 2 AS type, user_id AS userId  
+                    FROM c_column 
+                    WHERE status = 'A' 
+                      AND uri = #{dynamicId}) result
+                    """)
+    RouterInfoVo selectUriType(@Param("dynamicId") String dynamicId);
 }
