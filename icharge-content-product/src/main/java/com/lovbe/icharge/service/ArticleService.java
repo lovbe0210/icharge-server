@@ -35,7 +35,7 @@ public interface ArticleService {
      * @author lovbe0210
      * @date 2024/10/20 16:02
      */
-    ArticleVo getArticleForEdit(String articleId, long userId);
+    ArticleVo getArticleForEdit(String uri, long userId);
 
     /**
      * @description 更新文档信息

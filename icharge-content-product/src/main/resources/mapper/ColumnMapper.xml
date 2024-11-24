@@ -18,6 +18,7 @@
             c.update_time,
             a.uid article_id,
             a.title article_name,
+            a.uri article_uri,
             a.update_time article_update_timer,
             a.create_time article_create_timer
         FROM `c_column` c
@@ -31,7 +32,7 @@
             a.update_time DESC
     </select>
 
-    <resultMap id="columnListMap" type="com.lovbe.icharge.entity.dto.ColumnDo">
+    <resultMap id="columnListMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>
         <result column="uri" property="uri"/>
@@ -45,6 +46,7 @@
         <collection property="articleList" column="article_id" ofType="com.lovbe.icharge.common.model.dto.ArticleDo">
             <id column="article_id" property="uid"/>
             <result column="article_name" property="title"/>
+            <result column="article_uri" property="uri"/>
             <result column="article_update_timer" property="updateTime"/>
             <result column="article_create_timer" property="createTime"/>
         </collection>

@@ -1,9 +1,8 @@
-package com.lovbe.icharge.entity.dto;
+package com.lovbe.icharge.common.model.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
-import com.lovbe.icharge.common.model.dto.ArticleDo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;

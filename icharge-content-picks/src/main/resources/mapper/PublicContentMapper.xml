@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.PublicContentDao">
+    <!-- 获取专栏信息 -->
+    <select id="selectColumnInfo" resultMap="columnInfoMap">
+        SELECT
+            c.uid,
+            c.title,
+            c.uri,
+            c.user_id,
+            c.dir_content_id,
+            c.is_public,
+            c.enable_comment,
+            a.uid articleId,
+            a.title articleTitle,
+            a.summary articleSummary,
+            a.uri articleUri,
+            a.published_content_id
+        FROM c_column c
+        INNER JOIN c_article a ON c.uid = a.column_id
+            AND a.`status` = 'A'
+        WHERE
+            c.uri = #{uri}
+          AND c.`status` = 'A'
+    </select>
+
+    <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
+        <id column="uid" property="uid"/>
+        <result column="title" property="title"/>
+        <result column="uri" property="uri"/>
+        <result column="user_id" property="userId"/>
+        <result column="dir_content_id" property="dirContentId"/>
+        <result column="is_public" property="isPublic"/>
+        <result column="enable_comment" property="enableComment"/>
+        <collection column="articleId" property="articleList" ofType="com.lovbe.icharge.common.model.dto.ArticleDo">
+            <id column="articleId" property="uid"/>
+            <result column="articleTitle" property="title"/>
+            <result column="articleSummary" property="summary"/>
+            <result column="articleUri" property="uri"/>
+            <result column="published_content_id" property="publishedContentId"/>
+        </collection>
+    </resultMap>
+</mapper>

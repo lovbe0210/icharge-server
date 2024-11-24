@@ -43,6 +43,7 @@ public interface ServiceErrorCodes {
     //========== 内容生产 ==========
     ErrorCode ARTICLE_NOT_EXIST = new ErrorCode(400, "文章不存在或已被删除");
     ErrorCode COLUMN_NOT_EXIST = new ErrorCode(400, "专栏不存在或已被删除");
+    ErrorCode COLUMN_NOT_PUBLIC = new ErrorCode(400, "专栏权限为仅作者可访问");
     ErrorCode RAMBLY_JOT_NOT_EXIST = new ErrorCode(400, "随笔不存在或已被删除");
     ErrorCode ARTICLE_STATUS_ERROR = new ErrorCode(400, "文章违规屏蔽，不可浏览或编辑");
     ErrorCode ARTICLE_INFO_UPDATE_FAILED = new ErrorCode(400, "文章更新失败，请稍后再试");

@@ -50,10 +50,10 @@ public class ArticleController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @GetMapping("/article/{articleId}")
-    public ResponseBean<ArticleVo> getArticleForEdit(@PathVariable("articleId") String articleId,
+    @GetMapping("/article/{uri}")
+    public ResponseBean<ArticleVo> getArticleForEdit(@PathVariable("uri") String uri,
                                                      @RequestHeader("userId") long userId) {
-        return ResponseBean.ok(articleService.getArticleForEdit(articleId, userId));
+        return ResponseBean.ok(articleService.getArticleForEdit(uri, userId));
     }
 
     /**

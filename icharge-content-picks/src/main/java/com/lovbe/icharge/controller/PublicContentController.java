@@ -38,22 +38,36 @@ public class PublicContentController {
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @GetMapping("/article/{articleUri}")
-    public ResponseBean<PublicArticleVo> getArticleInfo(@PathVariable("articleUri") String articleUri,
-                                                        @RequestHeader(value = "userId", required = false) String userId) {
-        return ResponseBean.ok(contentService.getArticleInfo(articleUri, userId));
+    @GetMapping("/article/{uri}")
+    public ResponseBean<PublicArticleVo> getArticleInfo(@PathVariable("uri") String uri,
+                                                        @RequestHeader(value = "userId", required = false) Long userId) {
+        return ResponseBean.ok(contentService.getArticleInfo(uri, userId));
     }
 
     /**
-     * description: 获取文档信息用于阅读
+     * description: 获取作者公开文档列表
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param userId
      * @return ResponseBean<ArticleVO>
      */
-    @GetMapping("/article/list/{domain}")
-    public ResponseBean<PublicArticleVo> getArticleList(@PathVariable("domain") String domain,
-                                                        @RequestHeader(value = "userId", required = false) String userId) {
-        return ResponseBean.ok(contentService.getArticleList(domain, userId));
+    @GetMapping("/article/list/{authorId}")
+    public ResponseBean<PublicArticleVo> getArticleList(@PathVariable("authorId") Long authorId,
+                                                        @RequestHeader(value = "userId", required = false) Long userId) {
+        return ResponseBean.ok(contentService.getArticleList(authorId, userId));
     }
+
+    /**
+     * description: 获取公开专栏文章目录
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     */
+    @GetMapping("/column/dir/{uri}")
+    public ResponseBean<PublicArticleVo> getColumnDir(@PathVariable("uri") String uri,
+                                                      @RequestHeader(value = "userId", required = false) Long userId) {
+        return ResponseBean.ok(contentService.getColumnDir(uri, userId));
+    }
+
 }

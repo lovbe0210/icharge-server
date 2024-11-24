@@ -12,10 +12,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.ArticleDo;
-import com.lovbe.icharge.common.model.dto.ContentDo;
-import com.lovbe.icharge.common.model.dto.FileUploadDTO;
-import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -75,9 +72,9 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public ArticleVo getArticleForEdit(String articleId, long userId) {
+    public ArticleVo getArticleForEdit(String uri, long userId) {
         ArticleDo articleDo = articleDao.selectOne(new LambdaQueryWrapper<ArticleDo>()
-                .eq(ArticleDo::getUid, articleId)
+                .eq(ArticleDo::getUri, uri)
                 .eq(ArticleDo::getUserId, userId));
         if (articleDo == null || !CommonStatusEnum.isNormal(articleDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);

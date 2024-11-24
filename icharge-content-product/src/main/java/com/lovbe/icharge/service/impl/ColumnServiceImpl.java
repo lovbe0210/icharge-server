@@ -15,8 +15,10 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
+import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -147,13 +149,13 @@ public class ColumnServiceImpl implements ColumnService {
                 JSONArray finalParseArray = parseArray;
                 if (CollectionUtils.isEmpty(parseArray) && !CollectionUtils.isEmpty(articleList)) {
                     articleList.forEach(article -> {
-                        JSONObject entries = new JSONObject();
-                        entries.set("uid", article.getUid())
-                                .set("type", 1)
-                                .set("title", article.getTitle())
-                                .set("createTime", article.getCreateTime())
-                                .set("updateTime", article.getUpdateTime());
-                        finalParseArray.add(entries);
+                        DirNodeVo dirNode = new DirNodeVo()
+                                .setUid(article.getUid())
+                                .setType(1)
+                                .setTitle(article.getTitle())
+                                .setCreateTime(article.getCreateTime())
+                                .setUpdateTime(article.getUpdateTime());
+                        finalParseArray.add(dirNode);
                     });
                     contentDo.setContent(JSONUtil.toJsonStr(finalParseArray));
                     contentDao.updateById(contentDo);
@@ -169,13 +171,13 @@ public class ColumnServiceImpl implements ColumnService {
                     articleMap.values().stream()
                             .sorted((o1, o2) -> o1.getUpdateTime().compareTo(o2.getUpdateTime()))
                             .peek(article -> {
-                                JSONObject entries = new JSONObject();
-                                entries.set("uid", article.getUid())
-                                        .set("type", 1)
-                                        .set("title", article.getTitle())
-                                        .set("createTime", article.getCreateTime())
-                                        .set("updateTime", article.getUpdateTime());
-                                finalParseArray.add(0, entries);
+                                DirNodeVo dirNode = new DirNodeVo()
+                                        .setUid(article.getUid())
+                                        .setType(1)
+                                        .setTitle(article.getTitle())
+                                        .setCreateTime(article.getCreateTime())
+                                        .setUpdateTime(article.getUpdateTime());;
+                                finalParseArray.add(0, dirNode);
                             })
                             .collect(Collectors.toList());
                 }

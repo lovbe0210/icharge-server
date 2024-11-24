@@ -1,8 +1,12 @@
 package com.lovbe.icharge.service;
 
 
+import cn.hutool.json.JSONArray;
 import com.lovbe.icharge.entity.PublicArticleVo;
+import com.lovbe.icharge.entity.PublicColumnVo;
 import com.lovbe.icharge.entity.RouterInfoVo;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210
@@ -19,7 +23,7 @@ public interface PublicContentService {
      * @author lovbe0210
      * @date 2024/11/19 0:31
      */
-    PublicArticleVo getArticleInfo(String articleId, String userId);
+    PublicArticleVo getArticleInfo(String uri, Long userId);
 
     /**
      * @description 根据uri判断为1文章还是2专栏
@@ -32,9 +36,19 @@ public interface PublicContentService {
 
     /**
      * 获取文章列表
-     * @param domain
+     * @param authorId
      * @param userId
      * @return
      */
-    Object getArticleList(String domain, String userId);
+    List<PublicArticleVo> getArticleList(Long authorId, Long userId);
+
+    /**
+     * @description 获取专栏目录
+     * @param[1] uri
+     * @param[2] userId
+     * @return JSONArray
+     * @author lovbe0210
+     * @date 2024/11/23 22:21
+     */
+    PublicColumnVo getColumnDir(String uri, Long userId);
 }
