@@ -1,11 +1,9 @@
 package com.lovbe.icharge.dao;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
-import com.lovbe.icharge.entity.PublicArticleVo;
-import com.lovbe.icharge.entity.RouterInfoVo;
+import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

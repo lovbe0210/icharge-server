@@ -11,9 +11,9 @@ import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.dao.PublicContentDao;
-import com.lovbe.icharge.entity.PublicArticleVo;
-import com.lovbe.icharge.entity.PublicColumnVo;
-import com.lovbe.icharge.entity.RouterInfoVo;
+import com.lovbe.icharge.entity.vo.PublicArticleVo;
+import com.lovbe.icharge.entity.vo.PublicColumnVo;
+import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +43,8 @@ public class PublicContentServiceImpl implements PublicContentService {
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
+        // 如果当前为登录用户，获取点赞和收藏判断
+
         PublicArticleVo articleVo = new PublicArticleVo();
         BeanUtil.copyProperties(articleDo, articleVo);
         if (Objects.equals(articleDo.getUserId(), userId)) {

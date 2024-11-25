@@ -1,8 +1,8 @@
 package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.entity.PublicArticleVo;
-import com.lovbe.icharge.entity.RouterInfoVo;
+import com.lovbe.icharge.entity.vo.PublicArticleVo;
+import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.GetMapping;

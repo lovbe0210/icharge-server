@@ -49,8 +49,8 @@ public interface ServiceErrorCodes {
     ErrorCode ARTICLE_INFO_UPDATE_FAILED = new ErrorCode(400, "文章更新失败，请稍后再试");
     ErrorCode ARTICLE_PUBLISH_FAILED = new ErrorCode(400, "请先将阅读权限设置为互联网可访问再进行发布");
 
-    //========== 积分记录 1-004-008-000 ==========
-    ErrorCode POINT_RECORD_BIZ_NOT_SUPPORT = new ErrorCode(1_004_008_000, "用户积分记录业务类型不支持");
+    //========== 内容推荐精选 ==========
+    ErrorCode REPEAT_FAVORITE_TAG = new ErrorCode(400, "已存在相同名称的收藏分组");
 
     //========== 签到配置 1-004-009-000 ==========
     ErrorCode SIGN_IN_CONFIG_NOT_EXISTS = new ErrorCode(1_004_009_000, "签到天数规则不存在");

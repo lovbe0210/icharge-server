@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity;
+package com.lovbe.icharge.entity.vo;
 
 import lombok.Data;
 
