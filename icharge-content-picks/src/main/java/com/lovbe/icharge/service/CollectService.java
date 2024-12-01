@@ -1,7 +1,9 @@
 package com.lovbe.icharge.service;
 
-import com.lovbe.icharge.entity.dto.FavoriteTagsDTO;
-import com.lovbe.icharge.entity.dto.FavoriteTargetDTO;
+import com.lovbe.icharge.entity.dto.CollectRequestDTO;
+import com.lovbe.icharge.entity.dto.CollectTagsDTO;
+import com.lovbe.icharge.entity.dto.CollectTargetDTO;
+import com.lovbe.icharge.entity.vo.CollectVo;
 
 import java.util.List;
 
@@ -10,7 +12,7 @@ import java.util.List;
  * @Date: 2024/11/25 23:19
  * @Description: 收藏夹
  */
-public interface FavoriteService {
+public interface CollectService {
     /**
      * @description 收藏标记
      * @param[1] data
@@ -18,7 +20,7 @@ public interface FavoriteService {
      * @author lovbe0210
      * @date 2024/11/25 23:46
      */
-    void marksContent(FavoriteTargetDTO data, Long userId);
+    void marksContent(CollectTargetDTO data, Long userId);
 
     /**
      * @description 取消收藏
@@ -36,7 +38,7 @@ public interface FavoriteService {
      * @author lovbe0210
      * @date 2024/11/26 0:33
      */
-    List<FavoriteTagsDTO> getFavoriteTagList(Long userId);
+    List<CollectTagsDTO> getCollectTagList(Long userId);
 
     /**
      * @description 分类标签编辑
@@ -45,7 +47,7 @@ public interface FavoriteService {
      * @author lovbe0210
      * @date 2024/11/26 0:44
      */
-    void updateFavoriteTag(FavoriteTagsDTO data, Long userId);
+    void updateCollectTag(CollectTagsDTO data, Long userId);
 
     /**
      * @description 标签删除
@@ -54,5 +56,15 @@ public interface FavoriteService {
      * @author lovbe0210
      * @date 2024/11/26 0:54
      */
-    void deleteFavoriteTag(FavoriteTagsDTO data, Long userId);
+    void deleteCollectTag(CollectTagsDTO data, Long userId);
+
+    /**
+     * @return List<CollectTagsVo>
+     * @description 获取收藏内容
+     * @param[1] data
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/11/28 23:20
+     */
+    List<CollectVo> getCollectList(CollectRequestDTO data, Long userId);
 }

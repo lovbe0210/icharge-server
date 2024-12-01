@@ -36,9 +36,29 @@ public class ArticleDo extends BaseEntity {
      */
     private Long userId;
     /**
+     * 个人主页
+     */
+    @TableField(exist = false)
+    private String domain;
+    /**
+     * 用户名
+     */
+    @TableField(exist = false)
+    private String username;
+    /**
      * 所属专栏
      */
     private Long columnId;
+    /**
+     * 专栏地址
+     */
+    @TableField(exist = false)
+    private String columnUri;
+    /**
+     * 专栏名称
+     */
+    @TableField(exist = false)
+    private String columnName;
     /**
      * 字数
      */

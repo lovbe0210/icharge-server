@@ -3,11 +3,13 @@ package com.lovbe.icharge.dao;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -80,6 +82,15 @@ public interface PublicContentDao{
     List<ArticleDo> selectArticleList(@Param("authorId") Long authorId);
 
     /**
+     * @description 获取文章列表
+     * @param[1] articleIds
+     * @return List<ArticleDo>
+     * @author lovbe0210
+     * @date 2024/12/1 14:30
+     */
+    List<ArticleDo> selectArticleList(@Param("articleIds") List<Long> articleIds);
+
+    /**
      * @description 获取专栏信息
      * @param[1] uri
      * @return ColumnDo
@@ -87,4 +98,22 @@ public interface PublicContentDao{
      * @date 2024/11/23 22:36
      */
     ColumnDo selectColumnInfo(@Param("uri") String uri);
+
+    /**
+     * @description 获取专栏列表
+     * @param[1] columnIds
+     * @return List<ColumnDo>
+     * @author lovbe0210
+     * @date 2024/12/1 14:39
+     */
+    List<ColumnDo> selectColumnList(@Param("columnIds") List<Long> columnIds);
+
+    /**
+     * @description &#x83B7;&#x53D6;&#x7528;&#x6237;&#x5217;&#x8868;
+     * @param[1] userIds
+     * @return List<UserInfoDo>
+     * @author lovbe0210
+     * @date 2024/12/1 15:25
+     */
+    List<UserInfoDo> selectUserList(@Param("userIds") Collection<Long> userIds);
 }

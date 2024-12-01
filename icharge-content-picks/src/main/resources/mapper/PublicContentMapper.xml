@@ -24,6 +24,41 @@
           AND c.`status` = 'A'
     </select>
 
+    <!-- 获取文章列表 -->
+    <select id="selectArticleList" resultType="com.lovbe.icharge.common.model.dto.ArticleDo">
+        SELECT a.*, c.uri column_uri, c.title column_name, u.domain, u.username
+        FROM c_article a
+        LEFT JOIN p_user u ON a.user_id = u.uid
+        LEFT JOIN c_column c ON a.column_id = c.uid
+        WHERE a.uid IN
+        <foreach collection="articleIds" item="articleId" separator="," open="(" close=")">
+            #{articleId}
+        </foreach>
+        ORDER BY a.update_time DESC
+    </select>
+
+    <!-- 获取专栏列表 -->
+    <select id="selectColumnList" resultType="com.lovbe.icharge.common.model.dto.ColumnDo">
+        SELECT c.*, u.domain, u.username
+        FROM c_column c
+        LEFT JOIN p_user u ON c.user_id = u.uid
+        WHERE c.uid IN
+        <foreach collection="columnIds" item="columnId" separator="," open="(" close=")">
+            #{columnId}
+        </foreach>
+        ORDER BY c.update_time DESC
+    </select>
+
+    <!-- 获取用户列表 -->
+    <select id="selectUserList" resultType="com.lovbe.icharge.common.model.dto.UserInfoDo">
+        SELECT *
+        FROM p_user
+        WHERE uid IN
+        <foreach collection="userIds" item="userId" separator="," open="(" close=")">
+            #{userIds}
+        </foreach>
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>

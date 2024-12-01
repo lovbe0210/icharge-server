@@ -33,6 +33,16 @@ public class ColumnDo extends BaseEntity {
      */
     private Long userId;
     /**
+     * 个人主页
+     */
+    @TableField(exist = false)
+    private String domain;
+    /**
+     * 用户名
+     */
+    @TableField(exist = false)
+    private String username;
+    /**
      * 专栏简介
      */
     private String synopsis;

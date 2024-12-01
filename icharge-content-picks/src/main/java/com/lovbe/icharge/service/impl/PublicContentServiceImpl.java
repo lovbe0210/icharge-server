@@ -44,7 +44,6 @@ public class PublicContentServiceImpl implements PublicContentService {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
         // 如果当前为登录用户，获取点赞和收藏判断
-
         PublicArticleVo articleVo = new PublicArticleVo();
         BeanUtil.copyProperties(articleDo, articleVo);
         if (Objects.equals(articleDo.getUserId(), userId)) {

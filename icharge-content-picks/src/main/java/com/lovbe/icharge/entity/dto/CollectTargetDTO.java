@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @Author: lovbe0210
@@ -12,7 +13,7 @@ import java.util.List;
  * @Description: MS
  */
 @Data
-public class FavoriteTargetDTO {
+public class CollectTargetDTO {
     /**
      * 标记目标id
      */
@@ -30,5 +31,5 @@ public class FavoriteTargetDTO {
     /**
      * 收藏夹分类标签id
      */
-    private List<Long> tags;
+    private Set<Long> tags;
 }
