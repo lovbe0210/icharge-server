@@ -60,4 +60,12 @@ public class PublicArticleVo extends BaseEntity {
      * 是否公开访问 0否1是
      */
     private Integer isPublic;
+    /**
+     * 收藏id标识
+     */
+    private Long collectId;
+    /**
+     * 是否点赞
+     */
+    private boolean ifLike;
 }

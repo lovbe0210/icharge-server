@@ -60,6 +60,16 @@ public class ArticleDo extends BaseEntity {
     @TableField(exist = false)
     private String columnName;
     /**
+     * 收藏id标识
+     */
+    @TableField(exist = false)
+    private Long collectId;
+    /**
+     * 是否点赞
+     */
+    @TableField(exist = false)
+    private boolean ifLike;
+    /**
      * 字数
      */
     private Integer wordsNum;

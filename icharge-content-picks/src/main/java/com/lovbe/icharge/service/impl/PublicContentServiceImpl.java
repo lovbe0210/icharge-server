@@ -39,11 +39,10 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Override
     public PublicArticleVo getArticleInfo(String articleUri, Long userId) {
         // 如果userId和文档所在userId相同，则使用最新的contentId，否则使用已发布的contentId
-        ArticleDo articleDo = publicContentDao.selectArticleInfo(articleUri);
+        ArticleDo articleDo = publicContentDao.selectArticleInfo(articleUri, userId);
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
-        // 如果当前为登录用户，获取点赞和收藏判断
         PublicArticleVo articleVo = new PublicArticleVo();
         BeanUtil.copyProperties(articleDo, articleVo);
         if (Objects.equals(articleDo.getUserId(), userId)) {
@@ -77,7 +76,7 @@ public class PublicContentServiceImpl implements PublicContentService {
 
     @Override
     public List<PublicArticleVo> getArticleList(Long authorId, Long userId) {
-        List<ArticleDo> articleList = publicContentDao.selectArticleList(authorId);
+        List<ArticleDo> articleList = publicContentDao.selectArticleListByUserId(authorId);
         if (CollectionUtils.isEmpty(articleList)) {
             return Collections.EMPTY_LIST;
         }

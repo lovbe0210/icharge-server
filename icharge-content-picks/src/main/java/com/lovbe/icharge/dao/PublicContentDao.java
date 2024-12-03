@@ -27,9 +27,18 @@ public interface PublicContentDao{
      * @date 2024/11/19 1:48
      */
     @Select(value = """
-                    SELECT * FROM c_article WHERE uri = #{uri} AND status = 'A';
+                    SELECT c.*, ci.uid collect_id, li.uid = null AS if_like  
+                    FROM c_article c
+                    LEFT JOIN p_collect_item ci ON c.uid = ci.target_id 
+                        AND ci.user_id = #{userId}
+                        AND ci.status = 'A'
+                    LEFT JOIN p_like_item li ON c.uid = li.target_id
+                        AND li.user_id = #{userId}
+                        AND li.status = 'A'
+                    WHERE c.uri = #{uri} 
+                        AND c.status = 'A';
                     """)
-    ArticleDo selectArticleInfo(@Param("uri") String articleUri);
+    ArticleDo selectArticleInfo(@Param("uri") String articleUri, @Param("userId") Long userId);
 
     /**
      * @description 获取正文内容
@@ -79,7 +88,7 @@ public interface PublicContentDao{
                         AND status = 'A'
                     ORDER BY sort DESC, update_time DESC
                     """)
-    List<ArticleDo> selectArticleList(@Param("authorId") Long authorId);
+    List<ArticleDo> selectArticleListByUserId(@Param("authorId") Long authorId);
 
     /**
      * @description 获取文章列表

@@ -8,7 +8,6 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.CollectTagDao;
 import com.lovbe.icharge.dao.PublicContentDao;
@@ -20,7 +19,6 @@ import com.lovbe.icharge.entity.vo.CollectVo;
 import com.lovbe.icharge.service.CollectService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -29,7 +27,6 @@ import java.text.Collator;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @Author: lovbe0210
@@ -47,7 +44,7 @@ public class CollectServiceImpl implements CollectService {
     private PublicContentDao publicContentDao;
 
     @Override
-    public void marksContent(CollectTargetDTO data, Long userId) {
+    public Long marksContent(CollectTargetDTO data, Long userId) {
         CollectDo collectDb = collectDao.selectOne(new LambdaQueryWrapper<CollectDo>()
                 .eq(CollectDo::getUserId, userId)
                 .eq(CollectDo::getTargetId, data.getTargetId()));
@@ -55,19 +52,20 @@ public class CollectServiceImpl implements CollectService {
             // 更新
             collectDb.setTags(data.getTags()).setUpdateTime(new Date());
             collectDao.insertOrUpdate(collectDb);
-            return;
+            return userId;
         }
-        if (data.getFtId() == null) {
-            data.setFtId(YitIdHelper.nextId());
+        if (data.getUid() == null) {
+            data.setUid(YitIdHelper.nextId());
         }
         CollectDo collectDo = new CollectDo();
         BeanUtil.copyProperties(data, collectDo);
-        collectDo.setUid(data.getFtId())
+        collectDo.setUid(data.getUid())
                 .setStatus(CommonStatusEnum.NORMAL.getStatus())
                 .setCreateTime(new Date())
                 .setUpdateTime(new Date());
         collectDo.setUserId(userId);
         collectDao.insertOrUpdate(collectDo);
+        return collectDo.getUid();
     }
 
     @Override
@@ -81,7 +79,7 @@ public class CollectServiceImpl implements CollectService {
     }
 
     @Override
-    public List<CollectTagsDTO> getCollectTagList(Long userId) {
+    public List<CollectTagsDTO> getCollectTagCount(Long userId) {
         List<CollectTagsDTO> collectTagList = collectTagDao.selectList(new LambdaQueryWrapper<CollectTagsDTO>()
                 .eq(CollectTagsDTO::getUserId, userId)
                 .orderByDesc(CollectTagsDTO::getUpdateTime));
@@ -95,14 +93,12 @@ public class CollectServiceImpl implements CollectService {
         if (CollectionUtils.isEmpty(collectList)) {
             return collectTagList;
         }
+        defaultTag.setCollectCount(collectList.size());
         Map<Long, CollectTagsDTO> collectTagMap = collectTagList.stream()
                 .collect(Collectors.toMap(CollectTagsDTO::getUid, Function.identity()));
         collectList.forEach(collectDo -> {
             Set<Long> tags = collectDo.getTags();
-            if (CollectionUtils.isEmpty(tags)) {
-                CollectTagsDTO collectTag = collectTagMap.get(-1L);
-                collectTag.setCollectCount(collectTag.getCollectCount() + 1);
-            } else {
+            if (!CollectionUtils.isEmpty(tags)) {
                 tags.forEach(tag -> {
                     CollectTagsDTO collectTag = collectTagMap.get(tag);
                     if (collectTag != null) {
@@ -115,7 +111,18 @@ public class CollectServiceImpl implements CollectService {
     }
 
     @Override
-    public void updateCollectTag(CollectTagsDTO data, Long userId) {
+    public List<CollectTagsDTO> getCollectTagList(Long userId) {
+        List<CollectTagsDTO> collectTagList = collectTagDao.selectList(new LambdaQueryWrapper<CollectTagsDTO>()
+                .eq(CollectTagsDTO::getUserId, userId)
+                .orderByDesc(CollectTagsDTO::getUpdateTime));
+        if (CollectionUtils.isEmpty(collectTagList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return collectTagList;
+    }
+
+    @Override
+    public Long updateCollectTag(CollectTagsDTO data, Long userId) {
         List<CollectTagsDTO> collectTagList = collectTagDao.selectList(
                 new LambdaQueryWrapper<CollectTagsDTO>().eq(CollectTagsDTO::getUserId, userId));
         if (!CollectionUtils.isEmpty(collectTagList)) {
@@ -135,6 +142,7 @@ public class CollectServiceImpl implements CollectService {
             data.setUpdateTime(new Date());
         }
         collectTagDao.insertOrUpdate(data);
+        return data.getUid();
     }
 
     @Override
@@ -220,9 +228,9 @@ public class CollectServiceImpl implements CollectService {
         collectList.forEach(collectDo -> {
             Integer targetType = collectDo.getTargetType();
             if (targetType == 1) {
-                articleIds.add(collectDo.getUid());
+                articleIds.add(collectDo.getTargetId());
             } else if (targetType == 2) {
-                columnIds.add(collectDo.getUid());
+                columnIds.add(collectDo.getTargetId());
             }
         });
         Map<Long, ArticleDo> articleMap = new HashMap<>();

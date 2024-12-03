@@ -14,13 +14,14 @@ import java.util.List;
  */
 public interface CollectService {
     /**
+     * @return
      * @description 收藏标记
      * @param[1] data
      * @param[2] userId
      * @author lovbe0210
      * @date 2024/11/25 23:46
      */
-    void marksContent(CollectTargetDTO data, Long userId);
+    Long marksContent(CollectTargetDTO data, Long userId);
 
     /**
      * @description 取消收藏
@@ -38,16 +39,26 @@ public interface CollectService {
      * @author lovbe0210
      * @date 2024/11/26 0:33
      */
+    List<CollectTagsDTO> getCollectTagCount(Long userId);
+    
+    /** 
+     * @description: 获取标签列表
+     * @param: Long
+     * @return: List<CollectTagsDTO>
+     * @author: lovbe0210
+     * @date: 2024/12/3 16:45
+     */
     List<CollectTagsDTO> getCollectTagList(Long userId);
 
     /**
+     * @return
      * @description 分类标签编辑
      * @param[1] data
      * @param[2] userId
      * @author lovbe0210
      * @date 2024/11/26 0:44
      */
-    void updateCollectTag(CollectTagsDTO data, Long userId);
+    Long updateCollectTag(CollectTagsDTO data, Long userId);
 
     /**
      * @description 标签删除

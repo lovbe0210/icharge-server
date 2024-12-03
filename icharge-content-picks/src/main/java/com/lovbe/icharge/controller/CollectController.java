@@ -29,7 +29,21 @@ public class CollectController {
     private CollectService collectService;
 
     /**
-     * description: 获取收藏夹分类标签
+     * description: 获取收藏夹分类标签（带统计）
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/collect/tags/count")
+    public ResponseBean<PublicArticleVo> getCollectTagCount(@RequestHeader("userId") Long userId) {
+        List<CollectTagsDTO> data = collectService.getCollectTagCount(userId);
+        return ResponseBean.ok(data);
+    }
+
+    /**
+     * description: 获取收藏夹分类（纯展示）
      *
      * @param userId
      * @return ResponseBean<ArticleVO>
@@ -53,9 +67,9 @@ public class CollectController {
     @PostMapping("/collect/tag/edit")
     public ResponseBean<PublicArticleVo> updateCollectTag(@RequestBody @Valid BaseRequest<CollectTagsDTO> baseRequest,
                                                            @RequestHeader("userId") Long userId) {
-        Assert.notNull(baseRequest.getData().getTitle(), "收藏分组名称不得为空");
-        collectService.updateCollectTag(baseRequest.getData(), userId);
-        return ResponseBean.ok();
+        Assert.hasLength(baseRequest.getData().getTitle(), "收藏分组名称不得为空");
+        Long tagId = collectService.updateCollectTag(baseRequest.getData(), userId);
+        return ResponseBean.ok(tagId);
     }
 
     /**
@@ -104,8 +118,8 @@ public class CollectController {
         if (data.getTargetId() == null || data.getTargetType() == null) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
         }
-        collectService.marksContent(data, userId);
-        return ResponseBean.ok();
+        Long collectId = collectService.marksContent(data, userId);
+        return ResponseBean.ok(collectId);
     }
 
     /**
@@ -120,10 +134,10 @@ public class CollectController {
     public ResponseBean<PublicArticleVo> cancelMarkContent(@RequestBody @Valid BaseRequest<CollectTargetDTO> baseRequest,
                                                            @RequestHeader("userId") Long userId) {
         CollectTargetDTO data = baseRequest.getData();
-        if (data.getFtId() == null) {
+        if (data.getUid() == null) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
         }
-        collectService.cancelMarkContent(data.getFtId(), userId);
+        collectService.cancelMarkContent(data.getUid(), userId);
         return ResponseBean.ok();
     }
 }

@@ -27,7 +27,7 @@ public class CollectTargetDTO {
     /**
      * 收藏项id
      */
-    private Long ftId;
+    private Long uid;
     /**
      * 收藏夹分类标签id
      */
