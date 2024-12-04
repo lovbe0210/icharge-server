@@ -7,7 +7,6 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.CollectRequestDTO;
 import com.lovbe.icharge.entity.dto.CollectTagsDTO;
 import com.lovbe.icharge.entity.dto.CollectTargetDTO;
-import com.lovbe.icharge.entity.vo.CollectTagsVo;
 import com.lovbe.icharge.entity.vo.CollectVo;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.service.CollectService;
@@ -101,6 +100,21 @@ public class CollectController {
                                                                @RequestHeader("userId") Long userId) {
         List<CollectVo> collectList = collectService.getCollectList(baseRequest.getData(), userId);
         return ResponseBean.ok(collectList);
+    }
+
+    /**
+     * description: 获取收藏夹详情
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/collect/info/{collectId}")
+    public ResponseBean<PublicArticleVo> getCollectInfo(@PathVariable("collectId") Long collectId,
+                                                               @RequestHeader("userId") Long userId) {
+        CollectVo collect = collectService.getCollectInfo(collectId, userId);
+        return ResponseBean.ok(collect);
     }
 
     /**

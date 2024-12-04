@@ -78,4 +78,13 @@ public interface CollectService {
      * @date 2024/11/28 23:20
      */
     List<CollectVo> getCollectList(CollectRequestDTO data, Long userId);
+
+    /**
+     * @description: 获取收藏详情
+     * @param: Long
+     * @return: CollectVo
+     * @author: lovbe0210
+     * @date: 2024/12/4 15:34
+     */
+    CollectVo getCollectInfo(Long collectId, Long userId);
 }

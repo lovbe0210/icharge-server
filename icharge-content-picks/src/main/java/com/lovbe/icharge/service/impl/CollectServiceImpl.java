@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
@@ -214,6 +215,22 @@ public class CollectServiceImpl implements CollectService {
         }
         List<CollectVo> subList = newCollect.subList(data.getOffset(), data.getLimit());
         return subList;
+    }
+
+    @Override
+    public CollectVo getCollectInfo(Long collectId, Long userId) {
+        CollectDo collectDo = collectDao.selectOne(new LambdaQueryWrapper<CollectDo>()
+                .eq(CollectDo::getUid, collectId)
+                .eq(CollectDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        if (collectDo != null && !Objects.equals(collectDo.getUserId(), userId)) {
+            throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
+        }
+        if (collectDo != null) {
+            CollectVo collectVo = new CollectVo();
+            BeanUtil.copyProperties(collectDo, collectVo);
+            return collectVo;
+        }
+        return new CollectVo();
     }
 
     /**
