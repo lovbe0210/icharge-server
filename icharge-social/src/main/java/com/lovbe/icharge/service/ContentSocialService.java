@@ -15,5 +15,5 @@ public interface ContentSocialService {
      * @author: lovbe0210
      * @date: 2024/12/5 0:38
      */
-    Long marksContent(ContentLikeDTO data, Long userId);
+    void marksContent(ContentLikeDTO data, Long userId);
 }

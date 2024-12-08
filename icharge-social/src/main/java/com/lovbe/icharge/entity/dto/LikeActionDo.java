@@ -1,0 +1,31 @@
+package com.lovbe.icharge.entity.dto;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.lovbe.icharge.common.model.base.BaseEntity;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @Author: lovbe0210
+ * @Date: 2024/12/8 13:46
+ * @Description: MS
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName(value = "p_like_item")
+public class LikeActionDo extends BaseEntity {
+    /**
+     * 点赞对象id
+     */
+    private Long targetId;
+    /**
+     * 点赞对象类型  1文章 2专栏 3随笔 4评论
+     */
+    private Integer targetType;
+    /**
+     * 点赞用户id
+     */
+    private Long userId;
+}

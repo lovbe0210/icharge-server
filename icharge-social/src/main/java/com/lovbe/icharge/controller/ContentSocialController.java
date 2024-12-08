@@ -34,7 +34,7 @@ public class ContentSocialController {
     @PostMapping("/content/like")
     public ResponseBean markContent(@RequestBody @Valid BaseRequest<ContentLikeDTO> baseRequest,
                                     @RequestHeader("userId") Long userId) {
-        Long operateId = socialService.marksContent(baseRequest.getData(), userId);
+        socialService.marksContent(baseRequest.getData(), userId);
         return ResponseBean.ok();
     }
 }

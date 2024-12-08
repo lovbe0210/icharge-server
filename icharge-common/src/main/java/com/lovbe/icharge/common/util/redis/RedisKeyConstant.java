@@ -34,6 +34,10 @@ public abstract class RedisKeyConstant {
      */
     public static final String USER = "auth:";
     /**
+     * 社交模块
+     */
+    public static final String SOCIAL = "social:";
+    /**
      * 内容生产服务
      */
     public static final String CONTENT = "content-product:";
@@ -145,5 +149,16 @@ public abstract class RedisKeyConstant {
      */
     public static String getDomainKey() {
         return BASE_PROJECT + USER + "domain";
+    }
+
+    /**
+     * @description: 获取用户点赞列表
+     * @param: Long
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/12/8 12:19
+     */
+    public static String getUserLikesSet(Long userId) {
+        return BASE_PROJECT + SOCIAL + "action-like:" + userId;
     }
 }

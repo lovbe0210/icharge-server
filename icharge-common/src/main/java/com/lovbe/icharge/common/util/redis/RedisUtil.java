@@ -1060,7 +1060,7 @@ public final class RedisUtil {
      * @param value 值
      * @return true 存在 false不存在
      */
-    public static boolean sHasKey(String key, Object value) {
+    public static boolean sHasValue(String key, Object value) {
         try {
             return redisTemplate.opsForSet().isMember(key, value);
         } catch (Exception e) {
@@ -1349,5 +1349,64 @@ public final class RedisUtil {
 
     public static <T> void zset(String key, long score, T val) {
         redisTemplate.opsForZSet().add(key, val, score);
+    }
+
+    public static <T> void zSetTuple(String key, Set<ZSetOperations.TypedTuple<Object>> values) {
+        HashSet<Object> set = new HashSet<>();
+        redisTemplate.opsForZSet().add(key, values);
+    }
+
+    /**
+     * 根据value从一个zset中查询,是否存在
+     *
+     * @param key   键
+     * @param value 值
+     * @return true 存在 false不存在
+     */
+    public static boolean zsHasValue(String key, Object value) {
+        try {
+            return redisTemplate.opsForZSet().score(key, value) != null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * zset集合删除元素
+     * @param key
+     * @param targetId
+     */
+    public static void zRemove(String key, Long... targetId) {
+        redisTemplate.opsForZSet().remove(key, targetId);
+    }
+
+    /**
+     * 获取set缓存的长度
+     *
+     * @param key 键
+     * @return
+     */
+    public static long szGetSetSize(String key) {
+        try {
+            return redisTemplate.opsForZSet().size(key);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    /**
+     * 获取set缓存的长度
+     *
+     * @param key 键
+     * @return
+     */
+    public static void szRemoveRange(String key, int rangeIndex) {
+        try {
+            redisTemplate.opsForZSet().removeRange(key, rangeIndex, -1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
