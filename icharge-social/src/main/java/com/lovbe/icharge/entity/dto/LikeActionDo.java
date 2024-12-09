@@ -1,5 +1,6 @@
 package com.lovbe.icharge.entity.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.AllArgsConstructor;
@@ -28,4 +29,15 @@ public class LikeActionDo extends BaseEntity {
      * 点赞用户id
      */
     private Long userId;
+    /**
+     * 点赞动作 1点赞 0取消
+     */
+    @TableField(exist = false)
+    private Integer action;
+
+    public LikeActionDo(Long targetId, Integer targetType, Long userId) {
+        this.targetId = targetId;
+        this.targetType = targetType;
+        this.userId = userId;
+    }
 }

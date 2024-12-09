@@ -15,5 +15,14 @@ public interface ContentSocialService {
      * @author: lovbe0210
      * @date: 2024/12/5 0:38
      */
-    void marksContent(ContentLikeDTO data, Long userId);
+    void contentLikeMark(ContentLikeDTO data, Long userId);
+
+    /**
+     * @description: 判断是否已点赞
+     * @param: ContentLikeDTO
+     * @return: boolean
+     * @author: lovbe0210
+     * @date: 2024/12/9 23:45
+     */
+    boolean ifLike(ContentLikeDTO data, Long userId);
 }

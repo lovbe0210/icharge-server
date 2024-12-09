@@ -34,7 +34,14 @@ public class ContentSocialController {
     @PostMapping("/content/like")
     public ResponseBean markContent(@RequestBody @Valid BaseRequest<ContentLikeDTO> baseRequest,
                                     @RequestHeader("userId") Long userId) {
-        socialService.marksContent(baseRequest.getData(), userId);
+        socialService.contentLikeMark(baseRequest.getData(), userId);
         return ResponseBean.ok();
+    }
+
+    @PostMapping("/iflike")
+    public ResponseBean ifLike(@RequestBody @Valid BaseRequest<ContentLikeDTO> baseRequest,
+                               @RequestHeader("userId") Long userId) {
+        boolean likeFlag = socialService.ifLike(baseRequest.getData(), userId);
+        return ResponseBean.ok(likeFlag);
     }
 }

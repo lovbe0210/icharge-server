@@ -27,14 +27,11 @@ public interface PublicContentDao{
      * @date 2024/11/19 1:48
      */
     @Select(value = """
-                    SELECT c.*, ci.uid collect_id, li.uid = null AS if_like  
+                    SELECT c.*, ci.uid collect_id  
                     FROM c_article c
                     LEFT JOIN p_collect_item ci ON c.uid = ci.target_id 
                         AND ci.user_id = #{userId}
                         AND ci.status = 'A'
-                    LEFT JOIN p_like_item li ON c.uid = li.target_id
-                        AND li.user_id = #{userId}
-                        AND li.status = 'A'
                     WHERE c.uri = #{uri} 
                         AND c.status = 'A';
                     """)

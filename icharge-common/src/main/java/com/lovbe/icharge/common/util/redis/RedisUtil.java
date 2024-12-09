@@ -1387,7 +1387,7 @@ public final class RedisUtil {
      * @param key 键
      * @return
      */
-    public static long szGetSetSize(String key) {
+    public static long zsGetSetSize(String key) {
         try {
             return redisTemplate.opsForZSet().size(key);
         } catch (Exception e) {

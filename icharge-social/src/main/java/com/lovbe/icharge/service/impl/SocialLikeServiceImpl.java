@@ -12,7 +12,6 @@ import com.lovbe.icharge.service.SocialLikeService;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
@@ -33,7 +32,32 @@ public class SocialLikeServiceImpl implements SocialLikeService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void handlerLikeAction(LikeActionDo actionDo) {
-        // 判断redis中是否有最近的点赞记录
+        // 1. 获取数据库中收藏状态
+        LikeActionDo selected = socialLikeDao.selectOne(new LambdaQueryWrapper<LikeActionDo>()
+                .eq(LikeActionDo::getUserId, actionDo.getUserId())
+                .eq(LikeActionDo::getTargetId, actionDo.getTargetId()), false);
+        if (actionDo.getAction() == 1) {
+            // 点赞操作
+            if (selected == null) {
+                actionDo.setUid(YitIdHelper.nextId())
+                        .setUpdateTime(actionDo.getCreateTime())
+                        .setStatus(CommonStatusEnum.NORMAL.getStatus());
+                selected = actionDo;
+            } else {
+                selected.setUpdateTime(actionDo.getCreateTime());
+            }
+            socialLikeDao.insertOrUpdate(selected);
+            return;
+        }
+
+        // 2. 取消点赞
+        if (selected != null) {
+            socialLikeDao.delete(new LambdaQueryWrapper<LikeActionDo>()
+                    .eq(LikeActionDo::getUserId, actionDo.getUserId())
+                    .eq(LikeActionDo::getTargetId, actionDo.getTargetId()));
+        }
+
+       /* // 判断redis中是否有最近的点赞记录
         Long userId = actionDo.getUserId();
         String likesSet = RedisKeyConstant.getUserLikesSet(userId);
         if (RedisUtil.zsHasValue(likesSet, actionDo.getTargetId())) {
@@ -58,26 +82,27 @@ public class SocialLikeServiceImpl implements SocialLikeService {
                         .setCreateTime(new Date())
                         .setUpdateTime(new Date());
                 socialLikeDao.insert(actionDo);
-            }
-            // 更新redis
-            Page<LikeActionDo> likeActionList = socialLikeDao.selectPage(new Page<>(0, 998), new LambdaQueryWrapper<LikeActionDo>()
-                    .eq(LikeActionDo::getUserId, actionDo.getUserId())
-                    .orderByDesc(LikeActionDo::getUpdateTime));
-            if (!CollectionUtils.isEmpty(likeActionList.getRecords())) {
-                Set<ZSetOperations.TypedTuple<Object>> typedTupleSet = likeActionList.getRecords().parallelStream()
-                        .map(action -> {
-                            Long targetId = action.getTargetId();
-                            long time = action.getUpdateTime() == null ? 0 : action.getUpdateTime().getTime();
-                            ZSetOperations.TypedTuple<Object> tuple = ZSetOperations.TypedTuple.of(targetId, time * 1.00);
-                            return tuple;
-                        }).collect(Collectors.toSet());
-                RedisUtil.zSetTuple(likesSet, typedTupleSet);
-            }
-            RedisUtil.zset(likesSet,
-                    actionDo.getCreateTime() == null ? System.currentTimeMillis() : actionDo.getCreateTime().getTime(),
-                    actionDo.getTargetId());
-            // 如果长度大于999，只保留999
-            RedisUtil.szRemoveRange(likesSet, 999);
+            }*/
+
+        // 更新redis
+        /*String likesSetKey = RedisKeyConstant.getUserLikesSet(actionDo.getUserId());
+        Page<LikeActionDo> likeActionList = socialLikeDao.selectPage(new Page<>(0, 998), new LambdaQueryWrapper<LikeActionDo>()
+                .eq(LikeActionDo::getUserId, actionDo.getUserId())
+                .orderByDesc(LikeActionDo::getUpdateTime));
+        if (!CollectionUtils.isEmpty(likeActionList.getRecords())) {
+            Set<ZSetOperations.TypedTuple<Object>> typedTupleSet = likeActionList.getRecords().parallelStream()
+                    .map(action -> {
+                        Long targetId = action.getTargetId();
+                        long time = action.getUpdateTime() == null ? 0 : action.getUpdateTime().getTime();
+                        ZSetOperations.TypedTuple<Object> tuple = ZSetOperations.TypedTuple.of(targetId, time * 1.00);
+                        return tuple;
+                    }).collect(Collectors.toSet());
+            RedisUtil.zSetTuple(likesSetKey, typedTupleSet);
         }
+        RedisUtil.zset(likesSetKey,
+                actionDo.getCreateTime() == null ? System.currentTimeMillis() : actionDo.getCreateTime().getTime(),
+                actionDo.getTargetId());
+        // 如果长度大于999，只保留999
+        RedisUtil.szRemoveRange(likesSetKey, 999);*/
     }
 }

@@ -49,6 +49,7 @@ public class KafkaConsumer {
             LikeActionDo actionDo = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), LikeActionDo.class);
             // 参数校验
             if (actionDo.getUserId() == null ||
+                    actionDo.getAction() == null ||
                     actionDo.getTargetId() == null ||
                     actionDo.getTargetType() == null ||
                     actionDo.getCreateTime() == null) {

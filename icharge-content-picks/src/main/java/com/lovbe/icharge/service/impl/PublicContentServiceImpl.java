@@ -6,15 +6,21 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.PublicContentDao;
+import com.lovbe.icharge.entity.dto.ContentLikeDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.PublicColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
+import com.lovbe.icharge.service.feign.SocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +41,8 @@ import java.util.stream.Collectors;
 public class PublicContentServiceImpl implements PublicContentService {
     @Resource
     private PublicContentDao publicContentDao;
+    @Resource
+    private SocialService socialService;
 
     @Override
     public PublicArticleVo getArticleInfo(String articleUri, Long userId) {
@@ -42,6 +50,24 @@ public class PublicContentServiceImpl implements PublicContentService {
         ArticleDo articleDo = publicContentDao.selectArticleInfo(articleUri, userId);
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
+        }
+        // 已登陆查询点赞记录
+        if (userId != null) {
+            String likesSetKey = RedisKeyConstant.getUserLikesSet(userId);
+            boolean hasValue = RedisUtil.zsHasValue(likesSetKey, articleDo.getUid());
+            if (hasValue) {
+                articleDo.setIfLike(true);
+            } else {
+                // 判断个人收藏量是否超过了999，如果超过时查询数据库回溯
+                long size = RedisUtil.zsGetSetSize(likesSetKey);
+                if (size >= 999) {
+                    ResponseBean<Boolean> iflike = socialService.iflike(
+                            new BaseRequest<>(new ContentLikeDTO(articleDo.getUid(), 1)), userId);
+                    if (iflike != null && iflike.getData() != null && iflike.getData()) {
+                        articleDo.setIfLike(true);
+                    }
+                }
+            }
         }
         PublicArticleVo articleVo = new PublicArticleVo();
         BeanUtil.copyProperties(articleDo, articleVo);
