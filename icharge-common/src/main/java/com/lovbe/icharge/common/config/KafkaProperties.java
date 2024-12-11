@@ -37,9 +37,13 @@ public class KafkaProperties {
      */
     private String retries;
     /**
-     * 批量
+     * 批量拉去
      */
     private String batchSize;
+    /**
+     * 批量拉取数量
+     */
+    private int batchPoll;
     /**
      * 缓冲区大小
      */

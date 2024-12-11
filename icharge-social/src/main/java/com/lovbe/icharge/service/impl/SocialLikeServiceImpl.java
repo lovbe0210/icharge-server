@@ -1,23 +1,16 @@
 package com.lovbe.icharge.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
-import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
-import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.service.SocialLikeService;
 import jakarta.annotation.Resource;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * @Author: lovbe0210
@@ -31,9 +24,9 @@ public class SocialLikeServiceImpl implements SocialLikeService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void handlerLikeAction(LikeActionDo actionDo) {
+    public void handlerLikeAction(List<LikeActionDo> actionDo) {
         // 1. 获取数据库中收藏状态
-        LikeActionDo selected = socialLikeDao.selectOne(new LambdaQueryWrapper<LikeActionDo>()
+        /*LikeActionDo selected = socialLikeDao.selectOne(new LambdaQueryWrapper<LikeActionDo>()
                 .eq(LikeActionDo::getUserId, actionDo.getUserId())
                 .eq(LikeActionDo::getTargetId, actionDo.getTargetId()), false);
         if (actionDo.getAction() == 1) {
@@ -43,6 +36,8 @@ public class SocialLikeServiceImpl implements SocialLikeService {
                         .setUpdateTime(actionDo.getCreateTime())
                         .setStatus(CommonStatusEnum.NORMAL.getStatus());
                 selected = actionDo;
+                // 统计表+1
+                socialLikeDao.updateStatisticByAdd(actionDo.getTargetId(), actionDo.getTargetType());
             } else {
                 selected.setUpdateTime(actionDo.getCreateTime());
             }
@@ -55,7 +50,9 @@ public class SocialLikeServiceImpl implements SocialLikeService {
             socialLikeDao.delete(new LambdaQueryWrapper<LikeActionDo>()
                     .eq(LikeActionDo::getUserId, actionDo.getUserId())
                     .eq(LikeActionDo::getTargetId, actionDo.getTargetId()));
-        }
+            // 统计表-1
+            socialLikeDao.updateStatisticBySub(actionDo.getTargetId());
+        }*/
 
        /* // 判断redis中是否有最近的点赞记录
         Long userId = actionDo.getUserId();

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @EnableConfigurationProperties(KafkaProperties.class)
+@EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 @Import({
         KafkaProduceConfig.class,
         KafkaConsumerConfig.class,

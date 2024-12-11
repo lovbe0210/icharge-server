@@ -55,7 +55,6 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         try {
             CompletableFuture send = kafkaTemplate.send(likeActionTopic, JSONUtil.toJsonStr(message));
             send.thenAccept(result -> {
-                log.info(JSONUtil.toJsonStr(result));
                 log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
             }).exceptionally(ex -> {
                 log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));

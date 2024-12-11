@@ -6,12 +6,9 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -30,18 +27,19 @@ import java.util.Map;
  * @Description: 消费者配置
  */
 @Slf4j
+@EnableKafka
 @ConditionalOnProperty(value = "spring.kafka.consume-enable", havingValue = "true")
 public class KafkaConsumerConfig {
     /**
      * 定义一个KafkaAdmin的bean，可以自动检测集群中是否存在topic，不存在则创建
      */
-//    @Bean
-//    public KafkaAdmin kafkaAdmin(KafkaProperties kafkaProperties) {
-//        Map<String, Object> configs = new HashMap<>();
-//        // 指定多个kafka集群多个地址，例如：192.168.2.11,9092,192.168.2.12:9092,192.168.2.13:9092
-//        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getServers());
-//        return new KafkaAdmin(configs);
-//    }
+    @Bean
+    public KafkaAdmin kafkaAdmin(KafkaProperties kafkaProperties) {
+        Map<String, Object> configs = new HashMap<>();
+        // 指定多个kafka集群多个地址，例如：192.168.2.11,9092,192.168.2.12:9092,192.168.2.13:9092
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getServers());
+        return new KafkaAdmin(configs);
+    }
 
     /**
      * 构造消费者属性map，ConsumerConfig中的可配置属性比spring boot自动配置要多
@@ -52,7 +50,7 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "15000");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 5);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, kafkaProperties.getBatchPoll());
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getServers());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.getKafkaAutoOffset());
         if (!StringUtils.isEmpty(kafkaProperties.getSaslUsername()) && !StringUtils.isEmpty(kafkaProperties.getSaslPassword())) {
@@ -78,23 +76,12 @@ public class KafkaConsumerConfig {
         return new DefaultKafkaConsumerFactory(consumerProperties(kafkaProperties));
     }
 
-
-   /* @Bean("listenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory KafkaListenerContainerFactory(DefaultKafkaConsumerFactory consumerFactory) {
-        //指定使用DefaultKafkaConsumerFactory
-        ConcurrentKafkaListenerContainerFactory factory = new ConcurrentKafkaListenerContainerFactory();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(commonErrorHandler());
-        //设置消费者ack模式为手动，看需求设置
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-        return factory;
-    }*/
-
     public CommonErrorHandler commonErrorHandler() {
         // 创建 FixedBackOff 对象
         BackOff backOff = new FixedBackOff(5000L, 3L);
         DefaultErrorHandler defaultErrorHandler = new DefaultErrorHandler((ConsumerAwareRecordRecoverer) (record, consumer, exception) -> {
-            log.info("save to db " + record.value().toString());
+            log.info("[消息消费失败] --- errorInfo: {}" + exception.toString());
+            // TODO 放入死信队列
         }, backOff);
         return defaultErrorHandler;
     }
@@ -103,15 +90,13 @@ public class KafkaConsumerConfig {
     public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> kafkaListenerContainerFactory(KafkaProperties kafkaProperties) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory(kafkaProperties));
-        // 并发数 多个微服务实例会均分
-        factory.setConcurrency(2);
-//        factory.setBatchListener(true);
+        // 开启批量消费
+        factory.setBatchListener(true);
         factory.setCommonErrorHandler(commonErrorHandler());
 
         ContainerProperties containerProperties = factory.getContainerProperties();
         // 是否设置手动提交
         containerProperties.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-
         return factory;
     }
 }
