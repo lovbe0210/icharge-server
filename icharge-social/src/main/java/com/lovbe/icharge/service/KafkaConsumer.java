@@ -39,7 +39,6 @@ public class KafkaConsumer {
      */
     @KafkaListener(topics = "${spring.kafka.topics.user-action-like}",
             containerFactory = "kafkaListenerContainerFactory", groupId = "action-like")
-//    public void listenActionLike(ConsumerRecord consumerRecord, Acknowledgment ack, Consumer consumer) {
     public void listenActionLike(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
         if (consumerRecords.isEmpty()) {
             return;

@@ -1,6 +1,5 @@
 package com.lovbe.icharge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.dao.SocialLikeDao;
@@ -9,8 +8,12 @@ import com.lovbe.icharge.service.SocialLikeService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe0210
@@ -24,62 +27,94 @@ public class SocialLikeServiceImpl implements SocialLikeService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void handlerLikeAction(List<LikeActionDo> actionDo) {
+    public void handlerLikeAction(List<LikeActionDo> actionDoList) {
         // 1. 获取数据库中收藏状态
-        /*LikeActionDo selected = socialLikeDao.selectOne(new LambdaQueryWrapper<LikeActionDo>()
-                .eq(LikeActionDo::getUserId, actionDo.getUserId())
-                .eq(LikeActionDo::getTargetId, actionDo.getTargetId()), false);
-        if (actionDo.getAction() == 1) {
-            // 点赞操作
-            if (selected == null) {
-                actionDo.setUid(YitIdHelper.nextId())
-                        .setUpdateTime(actionDo.getCreateTime())
-                        .setStatus(CommonStatusEnum.NORMAL.getStatus());
-                selected = actionDo;
-                // 统计表+1
-                socialLikeDao.updateStatisticByAdd(actionDo.getTargetId(), actionDo.getTargetType());
+        List<LikeActionDo> likeActionList = socialLikeDao.selectListByAction(actionDoList);
+        Map<String, LikeActionDo> actionMap = CollectionUtils.isEmpty(likeActionList) ? Collections.EMPTY_MAP :
+                likeActionList.stream().collect(Collectors.toMap(action -> action.getUserId() + "-" + action.getTargetId(),
+                        Function.identity(),
+                        (a, b) -> b));
+
+        // 2. 根据回源数据进行自我校正
+        List<LikeActionDo> statisticAddList = new ArrayList<>();
+        List<LikeActionDo> statisticSubList = new ArrayList<>();
+        List<LikeActionDo> likeActionUpdateList = new ArrayList<>();
+        List<Long> likeActionDeleteList = new ArrayList<>();
+        Map<String, List<LikeActionDo>> collectMap = actionDoList.stream()
+                .collect(Collectors.groupingBy(action -> action.getUserId() + "-" + action.getTargetId()));
+        collectMap.forEach((key, list) -> {
+            LikeActionDo actionDB = actionMap.get(key);
+            LikeActionDo action = list.get(0);
+            if (list.size() == 1) {
+                if (actionDB != null) {
+                    // 已存在点赞数据
+                    if (action.getAction() == 1) {
+                        // 更新点赞时间即可
+                        actionDB.setUpdateTime(action.getCreateTime());
+                        likeActionUpdateList.add(actionDB);
+                    } else {
+                        // 取消点赞
+                        likeActionDeleteList.add(actionDB.getUid());
+                        statisticSubList.add(action);
+                    }
+                } else {
+                    // 不存在点赞数据且为点赞动作
+                    if (action.getAction() == 1) {
+                        action.setUid(YitIdHelper.nextId())
+                                .setUpdateTime(action.getCreateTime())
+                                .setStatus(CommonStatusEnum.NORMAL.getStatus());
+                        likeActionUpdateList.add(action);
+                        statisticAddList.add(action);
+                    }
+                }
             } else {
-                selected.setUpdateTime(actionDo.getCreateTime());
+                AtomicInteger likeFlag = new AtomicInteger(actionDB == null ? 0 : 1);
+                list.sort((o1, o2) -> o1.getCreateTime().compareTo(o2.getCreateTime()));
+                list.forEach(ad -> {
+                    if (ad.getAction() == 1 && likeFlag.get() == 0) {
+                        likeFlag.incrementAndGet();
+                    } else if (ad.getAction() == 0 && likeFlag.get() == 1) {
+                        likeFlag.decrementAndGet();
+                    }
+                });
+                if (likeFlag.get() == 1 && list.get(list.size() - 1).getAction() == 1) {
+                    // 获取最后一条消息的时间更新点赞时间
+                    if (actionDB != null) {
+                        actionDB.setUpdateTime(list.get(list.size() - 1).getCreateTime());
+                        likeActionDeleteList.add(actionDB.getUid());
+                    } else {
+                        LikeActionDo likeAction = list.get(list.size() - 1);
+                        likeAction.setUid(YitIdHelper.nextId())
+                                .setUpdateTime(likeAction.getCreateTime())
+                                .setStatus(CommonStatusEnum.NORMAL.getStatus());
+                        likeActionUpdateList.add(likeAction);
+                        statisticAddList.add(likeAction);
+                    }
+                } else if (actionDB != null && likeFlag.get() == 0 && list.get(list.size() - 1).getAction() == 0) {
+                    // 取消点赞
+                    likeActionDeleteList.add(actionDB.getUid());
+                    statisticSubList.add(actionDB);
+                }
             }
-            socialLikeDao.insertOrUpdate(selected);
-            return;
+        });
+
+
+        // 2. 数据持久化
+        if (statisticAddList.size() > 0) {
+            socialLikeDao.updateStatisticByAdd(statisticAddList);
+        }
+        if (statisticSubList.size() > 0) {
+            socialLikeDao.updateStatisticBySub(statisticSubList);
+        }
+        if (likeActionUpdateList.size() > 0) {
+            socialLikeDao.insertOrUpdate(likeActionUpdateList);
+        }
+        if (likeActionDeleteList.size() > 0) {
+            socialLikeDao.deleteByIds(likeActionDeleteList);
         }
 
-        // 2. 取消点赞
-        if (selected != null) {
-            socialLikeDao.delete(new LambdaQueryWrapper<LikeActionDo>()
-                    .eq(LikeActionDo::getUserId, actionDo.getUserId())
-                    .eq(LikeActionDo::getTargetId, actionDo.getTargetId()));
-            // 统计表-1
-            socialLikeDao.updateStatisticBySub(actionDo.getTargetId());
-        }*/
 
-       /* // 判断redis中是否有最近的点赞记录
-        Long userId = actionDo.getUserId();
-        String likesSet = RedisKeyConstant.getUserLikesSet(userId);
-        if (RedisUtil.zsHasValue(likesSet, actionDo.getTargetId())) {
-            // 已经点过赞了,对数据库进行操作，取消点赞
-            socialLikeDao.delete(new LambdaQueryWrapper<LikeActionDo>()
-                    .eq(LikeActionDo::getUserId, actionDo.getUserId())
-                    .eq(LikeActionDo::getTargetId, actionDo.getTargetId()));
-            // redis和数据库数据保持一致,移出redis中的点赞数据
-            RedisUtil.zRemove(likesSet, actionDo.getTargetId());
-        } else {
-            // 未点赞，进行点赞操作，查询数据库是否包含点赞信息
-            LikeActionDo selected = socialLikeDao.selectOne(new LambdaQueryWrapper<LikeActionDo>()
-                    .eq(LikeActionDo::getUserId, actionDo.getUserId())
-                    .eq(LikeActionDo::getTargetId, actionDo.getTargetId()), false);
-            if (selected != null) {
-                // 已经包含点赞信息，数据库更新updateTime
-                selected.setUpdateTime(new Date());
-                socialLikeDao.updateById(selected);
-            } else {
-                actionDo.setUid(YitIdHelper.nextId())
-                        .setStatus(CommonStatusEnum.NORMAL.getStatus())
-                        .setCreateTime(new Date())
-                        .setUpdateTime(new Date());
-                socialLikeDao.insert(actionDo);
-            }*/
+
 
         // 更新redis
         /*String likesSetKey = RedisKeyConstant.getUserLikesSet(actionDo.getUserId());

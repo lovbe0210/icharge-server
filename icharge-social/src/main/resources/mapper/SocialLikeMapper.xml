@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.SocialLikeDao">
+    <!-- 点赞统计表更新 -->
+    <insert id="updateStatisticByAdd">
+        INSERT INTO c_interaction_statistic (uid, type, like_count)
+        VALUES
+        <foreach collection="likeActionList" item="likeAction" separator=",">
+            (#{likeAction.targetId}, #{likeAction.targetType}, 1)
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        like_count = like_count + 1
+    </insert>
+    <insert id="updateStatisticBySub">
+        UPDATE c_interaction_statistic set like_count = IF(like_count = 0, 0, like_count -1)
+        WHERE uid in
+        <foreach collection="likeActionList" item="likeAction" separator="," open="(" close=")">
+            #{likeAction.targetId}
+        </foreach>
+    </insert>
+
+    <!-- 根据点赞对象获取数据list -->
+    <select id="selectListByAction" resultType="com.lovbe.icharge.entity.dto.LikeActionDo">
+        SELECT DISTINCT * FROM p_like_item WHERE
+        <foreach collection="actionList" separator="OR" item="action">
+            (user_id = #{action.userId} AND target_id = #{action.targetId})
+        </foreach>
+    </select>
+</mapper>

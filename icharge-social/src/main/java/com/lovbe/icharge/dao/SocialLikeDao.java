@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Author: lovbe0210
  * @Date: 2024/12/8 22:48
@@ -20,17 +22,15 @@ public interface SocialLikeDao extends BaseMapper<LikeActionDo> {
      * @author: lovbe0210
      * @date: 2024/12/11 23:35
      */
-    @Insert(value = """
-                    INSERT INTO c_interaction_statistic (uid, type, like_count) 
-                    VALUES (#{uid}, #{targetType}, 1)
-                    ON DUPLICATE KEY UPDATE
-                    like_count = like_count + 1
-                    """)
-    void updateStatisticByAdd(@Param("uid") Long targetId, @Param("targetType") int targetType);
-    @Insert(value = """
-                    UPDATE c_interaction_statistic set like_count = 
-                    IF(like_count = 0, 0, like_count -1)
-                    WHERE uid = #{uid} 
-                    """)
-    void updateStatisticBySub(@Param("uid") Long targetId);
+    void updateStatisticByAdd(@Param("likeActionList") List<LikeActionDo> likeActionList);
+    void updateStatisticBySub(@Param("likeActionList") List<LikeActionDo> likeActionList);
+
+    /**
+     * @description: 根据点赞对象获取数据list
+     * @param: List<LikeActionDo>
+     * @return: List<LikeActionDo>
+     * @author: lovbe0210
+     * @date: 2024/12/12 13:48
+     */
+    List<LikeActionDo> selectListByAction(@Param("actionList") List<LikeActionDo> actionList);
 }
