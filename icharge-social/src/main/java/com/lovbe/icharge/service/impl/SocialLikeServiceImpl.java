@@ -1,11 +1,16 @@
 package com.lovbe.icharge.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.service.SocialLikeService;
 import jakarta.annotation.Resource;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -42,7 +47,12 @@ public class SocialLikeServiceImpl implements SocialLikeService {
         List<Long> likeActionDeleteList = new ArrayList<>();
         Map<String, List<LikeActionDo>> collectMap = actionDoList.stream()
                 .collect(Collectors.groupingBy(action -> action.getUserId() + "-" + action.getTargetId()));
+        Set<Long> userIdSet = new HashSet<>();
+        Set<Long> targetIdSet = new HashSet<>();
         collectMap.forEach((key, list) -> {
+            String[] split = key.split("-");
+            userIdSet.add(Long.valueOf(split[0]));
+            targetIdSet.add(Long.valueOf(split[1]));
             LikeActionDo actionDB = actionMap.get(key);
             LikeActionDo action = list.get(0);
             if (list.size() == 1) {
@@ -98,7 +108,6 @@ public class SocialLikeServiceImpl implements SocialLikeService {
             }
         });
 
-
         // 2. 数据持久化
         if (statisticAddList.size() > 0) {
             socialLikeDao.updateStatisticByAdd(statisticAddList);
@@ -113,28 +122,15 @@ public class SocialLikeServiceImpl implements SocialLikeService {
             socialLikeDao.deleteByIds(likeActionDeleteList);
         }
 
-
-
-
         // 更新redis
-        /*String likesSetKey = RedisKeyConstant.getUserLikesSet(actionDo.getUserId());
-        Page<LikeActionDo> likeActionList = socialLikeDao.selectPage(new Page<>(0, 998), new LambdaQueryWrapper<LikeActionDo>()
-                .eq(LikeActionDo::getUserId, actionDo.getUserId())
-                .orderByDesc(LikeActionDo::getUpdateTime));
-        if (!CollectionUtils.isEmpty(likeActionList.getRecords())) {
-            Set<ZSetOperations.TypedTuple<Object>> typedTupleSet = likeActionList.getRecords().parallelStream()
-                    .map(action -> {
-                        Long targetId = action.getTargetId();
-                        long time = action.getUpdateTime() == null ? 0 : action.getUpdateTime().getTime();
-                        ZSetOperations.TypedTuple<Object> tuple = ZSetOperations.TypedTuple.of(targetId, time * 1.00);
-                        return tuple;
-                    }).collect(Collectors.toSet());
-            RedisUtil.zSetTuple(likesSetKey, typedTupleSet);
-        }
-        RedisUtil.zset(likesSetKey,
-                actionDo.getCreateTime() == null ? System.currentTimeMillis() : actionDo.getCreateTime().getTime(),
-                actionDo.getTargetId());
-        // 如果长度大于999，只保留999
-        RedisUtil.szRemoveRange(likesSetKey, 999);*/
+        userIdSet.forEach(userId -> {
+            String likesSetKey = RedisKeyConstant.getUserLikesSet(userId);
+            if (RedisUtil.zsGetSetSize(likesSetKey) > 999) {
+                RedisUtil.szRemoveRange(likesSetKey, 999);
+            }
+        });
+        targetIdSet.forEach(targetId -> {
+
+        });
     }
 }
