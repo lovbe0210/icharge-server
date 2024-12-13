@@ -161,4 +161,15 @@ public abstract class RedisKeyConstant {
     public static String getUserLikesSet(Long userId) {
         return BASE_PROJECT + SOCIAL + "action-like:" + userId;
     }
+
+    /**
+     * 获取点赞变化的user和target用于刷新限量明细
+     * @return
+     */
+    public static String getLikeChangeUserSet() {
+        return BASE_PROJECT + SOCIAL + "change-user";
+    }
+    public static String getLikeChangeTargetSet() {
+        return BASE_PROJECT + SOCIAL + "change-target";
+    }
 }
