@@ -159,7 +159,18 @@ public abstract class RedisKeyConstant {
      * @date: 2024/12/8 12:19
      */
     public static String getUserLikesSet(Long userId) {
-        return BASE_PROJECT + SOCIAL + "action-like:" + userId;
+        return BASE_PROJECT + SOCIAL + "user-like-targets:" + userId;
+    }
+
+    /**
+     * @description: 获取文章专栏随笔的点赞列表
+     * @param: Long
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/12/8 12:19
+     */
+    public static String getTargetLikedSet(Long userId) {
+        return BASE_PROJECT + SOCIAL + "target-liked-users:" + userId;
     }
 
     /**

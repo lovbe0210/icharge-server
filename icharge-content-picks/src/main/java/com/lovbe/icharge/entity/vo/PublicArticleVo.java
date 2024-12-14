@@ -1,6 +1,8 @@
 package com.lovbe.icharge.entity.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.lovbe.icharge.common.model.base.BaseEntity;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -68,4 +70,8 @@ public class PublicArticleVo extends BaseEntity {
      * 是否点赞
      */
     private boolean ifLike;
+    /**
+     * 点赞用户列表
+     */
+    private List<UserInfoDo> likeUserList;
 }

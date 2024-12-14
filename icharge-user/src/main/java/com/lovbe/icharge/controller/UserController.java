@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.dto.UpdateUserDTO;
 import com.lovbe.icharge.service.UserService;
@@ -50,6 +51,13 @@ public class UserController {
         return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO.getData()));
     }
 
+    /**
+     * @description: 密码重置
+     * @param: BaseRequest<ForgetPasswordDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
     @PostMapping("/reset/password")
     public ResponseBean resetUserPwd(@RequestBody @Validated BaseRequest<ForgetPasswordDTO> forgetPwdDto) {
         ForgetPasswordDTO pwdDtoData = forgetPwdDto.getData();
@@ -63,16 +71,49 @@ public class UserController {
         return ResponseBean.ok();
     }
 
+    /**
+     * @description: 通过domain获取用户信息
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
     @GetMapping("/domain/{domain}")
     public ResponseBean getUserInfo(@PathVariable("domain")String domain) {
-        return userService.getUserInfo(domain);
+        return ResponseBean.ok(userService.getUserInfo(domain));
     }
 
+    /**
+     * @description: 通过userId获取用户信息
+     * @param: Long
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:39
+     */
     @GetMapping("/id/{userId}")
     public ResponseBean getUserInfo(@PathVariable("userId")Long userId) {
-        return userService.getUserInfo(userId);
+        return ResponseBean.ok(userService.getUserInfo(userId));
     }
 
+    /**
+     * @description: 通过userId批量获取用户信息
+     * @param: BaseRequest<BatchUserRequestDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:39
+     */
+    @PostMapping("/ids")
+    public ResponseBean getUserInfoList(@RequestBody @Validated BaseRequest<BatchUserRequestDTO> batchRequest) {
+        return ResponseBean.ok(userService.getUserInfoList(batchRequest));
+    }
+
+    /**
+     * @description: 用户信息更新
+     * @param: Long
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:58
+     */
     @PutMapping("/update")
     public ResponseBean updateUserInfo(@RequestHeader(name = SysConstant.USERID) Long userId,
                                        @Validated UpdateUserDTO userDTO) {

@@ -1,6 +1,9 @@
 package com.lovbe.icharge.common.util;
 
 import cn.hutool.core.util.IdUtil;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 
 import java.util.Random;
 
@@ -31,5 +34,28 @@ public class CommonUtils {
 
     public static String getBeautifulId() {
         return CommonUtils.getLengthRandomString(6);
+    }
+
+    public static UserInfoDo checkUserStatus(UserInfoDo userInfo) {
+        if (userInfo == null) {
+            userInfo = new UserInfoDo()
+                    .setUsername(SysConstant.UNKNOWN_USER_NAME)
+                    .setGrowthValue(0)
+                    .setLevel(0)
+                    .setDomain(SysConstant.UNKNOWN_USER_NAME);
+        } else if (CommonStatusEnum.isDisable(userInfo.getStatus())) {
+            userInfo = new UserInfoDo()
+                    .setUsername(SysConstant.DISABLE_USER_NAME)
+                    .setGrowthValue(0)
+                    .setLevel(0)
+                    .setDomain(SysConstant.DISABLE_USER_NAME);
+        } else if (CommonStatusEnum.isDelete(userInfo.getStatus())) {
+            userInfo = new UserInfoDo()
+                    .setUsername(SysConstant.LOGOFF_USER_NAME)
+                    .setGrowthValue(0)
+                    .setLevel(0)
+                    .setDomain(SysConstant.LOGOFF_USER_NAME);
+        }
+        return userInfo;
     }
 }

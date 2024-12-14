@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @Author: lovbe0210
  * @Date: 2024/11/19 1:29
- * @Description: MS
+ * @Description: 公开内容Dao
  */
 @Mapper
 public interface PublicContentDao{

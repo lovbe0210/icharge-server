@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -36,7 +37,6 @@ public final class RedisUtil {
     public void init(RedisTemplate redisTemplate) {
         RedisUtil.redisTemplate = redisTemplate;
     }
-
 
     /**
      * 指定缓存失效时间
@@ -1299,43 +1299,7 @@ public final class RedisUtil {
         }
     }
 
-    /**
-     * 设置offset位的值
-     *
-     * @param key
-     * @param offset
-     * @param val
-     * @return
-     */
-    public static Boolean bitSet(String key, long offset, boolean val) {
-        return redisTemplate.opsForValue().setBit(key, offset, val);
-    }
-
-    /**
-     * 读取offset位的值
-     *
-     * @param key
-     * @param offset
-     * @return
-     */
-    public static Boolean bitGet(String key, long offset) {
-        return redisTemplate.opsForValue().getBit(key, offset);
-    }
-
-
-    /**
-     * 统计已标记的总数
-     *
-     * @param key
-     * @return
-     */
-    public static Long bitCount(String key) {
-        return redisTemplate.execute(conn -> {
-            byte[] bytes = ((StringRedisSerializer) redisTemplate.getKeySerializer()).serialize(key);
-            return conn.bitCount(bytes);
-        }, true);
-    }
-
+    // ============================== zSet ===============================================
     /**
      * 获取hash的大小
      *
@@ -1408,5 +1372,60 @@ public final class RedisUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 获取zset中的元素包含分数
+     * @param likedSetKey
+     * @param startIndex
+     * @param endIndex
+     * @param reverse
+     * @return
+     */
+    public static Set<ZSetOperations.TypedTuple<Object>> zsGetSet(String likedSetKey, int startIndex, int endIndex, boolean reverse) {
+        Set<ZSetOperations.TypedTuple<Object>> typedTuples;
+        if (reverse) {
+            typedTuples = redisTemplate.opsForZSet().reverseRangeWithScores(likedSetKey, startIndex, endIndex);
+        } else {
+            typedTuples = redisTemplate.opsForZSet().rangeWithScores(likedSetKey, startIndex, endIndex);
+        }
+        return typedTuples == null ? Set.of() : typedTuples;
+    }
+
+    /**
+     * 设置offset位的值
+     *
+     * @param key
+     * @param offset
+     * @param val
+     * @return
+     */
+    public static Boolean bitSet(String key, long offset, boolean val) {
+        return redisTemplate.opsForValue().setBit(key, offset, val);
+    }
+
+    /**
+     * 读取offset位的值
+     *
+     * @param key
+     * @param offset
+     * @return
+     */
+    public static Boolean bitGet(String key, long offset) {
+        return redisTemplate.opsForValue().getBit(key, offset);
+    }
+
+
+    /**
+     * 统计已标记的总数
+     *
+     * @param key
+     * @return
+     */
+    public static Long bitCount(String key) {
+        return redisTemplate.execute(conn -> {
+            byte[] bytes = ((StringRedisSerializer) redisTemplate.getKeySerializer()).serialize(key);
+            return conn.bitCount(bytes);
+        }, true);
     }
 }

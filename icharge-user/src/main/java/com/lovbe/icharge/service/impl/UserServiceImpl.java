@@ -11,6 +11,7 @@ import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
@@ -21,6 +22,7 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
+import com.lovbe.icharge.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
@@ -29,6 +31,7 @@ import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +62,8 @@ public class UserServiceImpl implements UserService {
     @Resource
     private BCryptPasswordEncoder cryptPasswordEncoder;
 
+    @Value("${service.batch-request-size}")
+    private int batchSize;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -160,7 +165,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseBean getUserInfo(Long userId) {
+    public UserInfoDo getUserInfo(Long userId) {
         UserInfoDo userInfoDo = userMapper.selectById(userId);
         if (userInfoDo == null) {
             throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
@@ -168,11 +173,11 @@ public class UserServiceImpl implements UserService {
         if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
         }
-        return ResponseBean.ok(userInfoDo);
+        return userInfoDo;
     }
 
     @Override
-    public ResponseBean getUserInfo(String domain) {
+    public UserInfoDo getUserInfo(String domain) {
         UserInfoDo userInfoDo = userMapper.selectOne(new LambdaQueryWrapper<UserInfoDo>()
                 .eq(UserInfoDo::getDomain, domain));
         if (userInfoDo == null) {
@@ -181,7 +186,7 @@ public class UserServiceImpl implements UserService {
         if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
         }
-        return ResponseBean.ok(userInfoDo);
+        return userInfoDo;
     }
 
     @Override
@@ -205,6 +210,16 @@ public class UserServiceImpl implements UserService {
             userInfo.setAvatarUrl(upload.getData());
         }
         userMapper.updateById(userInfo);
+    }
+
+    @Override
+    public List<UserInfoDo> getUserInfoList(BaseRequest<BatchUserRequestDTO> batchRequest) {
+        List<Long> userIdList = batchRequest.getData().getUserIdList();
+        if (userIdList.size() > batchSize) {
+            userIdList = userIdList.subList(0, batchSize);
+        }
+        List<UserInfoDo> userInfoList = userMapper.selectBatchIds(userIdList);
+        return CollectionUtils.isEmpty(userInfoList) ? List.of() : userInfoList;
     }
 
     /**

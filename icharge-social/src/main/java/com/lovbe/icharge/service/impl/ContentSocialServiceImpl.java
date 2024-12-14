@@ -42,13 +42,16 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         LikeActionDo actionDo = new LikeActionDo(data.getTargetId(), data.getTargetType(), userId, data.getAction());
         actionDo.setCreateTime(new Date());
         // redis同步操作
-        String likesSetKey = RedisKeyConstant.getUserLikesSet(userId);
+        String userLikesSetKey = RedisKeyConstant.getUserLikesSet(userId);
+        String targetLikedSetKey = RedisKeyConstant.getTargetLikedSet(data.getTargetId());
         if (data.getAction() == 1) {
             // 点赞操作
-            RedisUtil.zset(likesSetKey, actionDo.getCreateTime().getTime(), data.getTargetId());
+            RedisUtil.zset(userLikesSetKey, actionDo.getCreateTime().getTime(), data.getTargetId());
+            RedisUtil.zset(targetLikedSetKey, actionDo.getCreateTime().getTime(), userId);
         } else {
             // 取消点赞
-            RedisUtil.zRemove(likesSetKey, data.getTargetId());
+            RedisUtil.zRemove(userLikesSetKey, data.getTargetId());
+            RedisUtil.zRemove(targetLikedSetKey, userId);
         }
         // 消息队列异步纠正
         KafkaMessage message = new KafkaMessage<>(appName, likeActionTopic, actionDo);

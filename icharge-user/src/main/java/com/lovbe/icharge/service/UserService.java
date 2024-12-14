@@ -1,10 +1,14 @@
 package com.lovbe.icharge.service;
 
-import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.dto.UpdateUserDTO;
+
+import java.util.List;
 
 /**
  * @Author: lovbe
@@ -45,8 +49,8 @@ public interface UserService {
      * @author: lovbe0210
      * @date: 2024/9/30 16:55
      */
-    ResponseBean getUserInfo(Long userId);
-    ResponseBean getUserInfo(String domain);
+    UserInfoDo getUserInfo(Long userId);
+    UserInfoDo getUserInfo(String domain);
 
     /**
      * @description 更新用户信息
@@ -56,4 +60,13 @@ public interface UserService {
      * @date 2024/10/7 23:30
      */
     void updateUserInfo(Long userId, UpdateUserDTO userDTO);
+
+    /**
+     * @description: 通过userId批量获取用户信息
+     * @param: BaseRequest<BatchUserRequestDTO>
+     * @return: List<UserInfoDo>
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:48
+     */
+    List<UserInfoDo> getUserInfoList(BaseRequest<BatchUserRequestDTO> batchRequest);
 }

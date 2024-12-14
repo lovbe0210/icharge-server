@@ -65,10 +65,10 @@ public class ArticleDo extends BaseEntity {
     @TableField(exist = false)
     private Long collectId;
     /**
-     * 是否点赞
+     * 点赞用户列表
      */
     @TableField(exist = false)
-    private boolean ifLike;
+    private List<UserInfoDo> likeUserList;
     /**
      * 字数
      */

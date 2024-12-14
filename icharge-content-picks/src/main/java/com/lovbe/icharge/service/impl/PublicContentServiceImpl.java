@@ -4,6 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.system.UserInfo;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
@@ -11,7 +14,9 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.ContentDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.PublicContentDao;
@@ -21,8 +26,10 @@ import com.lovbe.icharge.entity.vo.PublicColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import com.lovbe.icharge.service.feign.SocialService;
+import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -42,7 +49,7 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Resource
     private PublicContentDao publicContentDao;
     @Resource
-    private SocialService socialService;
+    private UserService userService;
 
     @Override
     public PublicArticleVo getArticleInfo(String articleUri, Long userId) {
@@ -51,26 +58,41 @@ public class PublicContentServiceImpl implements PublicContentService {
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
+
+        PublicArticleVo articleVo = new PublicArticleVo();
+        BeanUtil.copyProperties(articleDo, articleVo);
         // 已登陆查询点赞记录
         if (userId != null) {
             String likesSetKey = RedisKeyConstant.getUserLikesSet(userId);
             boolean hasValue = RedisUtil.zsHasValue(likesSetKey, articleDo.getUid());
-            if (hasValue) {
-                articleDo.setIfLike(true);
-            } else {
-                // 判断个人收藏量是否超过了999，如果超过时查询数据库回溯
-                long size = RedisUtil.zsGetSetSize(likesSetKey);
-                if (size >= 999) {
-                    ResponseBean<Boolean> iflike = socialService.iflike(
-                            new BaseRequest<>(new ContentLikeDTO(articleDo.getUid(), 1)), userId);
-                    if (iflike != null && iflike.getData() != null && iflike.getData()) {
-                        articleDo.setIfLike(true);
-                    }
-                }
-            }
+            articleVo.setIfLike(hasValue);
         }
-        PublicArticleVo articleVo = new PublicArticleVo();
-        BeanUtil.copyProperties(articleDo, articleVo);
+        // 查询点赞列表
+        String likedSetKey = RedisKeyConstant.getTargetLikedSet(articleDo.getUid());
+        Set<ZSetOperations.TypedTuple<Object>> tupleList = RedisUtil.zsGetSet(likedSetKey, 0, 13, true);
+        if (!CollectionUtils.isEmpty(tupleList)) {
+            List<Object> userIdList = new ArrayList<>();
+            for (ZSetOperations.TypedTuple<Object> tuple : tupleList) {
+                userIdList.add(tuple.getValue());
+            }
+            HashMap<Long, UserInfoDo> userMap = new HashMap<>();
+            ResponseBean<List<UserInfoDo>> userResp = userService.getUserInfoList(new BaseRequest<>(Map.of("userIdList", userIdList)));
+            if (userResp != null && !CollectionUtils.isEmpty(userResp.getData())) {
+                Map<Long, UserInfoDo> collect = userResp.getData().stream()
+                        .collect(Collectors.toMap(UserInfoDo::getUid, Function.identity()));
+                userMap.putAll(collect);
+            }
+            List<UserInfoDo> collect = userIdList.stream()
+                    .map(uid -> {
+                        UserInfoDo userInfo = CommonUtils.checkUserStatus(userMap.get(uid));
+                        userInfo.setUid((Long) uid);
+                        return userInfo;
+                    })
+                    .collect(Collectors.toList());
+            articleVo.setLikeUserList(collect);
+        }
+
+        // 查询文章内容
         if (Objects.equals(articleDo.getUserId(), userId)) {
             // 作者本人，取最新内容版本id
             Long latestContentId = articleDo.getLatestContentId();
@@ -262,9 +284,9 @@ public class PublicContentServiceImpl implements PublicContentService {
                 iterator.remove();
             } else {
                 node.set("title", articleDo.getTitle())
-                    .set("summary", articleDo.getSummary())
-                    .set("uri", articleDo.getUri())
-                    .set("updateTime", articleDo.getUpdateTime());
+                        .set("summary", articleDo.getSummary())
+                        .set("uri", articleDo.getUri())
+                        .set("updateTime", articleDo.getUpdateTime());
                 articleMap.remove(uid);
             }
         } else if (node.getInt("type") == 2) {

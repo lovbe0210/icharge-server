@@ -1,7 +1,5 @@
 package com.lovbe.icharge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -10,13 +8,11 @@ import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.service.SocialLikeService;
 import jakarta.annotation.Resource;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -73,14 +69,19 @@ public class SocialLikeServiceImpl implements SocialLikeService {
         }
 
         // 4. 将变动的userId和targetId存入redis，在定时任务中获取变化的userId和target对明细进行update操作
-        String changeUserKey = RedisKeyConstant.getLikeChangeUserSet();
-        RedisUtil.sSet(changeUserKey, userIdSet);
-        String changeTargetKey = RedisKeyConstant.getLikeChangeTargetSet();
-        RedisUtil.sSet(changeTargetKey, targetIdSet);
+        if (userIdSet.size() > 0) {
+            String changeUserKey = RedisKeyConstant.getLikeChangeUserSet();
+            RedisUtil.sSet(changeUserKey, userIdSet.toArray());
+        }
+        if (targetIdSet.size() > 0) {
+            String changeTargetKey = RedisKeyConstant.getLikeChangeTargetSet();
+            RedisUtil.sSet(changeTargetKey, targetIdSet.toArray());
+        }
     }
 
     /**
      * 多次点赞处理
+     *
      * @param list
      * @param actionDB
      * @param likeActionDeleteList
@@ -91,12 +92,12 @@ public class SocialLikeServiceImpl implements SocialLikeService {
      * @param targetIdSet
      */
     private static void handleMultipleActions(List<LikeActionDo> list,
-                                  LikeActionDo actionDB,
-                                  List<Long> likeActionDeleteList,
-                                  List<LikeActionDo> likeActionUpdateList,
-                                  List<LikeActionDo> statisticAddList,
-                                  List<LikeActionDo> statisticSubList,
-                                  Set<Long> userIdSet, Set<Long> targetIdSet) {
+                                              LikeActionDo actionDB,
+                                              List<Long> likeActionDeleteList,
+                                              List<LikeActionDo> likeActionUpdateList,
+                                              List<LikeActionDo> statisticAddList,
+                                              List<LikeActionDo> statisticSubList,
+                                              Set<Long> userIdSet, Set<Long> targetIdSet) {
         LikeActionDo action = list.get(0);
         int likeFlag = actionDB == null ? 0 : 1;
         list.sort((o1, o2) -> o1.getCreateTime().compareTo(o2.getCreateTime()));
@@ -137,6 +138,7 @@ public class SocialLikeServiceImpl implements SocialLikeService {
 
     /**
      * 单次点赞处理
+     *
      * @param action
      * @param actionDB
      * @param likeActionUpdateList
