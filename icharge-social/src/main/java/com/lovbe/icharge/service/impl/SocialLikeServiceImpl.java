@@ -98,16 +98,16 @@ public class SocialLikeServiceImpl implements SocialLikeService {
                                   List<LikeActionDo> statisticSubList,
                                   Set<Long> userIdSet, Set<Long> targetIdSet) {
         LikeActionDo action = list.get(0);
-        AtomicInteger likeFlag = new AtomicInteger(actionDB == null ? 0 : 1);
+        int likeFlag = actionDB == null ? 0 : 1;
         list.sort((o1, o2) -> o1.getCreateTime().compareTo(o2.getCreateTime()));
-        list.forEach(ad -> {
-            if (ad.getAction() == 1 && likeFlag.get() == 0) {
-                likeFlag.incrementAndGet();
-            } else if (ad.getAction() == 0 && likeFlag.get() == 1) {
-                likeFlag.decrementAndGet();
+        for (LikeActionDo ad : list) {
+            if (ad.getAction() == 1 && likeFlag == 0) {
+                likeFlag++;
+            } else if (ad.getAction() == 0 && likeFlag == 1) {
+                likeFlag--;
             }
-        });
-        if (likeFlag.get() == 1 && list.get(list.size() - 1).getAction() == 1) {
+        }
+        if (likeFlag == 1 && list.get(list.size() - 1).getAction() == 1) {
             // 获取最后一条消息的时间更新点赞时间
             if (actionDB != null) {
                 actionDB.setUpdateTime(list.get(list.size() - 1).getCreateTime());
@@ -124,7 +124,7 @@ public class SocialLikeServiceImpl implements SocialLikeService {
                     targetIdSet.add(action.getTargetId());
                 }
             }
-        } else if (actionDB != null && likeFlag.get() == 0 && list.get(list.size() - 1).getAction() == 0) {
+        } else if (actionDB != null && likeFlag == 0 && list.get(list.size() - 1).getAction() == 0) {
             // 取消点赞
             likeActionDeleteList.add(actionDB.getUid());
             statisticSubList.add(actionDB);
