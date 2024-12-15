@@ -90,6 +90,8 @@ public class PublicContentServiceImpl implements PublicContentService {
                     })
                     .collect(Collectors.toList());
             articleVo.setLikeUserList(collect);
+        } else {
+            articleVo.setLikeUserList(List.of());
         }
 
         // 查询文章内容

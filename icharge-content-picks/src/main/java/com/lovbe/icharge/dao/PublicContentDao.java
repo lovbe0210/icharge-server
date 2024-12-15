@@ -27,8 +27,14 @@ public interface PublicContentDao{
      * @date 2024/11/19 1:48
      */
     @Select(value = """
-                    SELECT c.*, ci.uid collect_id  
+                    SELECT c.*, 
+                           ci.uid collect_id,
+                           cis.like_count likeCount,
+                           cis.comment_count commentCount,
+                           cis.collect_count collectCount,
+                           cis.view_count viewCount
                     FROM c_article c
+                    LEFT JOIN c_interaction_statistic cis ON c.uid = cis.uid
                     LEFT JOIN p_collect_item ci ON c.uid = ci.target_id 
                         AND ci.user_id = #{userId}
                         AND ci.status = 'A'

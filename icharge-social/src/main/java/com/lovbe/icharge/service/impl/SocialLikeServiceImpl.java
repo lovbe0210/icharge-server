@@ -113,6 +113,7 @@ public class SocialLikeServiceImpl implements SocialLikeService {
             if (actionDB != null) {
                 actionDB.setUpdateTime(list.get(list.size() - 1).getCreateTime());
                 likeActionDeleteList.add(actionDB.getUid());
+                statisticSubList.add(actionDB);
             } else {
                 LikeActionDo likeAction = list.get(list.size() - 1);
                 likeAction.setUid(YitIdHelper.nextId())

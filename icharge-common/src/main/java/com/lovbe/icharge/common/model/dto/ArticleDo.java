@@ -110,4 +110,24 @@ public class ArticleDo extends BaseEntity {
      * 发布状态 0未发布 1审核中 2审核失败 3已发布
      */
     private Integer publishStatus;
+    /**
+     * 点赞数
+     */
+    @TableField(exist = false)
+    private int likeCount;
+    /**
+     * 评论数
+     */
+    @TableField(exist = false)
+    private int commentCount;
+    /**
+     * 收藏数
+     */
+    @TableField(exist = false)
+    private int collectCount;
+    /**
+     * 浏览量
+     */
+    @TableField(exist = false)
+    private int viewCount;
 }

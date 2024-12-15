@@ -67,6 +67,18 @@ public class PublicArticleVo extends BaseEntity {
      */
     private Long collectId;
     /**
+     * 点赞数
+     */
+    private int likeCount;
+    /**
+     * 浏览量
+     */
+    private int viewCount;
+    /**
+     * 评论数
+     */
+    private int commentCount;
+    /**
      * 是否点赞
      */
     private boolean ifLike;
