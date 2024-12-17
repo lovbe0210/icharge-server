@@ -2,12 +2,20 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
+import com.lovbe.icharge.entity.dto.ReplyCommentDo;
+import com.lovbe.icharge.entity.dto.TargetCommentDTO;
 import com.lovbe.icharge.service.ContentSocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +24,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -28,6 +38,8 @@ import java.util.concurrent.CompletableFuture;
 public class ContentSocialServiceImpl implements ContentSocialService {
     @Resource
     private KafkaTemplate kafkaTemplate;
+    @Resource
+    private ReplyCommentDao replyCommentDao;
     // 用户操作：点赞
     @Value("${spring.kafka.topics.user-action-like}")
     private String likeActionTopic;
@@ -75,5 +87,22 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                         .eq(LikeActionDo::getUserId, userId),
                 false);
         return actionDo != null;
+    }
+
+    @Override
+    public ResponseBean getCommentList(BaseRequest<TargetCommentDTO> baseRequest, Long userId) {
+        HashMap<String, Object> commentResult = new HashMap<>(2);
+        // 查询评论总数
+        TargetCommentDTO commentDTO = baseRequest.getData();
+        TargetStatisticDo statisticDo = replyCommentDao.selectCommentStatistic(commentDTO);
+        if (statisticDo == null || statisticDo.getCommentCount() == 0) {
+            commentResult.put(SysConstant.TOTAL, 0);
+            commentResult.put(SysConstant.LIST, List.of());
+            return ResponseBean.ok(commentResult);
+        }
+        commentResult.put(SysConstant.TOTAL, statisticDo.getCommentCount());
+        // 获取评论列表
+        List<ReplyCommentDo> replyCommentList = replyCommentDao.selectReplyCommentList(commentDTO);
+        return ResponseBean.ok(commentResult);
     }
 }

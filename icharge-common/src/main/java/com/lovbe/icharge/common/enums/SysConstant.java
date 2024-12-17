@@ -31,6 +31,8 @@ public class SysConstant {
     public static final String FILE_SCENE_COVER = "cover";
     public static final String UPDATE_TIME = "updateTime";
     public static final String CONTENT_ID = "contentId";
+    public static final String TOTAL = "total";
+    public static final String LIST = "list";
 
     public static final String UNKNOWN_USER_NAME = "未知用户";
     public static final String DISABLE_USER_NAME = "封禁用户";

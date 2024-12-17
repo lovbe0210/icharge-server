@@ -3,6 +3,7 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
+import com.lovbe.icharge.entity.dto.TargetCommentDTO;
 import com.lovbe.icharge.service.ContentSocialService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -43,5 +44,11 @@ public class ContentSocialController {
                                @RequestHeader("userId") Long userId) {
         boolean likeFlag = socialService.ifLike(baseRequest.getData(), userId);
         return ResponseBean.ok(likeFlag);
+    }
+
+    @PostMapping("/target/comments")
+    public ResponseBean getCommentList(@RequestBody @Valid BaseRequest<TargetCommentDTO> baseRequest,
+                                         @RequestHeader(value = "userId", required = false) Long userId) {
+        return socialService.getCommentList(baseRequest, userId);
     }
 }
