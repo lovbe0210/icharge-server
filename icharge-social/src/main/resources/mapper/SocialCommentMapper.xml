@@ -9,12 +9,49 @@
     <!-- 获取评论列表 -->
     <select id="selectReplyCommentList" resultType="com.lovbe.icharge.entity.dto.ReplyCommentDo">
         SELECT
-            *
+        dc.uid AS direct_comment_id,
+        dc.target_id,
+        dc.like_count,
+        dc.reply_count,
+        dc.is_top,
+        dc.is_feature,
+        dc.user_id,
+        dc.content,
+        dc.create_time,
+        rc.uid AS reply_uid,
+        rc.user_id AS reply_user_id,
+        rc.content AS reply_content,
+        rc.create_time AS reply_create_time
         FROM
-            `s_comment`
+        s_comment dc
+        LEFT JOIN (
+        SELECT
+        *
+        FROM
+        s_comment r1
         WHERE
-            target_id = 36430124466437
-          AND parent_id is NULL
-        ORDER BY is_top DESC, reply_count DESC, like_count desc
+        r1.STATUS = 'A'
+        AND r1.target_id = 36430124466437
+        AND r1.parent_id IS NOT NULL
+        AND (
+        SELECT
+        COUNT(*)
+        FROM
+        s_comment r2
+        WHERE
+        r2.parent_id = r1.parent_id
+        AND r2.STATUS = 'A'
+        AND r2.create_time <![CDATA[ <= ]]> r1.create_time
+        ) <![CDATA[ <= ]]> 5
+        ORDER BY r1.create_time
+        ) rc ON dc.uid = rc.parent_id
+        AND rc.target_id = 36430124466437
+        WHERE
+        dc.status = 'A'
+        AND dc.target_id = 36430124466437
+        AND dc.parent_id IS NULL
+        ORDER BY dc.is_top, dc.is_feature,
+        dc.like_count DESC,
+        dc.create_time ASC
     </select>
 </mapper>
