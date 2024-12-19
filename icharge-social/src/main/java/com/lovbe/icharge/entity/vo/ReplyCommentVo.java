@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity.dto;
+package com.lovbe.icharge.entity.vo;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -12,16 +12,11 @@ import java.util.List;
 /**
  * @Author: lovbe0210
  * @Date: 2024/12/17 23:59
- * @Description: MS
+ * @Description: 评论回复
  */
 @Data
 @Accessors(chain = true)
-@TableName("s_comment")
-public class ReplyCommentDo extends BaseEntity {
-    /**
-     * 评论对象id
-     */
-    private Long targetId;
+public class ReplyCommentVo extends BaseEntity {
     /**
      * 父级评论id
      */
@@ -33,12 +28,10 @@ public class ReplyCommentDo extends BaseEntity {
     /**
      * 用户信息
      */
-    @TableField(exist = false)
     private UserInfoDo userInfo;
     /**
      * 楼中楼回复用户信息
      */
-    @TableField(exist = false)
     private UserInfoDo replyUserInfo;
     /**
      * 评论内容
@@ -57,10 +50,6 @@ public class ReplyCommentDo extends BaseEntity {
      */
     private int replyCount;
     /**
-     * 楼中楼回复@用户id
-     */
-    private Long replyUserId;
-    /**
      * 评论提交ip
      */
     private String submitIp;
@@ -77,8 +66,11 @@ public class ReplyCommentDo extends BaseEntity {
      */
     private int isFeature;
     /**
+     * 是否点赞 0否1是
+     */
+    private int ifLike;
+    /**
      * 楼中楼回复
      */
-    @TableField(exist = false)
-    private List<ReplyCommentDo> replyCommentList;
+    private List<ReplyCommentVo> deepReplyList;
 }

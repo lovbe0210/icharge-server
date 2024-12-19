@@ -1,32 +1,43 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
-import com.lovbe.icharge.entity.dto.ContentLikeDTO;
-import com.lovbe.icharge.entity.dto.LikeActionDo;
-import com.lovbe.icharge.entity.dto.ReplyCommentDo;
-import com.lovbe.icharge.entity.dto.TargetCommentDTO;
+import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 import com.lovbe.icharge.service.ContentSocialService;
+import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe0210
@@ -40,6 +51,8 @@ public class ContentSocialServiceImpl implements ContentSocialService {
     private KafkaTemplate kafkaTemplate;
     @Resource
     private ReplyCommentDao replyCommentDao;
+    @Resource
+    private StorageService storageService;
     // 用户操作：点赞
     @Value("${spring.kafka.topics.user-action-like}")
     private String likeActionTopic;
@@ -103,6 +116,78 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         commentResult.put(SysConstant.TOTAL, statisticDo.getCommentCount());
         // 获取评论列表
         List<ReplyCommentDo> replyCommentList = replyCommentDao.selectReplyCommentList(commentDTO);
+        if (CollectionUtils.isEmpty(replyCommentList)) {
+            commentResult.put(SysConstant.LIST, List.of());
+            return ResponseBean.ok(commentResult);
+        }
+        // 如果为登录用户，则获取每条评论的点赞状态
+        Set<Object> likeTargets = new HashSet<>();
+        if (userId != null) {
+            String targetLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            Set<Object> rangeSet = RedisUtil.zsGetSet(targetLikedSet, 0, -1);
+            if (!CollectionUtils.isEmpty(rangeSet)) {
+                likeTargets.addAll(rangeSet);
+            }
+        }
+        List<ReplyCommentVo> collect = replyCommentList.stream()
+                .map(replyCommentDo -> {
+                    ReplyCommentVo replyCommentVo = new ReplyCommentVo();
+                    BeanUtil.copyProperties(replyCommentDo, replyCommentVo);
+                    replyCommentVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getUserInfo()));
+                    replyCommentVo.setIfLike(likeTargets.contains(replyCommentDo.getUid()) ? 1 : 0);
+                    if (CollectionUtils.isEmpty(replyCommentDo.getReplyCommentList())) {
+                        replyCommentVo.setDeepReplyList(List.of());
+                        return replyCommentVo;
+                    }
+                    List<ReplyCommentVo> deepReplyList = replyCommentDo.getReplyCommentList().stream()
+                            .map(deepReply -> {
+                                ReplyCommentVo deepReplyVo = new ReplyCommentVo();
+                                BeanUtil.copyProperties(deepReply, deepReplyVo);
+                                deepReplyVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getUserInfo()));
+                                if (replyCommentVo.getReplyUserInfo() != null) {
+                                    deepReplyVo.setReplyUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getReplyUserInfo()));
+                                }
+                                replyCommentVo.setIfLike(likeTargets.contains(deepReply.getUid()) ? 1 : 0);
+                                return deepReplyVo;
+                            }).collect(Collectors.toList());
+                    replyCommentVo.setDeepReplyList(deepReplyList);
+                    return replyCommentVo;
+                }).collect(Collectors.toList());
+        commentResult.put(SysConstant.LIST, collect);
         return ResponseBean.ok(commentResult);
+    }
+
+    @Override
+    public ReplyCommentVo replyComment(ReplyCommentDTO replyCommentDTO, Long userId) {
+        // 业务参数校验
+        Long replyUserId = replyCommentDTO.getReplyUserId();
+        if (replyUserId != null) {
+            Assert.notNull(replyCommentDTO.getParentId(), ServiceErrorCodes.REPLY_PARENT_ID_NOT_NULL.getMsg());
+        }
+        ReplyCommentDo replyCommentDo = new ReplyCommentDo();
+        BeanUtils.copyProperties(replyCommentDTO, replyCommentDo);
+        // 图片文件上传
+        MultipartFile contentImgFile = replyCommentDTO.getContentImgFile();
+        if (contentImgFile != null) {
+            // 上传文件
+            ResponseBean<String> upload = storageService
+                    .upload(new FileUploadDTO(contentImgFile, SysConstant.FILE_SCENE_COMMENT));
+            if (!upload.isResult()) {
+                log.error("[发表评论回复] --- 图片上传失败，errorInfo: {}", upload.getMessage());
+                throw new ServiceException(ServiceErrorCodes.COMMENT_IMAGE_UPLOAD_FAILED);
+            }
+            replyCommentDo.setContentImgUrl(upload.getData());
+        }
+        replyCommentDo.setUserId(userId)
+                .setUid(YitIdHelper.nextId())
+                .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                .setCreateTime(new Date())
+                .setUpdateTime(new Date());
+        replyCommentDao.insert(replyCommentDo);
+        ReplyCommentVo replyCommentVo = new ReplyCommentVo();
+        BeanUtil.copyProperties(replyCommentDo, replyCommentVo);
+        // 补充userInfo
+
+        return replyCommentVo;
     }
 }

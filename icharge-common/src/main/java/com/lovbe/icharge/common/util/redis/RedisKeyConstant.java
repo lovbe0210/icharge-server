@@ -169,8 +169,8 @@ public abstract class RedisKeyConstant {
      * @author: lovbe0210
      * @date: 2024/12/8 12:19
      */
-    public static String getTargetLikedSet(Long userId) {
-        return BASE_PROJECT + SOCIAL + "target-liked-users:" + userId;
+    public static String getTargetLikedSet(Long targetId) {
+        return BASE_PROJECT + SOCIAL + "target-liked-users:" + targetId;
     }
 
     /**

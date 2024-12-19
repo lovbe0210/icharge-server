@@ -3,7 +3,9 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
+import com.lovbe.icharge.entity.dto.ReplyCommentDTO;
 import com.lovbe.icharge.entity.dto.TargetCommentDTO;
+import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 
 /**
  * @description: Oss基础客户端
@@ -37,4 +39,13 @@ public interface ContentSocialService {
      * @date: 2024/12/17 16:52
      */
     ResponseBean getCommentList(BaseRequest<TargetCommentDTO> baseRequest, Long userId);
+
+    /**
+     * @description: 发表评论或回复
+     * @param: BaseRequest<ReplyCommentDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/20 0:23
+     */
+    ReplyCommentVo replyComment(ReplyCommentDTO replyCommentDTO, Long userId);
 }

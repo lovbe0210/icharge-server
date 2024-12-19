@@ -1379,6 +1379,18 @@ public final class RedisUtil {
      * @param likedSetKey
      * @param startIndex
      * @param endIndex
+     * @return
+     */
+    public static Set<Object> zsGetSet(String likedSetKey, int startIndex, int endIndex) {
+        Set<Object> range = redisTemplate.opsForZSet().range(likedSetKey, startIndex, endIndex);
+        return range == null ? Set.of() : range;
+    }
+
+    /**
+     * 获取zset中的元素包含分数
+     * @param likedSetKey
+     * @param startIndex
+     * @param endIndex
      * @param reverse
      * @return
      */

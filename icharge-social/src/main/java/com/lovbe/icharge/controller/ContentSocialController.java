@@ -1,17 +1,21 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
+import com.lovbe.icharge.entity.dto.ReplyCommentDTO;
 import com.lovbe.icharge.entity.dto.TargetCommentDTO;
+import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 import com.lovbe.icharge.service.ContentSocialService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @Author: lovbe0210
@@ -39,6 +43,13 @@ public class ContentSocialController {
         return ResponseBean.ok();
     }
 
+    /**
+     * @description: 判断是否点过赞
+     * @param: BaseRequest<ContentLikeDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/20 0:21
+     */
     @PostMapping("/iflike")
     public ResponseBean ifLike(@RequestBody @Valid BaseRequest<ContentLikeDTO> baseRequest,
                                @RequestHeader("userId") Long userId) {
@@ -46,9 +57,34 @@ public class ContentSocialController {
         return ResponseBean.ok(likeFlag);
     }
 
+    /**
+     * @description: 获取评论列表
+     * @param: BaseRequest<TargetCommentDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/20 0:22
+     */
     @PostMapping("/target/comments")
     public ResponseBean getCommentList(@RequestBody @Valid BaseRequest<TargetCommentDTO> baseRequest,
-                                         @RequestHeader(value = "userId", required = false) Long userId) {
+                                       @RequestHeader(value = "userId", required = false) Long userId) {
         return socialService.getCommentList(baseRequest, userId);
+    }
+
+    /**
+     * @description: 发表评论或回复
+     * @param: BaseRequest<ReplyCommentDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/20 0:22
+     */
+    @PutMapping("/target/comment")
+    public ResponseBean replyComment(@Validated ReplyCommentDTO replyCommentDTO,
+                                     @RequestHeader("userId") Long userId) {
+        MultipartFile contentImg = replyCommentDTO.getContentImgFile();
+        if (contentImg != null && contentImg.getSize() > SysConstant.SIZE_10MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        }
+        ReplyCommentVo replyCommentVo = socialService.replyComment(replyCommentDTO, userId);
+        return ResponseBean.ok(replyCommentVo);
     }
 }

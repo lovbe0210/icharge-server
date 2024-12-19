@@ -52,8 +52,9 @@ public interface ServiceErrorCodes {
     //========== 内容推荐精选 ==========
     ErrorCode REPEAT_FAVORITE_TAG = new ErrorCode(400, "已存在相同名称的收藏分组");
 
-    //========== 签到配置 1-004-009-000 ==========
-    ErrorCode SIGN_IN_CONFIG_NOT_EXISTS = new ErrorCode(1_004_009_000, "签到天数规则不存在");
+    //========== 社交排行 ==========
+    ErrorCode REPLY_PARENT_ID_NOT_NULL = new ErrorCode(400, "回复评论id不得为空");
+    ErrorCode COMMENT_IMAGE_UPLOAD_FAILED = new ErrorCode(400, "评论图片上传失败，请稍后再试");
     ErrorCode SIGN_IN_CONFIG_EXISTS = new ErrorCode(1_004_009_001, "签到天数规则已存在");
 
     //========== 签到配置 1-004-010-000 ==========
