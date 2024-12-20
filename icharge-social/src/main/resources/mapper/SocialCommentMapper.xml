@@ -25,9 +25,26 @@
             dc.content_img_url,
             dc.create_time,
             rc.*
-        FROM s_comment dc
-                 LEFT JOIN p_user pu ON dc.user_id = pu.uid
-                 LEFT JOIN (
+        FROM (SELECT
+                 uid,
+                 target_id,
+                 like_count,
+                 reply_count,
+                 is_top,
+                 is_feature,
+                 user_id,
+                 content,
+                 content_img_url,
+                 create_time
+             FROM s_comment
+             WHERE `status` = 'A'
+               AND target_id = #{commentDTO.targetId}
+               AND parent_id IS NULL
+             ORDER BY is_top DESC, is_feature DESC, create_time ASC
+             LIMIT #{commentDTO.offset}, #{commentDTO.limit}
+             ) dc
+        LEFT JOIN p_user pu ON dc.user_id = pu.uid
+        LEFT JOIN (
             SELECT
                 rc.uid AS reply_uid,
                 rc.target_id AS reply_target_id,
@@ -48,8 +65,8 @@
                 rpu.username AS reply_reply_username,
                 rpu.`status` AS reply_reply_status
             FROM s_comment rc
-                     LEFT JOIN p_user pu ON rc.user_id = pu.uid
-                     LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
+            LEFT JOIN p_user pu ON rc.user_id = pu.uid
+            LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
             WHERE rc.`status` = 'A'
               AND rc.target_id = #{commentDTO.targetId}
               AND rc.parent_id IS NOT NULL
@@ -58,15 +75,46 @@
                    WHERE rcc.parent_id = rc.parent_id
                      AND rcc.`status` = 'A'
                      AND rcc.create_time <![CDATA[ <= ]]> rc.create_time
-        ) <![CDATA[ <= ]]> 5
-        ORDER BY rc.create_time
-            ) rc ON dc.uid = rc.reply_parent_id
+                   ) <![CDATA[ <= ]]> 5
+            ORDER BY rc.create_time
+        ) rc ON dc.uid = rc.reply_parent_id
             AND rc.reply_target_id = #{commentDTO.targetId}
+
+    </select>
+
+    <!-- 获取评论回复列表 -->
+    <select id="selectCommentReplyList" resultMap="replyCommentMap">
+        SELECT rc.uid,
+               rc.target_id,
+               rc.parent_id,
+               rc.like_count,
+               rc.user_id,
+               pu.username,
+               pu.avatar_url,
+               pu.domain,
+               pu.location,
+               pu.industry,
+               pu.`status`,
+               rc.content,
+               rc.content_img_url,
+               rc.create_time,
+               rpu.uid AS reply_user_id,
+               rpu.username AS reply_username,
+               rpu.avatar_url AS reply_avatar_url,
+               rpu.domain AS reply_domain,
+               rpu.location AS reply_location,
+               rpu.industry AS reply_industry,
+               rpu.`status` AS reply_status,
+               NULL AS reply_uid
+        FROM s_comment dc
+        INNER JOIN s_comment rc ON dc.uid = rc.parent_id
+            AND rc.status = 'A'
+        LEFT JOIN p_user pu ON rc.user_id = pu.uid
+        LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
         WHERE dc.status = 'A'
-          AND dc.target_id = #{commentDTO.targetId}
-          AND dc.parent_id IS NULL
-        ORDER BY dc.is_top, dc.is_feature, dc.create_time ASC
-            LIMIT #{commentDTO.offset}, #{commentDTO.limit}
+        AND dc.uid = #{commentDTO.commentId}
+        ORDER BY rc.create_time
+        LIMIT #{commentDTO.offset}, #{commentDTO.limit}
     </select>
 
     <resultMap id="replyCommentMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">
@@ -77,15 +125,23 @@
         <result column="is_top" property="isTop"/>
         <result column="is_feature" property="isFeature"/>
         <result column="user_id" property="userInfo.uid"/>
+        <result column="username" property="userInfo.username"/>
         <result column="avatar_url" property="userInfo.avatarUrl"/>
         <result column="domain" property="userInfo.domain"/>
         <result column="location" property="userInfo.location"/>
         <result column="industry" property="userInfo.industry"/>
         <result column="status" property="userInfo.status"/>
+        <result column="reply_user_id" property="replyUserInfo.uid"/>
+        <result column="reply_username" property="replyUserInfo.username"/>
+        <result column="reply_avatar_url" property="replyUserInfo.avatarUrl"/>
+        <result column="reply_domain" property="replyUserInfo.domain"/>
+        <result column="reply_location" property="replyUserInfo.location"/>
+        <result column="reply_industry" property="replyUserInfo.industry"/>
+        <result column="reply_status" property="replyUserInfo.status"/>
         <result column="content" property="content"/>
         <result column="content_img_url" property="contentImgUrl"/>
         <result column="create_time" property="createTime"/>
-        <collection column="reply_uid" property="replyCommentList" ofType="com.lovbe.icharge.entity.dto.ReplyCommentDo">
+        <collection column="reply_uid" property="replyCommentList" ofType="com.lovbe.icharge.entity.dto.ReplyCommentDo" notNullColumn="reply_uid">
             <id column="reply_uid" property="uid"/>
             <result column="reply_target_id" property="targetId"/>
             <result column="reply_like_count" property="likeCount"/>

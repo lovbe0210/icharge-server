@@ -13,9 +13,12 @@ import com.lovbe.icharge.service.ContentSocialService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210
@@ -68,6 +71,21 @@ public class ContentSocialController {
     public ResponseBean getCommentList(@RequestBody @Valid BaseRequest<TargetCommentDTO> baseRequest,
                                        @RequestHeader(value = "userId", required = false) Long userId) {
         return socialService.getCommentList(baseRequest, userId);
+    }
+
+    /**
+     * @description: 获取楼中楼回复
+     * @param: BaseRequest<TargetCommentDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/20 0:22
+     */
+    @PostMapping("/comment/replies")
+    public ResponseBean getCommentReplyList(@RequestBody @Valid BaseRequest<TargetCommentDTO> baseRequest,
+                                            @RequestHeader(value = "userId", required = false) Long userId) {
+        Assert.notNull(baseRequest.getData().getCommentId(), "回复评论的id不得为空");
+        List<ReplyCommentVo> commentReplyList = socialService.getCommentReplyList(baseRequest, userId);
+        return ResponseBean.ok(commentReplyList);
     }
 
     /**

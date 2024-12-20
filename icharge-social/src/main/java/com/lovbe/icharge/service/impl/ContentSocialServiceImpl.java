@@ -3,6 +3,9 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -15,6 +18,7 @@ import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
@@ -61,6 +65,9 @@ public class ContentSocialServiceImpl implements ContentSocialService {
 
     @Resource
     private SocialLikeDao socialLikeDao;
+
+    @Resource
+    private CommonService commonService;
 
     @Override
     public void contentLikeMark(ContentLikeDTO data, Long userId) {
@@ -187,7 +194,40 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         ReplyCommentVo replyCommentVo = new ReplyCommentVo();
         BeanUtil.copyProperties(replyCommentDo, replyCommentVo);
         // 补充userInfo
-
+        replyCommentVo.setUserInfo(commonService.getCacheUser(userId));
+        if (replyCommentDTO.getReplyUserId() != null) {
+            replyCommentVo.setReplyUserInfo(commonService.getCacheUser(replyCommentDTO.getReplyUserId()));
+        }
         return replyCommentVo;
+    }
+
+    @Override
+    public List<ReplyCommentVo> getCommentReplyList(BaseRequest<TargetCommentDTO> baseRequest, Long userId) {
+        List<ReplyCommentDo> replyCommentList = replyCommentDao.selectCommentReplyList(baseRequest.getData());
+        if (CollectionUtils.isEmpty(replyCommentList)) {
+            return List.of();
+        }
+        Set<Object> likeTargets = new HashSet<>();
+        if (userId != null) {
+            String targetLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            Set<Object> rangeSet = RedisUtil.zsGetSet(targetLikedSet, 0, -1);
+            if (!CollectionUtils.isEmpty(rangeSet)) {
+                likeTargets.addAll(rangeSet);
+            }
+        }
+        List<ReplyCommentVo> collect = replyCommentList.stream()
+                .map(replyCommentDo -> {
+                    ReplyCommentVo replyVo = new ReplyCommentVo();
+                    BeanUtil.copyProperties(replyCommentDo, replyVo);
+                    replyVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentDo.getUserInfo()));
+                    if (replyCommentDo.getReplyUserInfo() != null) {
+                        replyVo.setReplyUserInfo(CommonUtils.checkUserStatus(replyCommentDo.getReplyUserInfo()));
+                    }
+                    if (userId != null) {
+                        replyVo.setIfLike(likeTargets.contains(replyCommentDo.getUid()) ? 1 : 0);
+                    }
+                    return replyVo;
+                }).collect(Collectors.toList());
+        return collect;
     }
 }

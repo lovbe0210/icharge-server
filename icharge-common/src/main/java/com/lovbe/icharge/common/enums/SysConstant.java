@@ -61,6 +61,10 @@ public class SysConstant {
     public static final String ARTICLE_BATCH_DELETE = "5";
 
     public static final long SIZE_10MB = 10 * 1024 * 1024;
+    /**
+     * 缓存时间 30天，单位秒
+     */
+    public static final long DAY_30 = 60 * 60 * 24 * 30;
 
     public static final String NORMAL_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 }

@@ -7,6 +7,8 @@ import com.lovbe.icharge.entity.dto.ReplyCommentDTO;
 import com.lovbe.icharge.entity.dto.TargetCommentDTO;
 import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 
+import java.util.List;
+
 /**
  * @description: Oss基础客户端
  * @author: Lvhl
@@ -48,4 +50,13 @@ public interface ContentSocialService {
      * @date: 2024/12/20 0:23
      */
     ReplyCommentVo replyComment(ReplyCommentDTO replyCommentDTO, Long userId);
+
+    /**
+     * @description: 获取楼中楼回复
+     * @param: BaseRequest<TargetCommentDTO>
+     * @return: List<ReplyCommentVo>
+     * @author: lovbe0210
+     * @date: 2024/12/20 18:51
+     */
+    List<ReplyCommentVo> getCommentReplyList(BaseRequest<TargetCommentDTO> baseRequest, Long userId);
 }

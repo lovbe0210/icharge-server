@@ -16,6 +16,10 @@ public class TargetCommentDTO {
     @NotNull(message = "评论对象不得为空")
     private Long targetId;
     /**
+     * 评论id
+     */
+    private Long commentId;
+    /**
      * 查询坐标
      */
     private int offset;
@@ -24,11 +28,11 @@ public class TargetCommentDTO {
      */
     private int limit = 100;
 
-    public int getOffset() {
+    public long getOffset() {
         return offset < 0 ? 0 : offset;
     }
 
-    public int getLimit() {
+    public long getLimit() {
         return limit <= 0 ? 100 : limit > 1000 ? 1000 : limit;
     }
 }

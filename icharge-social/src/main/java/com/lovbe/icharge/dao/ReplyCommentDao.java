@@ -33,4 +33,13 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
      * @date: 2024/12/18 1:07
      */
     List<ReplyCommentDo> selectReplyCommentList(@Param("commentDTO") TargetCommentDTO commentDTO);
+
+    /**
+     * @description: 获取评论回复列表
+     * @param: TargetCommentDTO
+     * @return: List<ReplyCommentDo>
+     * @author: lovbe0210
+     * @date: 2024/12/20 19:10
+     */
+    List<ReplyCommentDo> selectCommentReplyList(@Param("commentDTO") TargetCommentDTO commentDTO);
 }

@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @EnableDiscoveryClient
 @EnableFeignClients
-@MapperScan("com.lovbe.icharge.dao")
+@MapperScan({"com.lovbe.icharge.dao", "com.lovbe.icharge.common.dao"})
 @SpringBootApplication
 public class IchargeSocialApplication {
 

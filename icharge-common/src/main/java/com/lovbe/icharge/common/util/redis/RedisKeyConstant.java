@@ -32,7 +32,7 @@ public abstract class RedisKeyConstant {
     /**
      * 用户服务
      */
-    public static final String USER = "auth:";
+    public static final String USER = "user:";
     /**
      * 社交模块
      */
@@ -182,5 +182,14 @@ public abstract class RedisKeyConstant {
     }
     public static String getLikeChangeTargetSet() {
         return BASE_PROJECT + SOCIAL + "change-target";
+    }
+
+    /**
+     * 获取用户缓存键
+     * @param userId
+     * @return
+     */
+    public static String getCacheUserKey(Long userId) {
+        return BASE_PROJECT + USER + userId;
     }
 }
