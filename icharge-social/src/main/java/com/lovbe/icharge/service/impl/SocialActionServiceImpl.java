@@ -6,7 +6,8 @@ import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
-import com.lovbe.icharge.service.SocialLikeService;
+import com.lovbe.icharge.entity.dto.ReplyCommentDo;
+import com.lovbe.icharge.service.SocialActionService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +20,10 @@ import java.util.stream.Collectors;
 /**
  * @Author: lovbe0210
  * @Date: 2024/12/8 22:58
- * @Description: MS
+ * @Description: 社交行为处理逻辑，点赞、评论
  */
 @Service
-public class SocialLikeServiceImpl implements SocialLikeService {
+public class SocialActionServiceImpl implements SocialActionService {
     @Resource
     private SocialLikeDao socialLikeDao;
 
@@ -77,6 +78,11 @@ public class SocialLikeServiceImpl implements SocialLikeService {
             String changeTargetKey = RedisKeyConstant.getLikeChangeTargetSet();
             RedisUtil.sSet(changeTargetKey, targetIdSet.toArray());
         }
+    }
+
+    @Override
+    public void handlerCommentAction(List<ReplyCommentDo> actionList) {
+
     }
 
     /**

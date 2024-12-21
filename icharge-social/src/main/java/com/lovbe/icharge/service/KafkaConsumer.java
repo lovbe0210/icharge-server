@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
+import com.lovbe.icharge.entity.dto.ReplyCommentDo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -26,10 +27,10 @@ import java.util.stream.Collectors;
 @RefreshScope
 public class KafkaConsumer {
     @Resource
-    private SocialLikeService socialLikeService;
+    private SocialActionService socialActionService;
 
     /**
-     * 点赞列表消息消费
+     * 点赞消息消费
      *
      * @param consumerRecords
      * @param ack
@@ -72,10 +73,61 @@ public class KafkaConsumer {
             if (CollectionUtils.isEmpty(collect)) {
                 return;
             }
-            socialLikeService.handlerLikeAction(collect);
+            socialActionService.handlerLikeAction(collect);
         } catch (Exception e) {
             log.error("[点赞消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
-            // TODO 放入死信队列
+        } finally {
+            ack.acknowledge();
+        }
+    }
+
+    /**
+     * 评论回复消息消费
+     *
+     * @param consumerRecords
+     * @param ack
+     */
+    @KafkaListener(topics = "${spring.kafka.topics.user-action-comment}",
+            containerFactory = "kafkaListenerContainerFactory", groupId = "action-comment")
+    public void listenActionComment(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
+        if (consumerRecords.isEmpty()) {
+            return;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("received msgSize: " + consumerRecords.size());
+        }
+        try {
+            List<ReplyCommentDo> collect = consumerRecords.parallelStream()
+                    .map(consumerRecord -> {
+                        String data = String.valueOf(consumerRecord.value());
+                        KafkaMessage kafkaMsg = JsonUtils.parseObject(data, KafkaMessage.class);
+                        if (log.isDebugEnabled()) {
+                            log.debug("received msg: " + data);
+                        }
+                        Object msgData = kafkaMsg.getData();
+                        if (msgData == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体内容为空", data);
+                            return null;
+                        }
+                        ReplyCommentDo actionDo = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), ReplyCommentDo.class);
+                        // 参数校验
+                        if (actionDo.getUserId() == null ||
+                                actionDo.getTargetId() == null ||
+                                actionDo.getContent() == null ||
+                                (actionDo.getParentId() == null && actionDo.getReplyUserId() != null) ||
+                                actionDo.getCreateTime() == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);
+                            return null;
+                        }
+                        return actionDo;
+                    })
+                    .filter(actionDo -> actionDo != null).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(collect)) {
+                return;
+            }
+            socialActionService.handlerCommentAction(collect);
+        } catch (Exception e) {
+            log.error("[点赞消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

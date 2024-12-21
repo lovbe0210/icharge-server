@@ -1,5 +1,6 @@
 package com.lovbe.icharge.common.config;
 
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -80,7 +81,7 @@ public class KafkaConsumerConfig {
         // 创建 FixedBackOff 对象
         BackOff backOff = new FixedBackOff(5000L, 3L);
         DefaultErrorHandler defaultErrorHandler = new DefaultErrorHandler((ConsumerAwareRecordRecoverer) (record, consumer, exception) -> {
-            log.info("[消息消费失败] --- errorInfo: {}" + exception.toString());
+            log.info("[消息消费失败] --- errorInfo: {}, data: {}" + exception.toString(), JSONUtil.toJsonStr(record.value()));
             // TODO 放入死信队列
         }, backOff);
         return defaultErrorHandler;

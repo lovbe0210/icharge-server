@@ -60,6 +60,9 @@ public class ContentSocialServiceImpl implements ContentSocialService {
     // 用户操作：点赞
     @Value("${spring.kafka.topics.user-action-like}")
     private String likeActionTopic;
+    // 用户操作：评论回复
+    @Value("${spring.kafka.topics.user-action-comment}")
+    private String replyCommentTopic;
     @Value("${spring.application.name}")
     private String appName;
 
@@ -197,6 +200,19 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         replyCommentVo.setUserInfo(commonService.getCacheUser(userId));
         if (replyCommentDTO.getReplyUserId() != null) {
             replyCommentVo.setReplyUserInfo(commonService.getCacheUser(replyCommentDTO.getReplyUserId()));
+        }
+        // 消息队列异步统计
+        KafkaMessage message = new KafkaMessage<>(appName, replyCommentTopic, replyCommentDo);
+        try {
+            CompletableFuture send = kafkaTemplate.send(replyCommentTopic, JSONUtil.toJsonStr(message));
+            send.thenAccept(result -> {
+                log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
+            }).exceptionally(ex -> {
+                log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));
+                return null;
+            });
+        } catch (Exception e) {
+            log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
         }
         return replyCommentVo;
     }
