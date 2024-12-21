@@ -7,6 +7,7 @@ import com.lovbe.icharge.entity.dto.TargetCommentDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,11 +36,20 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
     List<ReplyCommentDo> selectReplyCommentList(@Param("commentDTO") TargetCommentDTO commentDTO);
 
     /**
-     * @description: 获取评论回复列表
+     * @description: 获取回复列表
      * @param: TargetCommentDTO
      * @return: List<ReplyCommentDo>
      * @author: lovbe0210
      * @date: 2024/12/20 19:10
      */
     List<ReplyCommentDo> selectCommentReplyList(@Param("commentDTO") TargetCommentDTO commentDTO);
+
+    /**
+     * @description: 更新评论的回复数
+     * @param: List<ReplyCommentDo>
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/21 11:20
+     */
+    void updateReplyCount(@Param("replyList") List<ReplyCommentDo> replyList);
 }

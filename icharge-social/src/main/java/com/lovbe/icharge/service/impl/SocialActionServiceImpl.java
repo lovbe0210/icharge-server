@@ -4,6 +4,7 @@ import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 public class SocialActionServiceImpl implements SocialActionService {
     @Resource
     private SocialLikeDao socialLikeDao;
+    @Resource
+    private ReplyCommentDao replyCommentDao;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -80,9 +83,24 @@ public class SocialActionServiceImpl implements SocialActionService {
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void handlerCommentAction(List<ReplyCommentDo> actionList) {
-
+        // 点赞明细入库
+        replyCommentDao.insert(actionList);
+        // 过滤出楼中楼回复对父级评论更新统计
+        List<ReplyCommentDo> replyList = new ArrayList<>();
+        actionList.stream()
+                .filter(replyCommentDo -> replyCommentDo.getParentId() != null)
+                .collect(Collectors.groupingBy(ReplyCommentDo::getParentId))
+                .forEach((parentId, list) -> {
+                    ReplyCommentDo replyCommentDo = new ReplyCommentDo().setReplyCount(list.size());
+                    replyCommentDo.setUid(parentId);
+                    replyList.add(replyCommentDo);
+                });
+        if (replyList.size() > 0) {
+            replyCommentDao.updateReplyCount(replyList);
+        }
     }
 
     /**

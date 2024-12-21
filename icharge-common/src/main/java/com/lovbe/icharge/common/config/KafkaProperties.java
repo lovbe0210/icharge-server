@@ -43,7 +43,7 @@ public class KafkaProperties {
     /**
      * 批量拉取数量
      */
-    private int batchPoll;
+    private int batchPoll = 100;
     /**
      * 缓冲区大小
      */

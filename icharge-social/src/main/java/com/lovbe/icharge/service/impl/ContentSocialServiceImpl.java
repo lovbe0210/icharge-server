@@ -146,7 +146,7 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                     replyCommentVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getUserInfo()));
                     replyCommentVo.setIfLike(likeTargets.contains(replyCommentDo.getUid()) ? 1 : 0);
                     if (CollectionUtils.isEmpty(replyCommentDo.getReplyCommentList())) {
-                        replyCommentVo.setDeepReplyList(List.of());
+                        replyCommentVo.setReplyList(List.of());
                         return replyCommentVo;
                     }
                     List<ReplyCommentVo> deepReplyList = replyCommentDo.getReplyCommentList().stream()
@@ -160,7 +160,7 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                                 replyCommentVo.setIfLike(likeTargets.contains(deepReply.getUid()) ? 1 : 0);
                                 return deepReplyVo;
                             }).collect(Collectors.toList());
-                    replyCommentVo.setDeepReplyList(deepReplyList);
+                    replyCommentVo.setReplyList(deepReplyList);
                     return replyCommentVo;
                 }).collect(Collectors.toList());
         commentResult.put(SysConstant.LIST, collect);
@@ -193,7 +193,6 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                 .setStatus(CommonStatusEnum.NORMAL.getStatus())
                 .setCreateTime(new Date())
                 .setUpdateTime(new Date());
-        replyCommentDao.insert(replyCommentDo);
         ReplyCommentVo replyCommentVo = new ReplyCommentVo();
         BeanUtil.copyProperties(replyCommentDo, replyCommentVo);
         // 补充userInfo

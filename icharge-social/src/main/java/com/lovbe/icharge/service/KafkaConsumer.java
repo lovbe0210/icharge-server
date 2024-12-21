@@ -115,6 +115,7 @@ public class KafkaConsumer {
                                 actionDo.getTargetId() == null ||
                                 actionDo.getContent() == null ||
                                 (actionDo.getParentId() == null && actionDo.getReplyUserId() != null) ||
+                                actionDo.getUpdateTime() == null ||
                                 actionDo.getCreateTime() == null) {
                             log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);
                             return null;

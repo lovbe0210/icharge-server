@@ -72,5 +72,5 @@ public class ReplyCommentVo extends BaseEntity {
     /**
      * 楼中楼回复
      */
-    private List<ReplyCommentVo> deepReplyList;
+    private List<ReplyCommentVo> replyList;
 }

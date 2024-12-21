@@ -1,16 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lovbe.icharge.dao.ReplyCommentDao">
+
+    <!-- 更新评论的回复数 -->
+    <update id="updateReplyCount">
+        UPDATE s_comment SET reply_count = reply_count +
+        CASE uid
+        <foreach collection="replyList" item="reply">
+            WHEN #{reply.uid} THEN #{reply.replyCount}
+        </foreach>
+        ELSE 0 END
+        WHERE uid IN
+        <foreach collection="replyList" item="reply" open="(" close=")" separator=",">
+            #{reply.uid}
+        </foreach>
+    </update>
     <!-- 获取评论统计 -->
     <select id="selectCommentStatistic" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
         SELECT * FROM c_interaction_statistic where uid = #{targetComment.targetId}
     </select>
 
+    <!-- 获取评论列表 -->
     <select id="selectReplyCommentList" resultMap="replyCommentMap">
         SELECT
             dc.uid,
             dc.target_id,
-            dc.like_count,
+            cis.like_count,
             dc.reply_count,
             dc.is_top,
             dc.is_feature,
@@ -20,6 +35,7 @@
             pu.domain,
             pu.location,
             pu.industry,
+            pu.level,
             pu.`status`,
             dc.content,
             dc.content_img_url,
@@ -28,7 +44,6 @@
         FROM (SELECT
                  uid,
                  target_id,
-                 like_count,
                  reply_count,
                  is_top,
                  is_feature,
@@ -44,18 +59,20 @@
              LIMIT #{commentDTO.offset}, #{commentDTO.limit}
              ) dc
         LEFT JOIN p_user pu ON dc.user_id = pu.uid
+        LEFT JOIN c_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         LEFT JOIN (
             SELECT
                 rc.uid AS reply_uid,
                 rc.target_id AS reply_target_id,
                 rc.parent_id AS reply_parent_id,
-                rc.like_count AS reply_like_count,
+                cis.like_count AS reply_like_count,
                 rc.user_id AS reply_user_id,
                 pu.username AS reply_username,
                 pu.avatar_url AS reply_avatar_url,
                 pu.domain AS reply_domain,
                 pu.location AS reply_location,
                 pu.industry AS reply_industry,
+                pu.level AS reply_level,
                 pu.`status` AS reply_status,
                 rc.content AS reply_content,
                 rc.content_img_url AS reply_content_img_url,
@@ -67,6 +84,7 @@
             FROM s_comment rc
             LEFT JOIN p_user pu ON rc.user_id = pu.uid
             LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
+            LEFT JOIN c_interaction_statistic cis ON rc.uid = cis.uid AND cis.status = 'A'
             WHERE rc.`status` = 'A'
               AND rc.target_id = #{commentDTO.targetId}
               AND rc.parent_id IS NOT NULL
@@ -75,25 +93,26 @@
                    WHERE rcc.parent_id = rc.parent_id
                      AND rcc.`status` = 'A'
                      AND rcc.create_time <![CDATA[ <= ]]> rc.create_time
-                   ) <![CDATA[ <= ]]> 5
+                   ) <![CDATA[ <= ]]> 3
             ORDER BY rc.create_time
         ) rc ON dc.uid = rc.reply_parent_id
             AND rc.reply_target_id = #{commentDTO.targetId}
 
     </select>
 
-    <!-- 获取评论回复列表 -->
+    <!-- 获取楼中楼回复列表 -->
     <select id="selectCommentReplyList" resultMap="replyCommentMap">
         SELECT rc.uid,
                rc.target_id,
                rc.parent_id,
-               rc.like_count,
+               cis.like_count,
                rc.user_id,
                pu.username,
                pu.avatar_url,
                pu.domain,
                pu.location,
                pu.industry,
+               pu.level,
                pu.`status`,
                rc.content,
                rc.content_img_url,
@@ -104,6 +123,7 @@
                rpu.domain AS reply_domain,
                rpu.location AS reply_location,
                rpu.industry AS reply_industry,
+               rpu.level AS reply_level,
                rpu.`status` AS reply_status,
                NULL AS reply_uid
         FROM s_comment dc
@@ -111,6 +131,7 @@
             AND rc.status = 'A'
         LEFT JOIN p_user pu ON rc.user_id = pu.uid
         LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
+        LEFT JOIN c_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         WHERE dc.status = 'A'
         AND dc.uid = #{commentDTO.commentId}
         ORDER BY rc.create_time
@@ -130,6 +151,7 @@
         <result column="domain" property="userInfo.domain"/>
         <result column="location" property="userInfo.location"/>
         <result column="industry" property="userInfo.industry"/>
+        <result column="level" property="userInfo.level"/>
         <result column="status" property="userInfo.status"/>
         <result column="reply_user_id" property="replyUserInfo.uid"/>
         <result column="reply_username" property="replyUserInfo.username"/>
@@ -137,6 +159,7 @@
         <result column="reply_domain" property="replyUserInfo.domain"/>
         <result column="reply_location" property="replyUserInfo.location"/>
         <result column="reply_industry" property="replyUserInfo.industry"/>
+        <result column="reply_level" property="replyUserInfo.level"/>
         <result column="reply_status" property="replyUserInfo.status"/>
         <result column="content" property="content"/>
         <result column="content_img_url" property="contentImgUrl"/>
@@ -152,6 +175,7 @@
             <result column="reply_status" property="userInfo.status"/>
             <result column="reply_location" property="userInfo.location"/>
             <result column="reply_industry" property="userInfo.industry"/>
+            <result column="reply_level" property="userInfo.level"/>
             <result column="reply_status" property="userInfo.status"/>
             <result column="reply_content" property="content"/>
             <result column="reply_content_img_url" property="contentImgUrl"/>
@@ -159,6 +183,7 @@
             <result column="reply_reply_uid" property="replyUserInfo.uid"/>
             <result column="reply_reply_domain" property="replyUserInfo.domain"/>
             <result column="reply_reply_username" property="replyUserInfo.username"/>
+            <result column="reply_reply_level" property="replyUserInfo.level"/>
             <result column="reply_reply_status" property="replyUserInfo.status"/>
         </collection>
     </resultMap>
