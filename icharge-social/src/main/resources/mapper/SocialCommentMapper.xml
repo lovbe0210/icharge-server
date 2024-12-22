@@ -80,6 +80,8 @@
                 rpu.uid AS reply_reply_uid,
                 rpu.domain AS reply_reply_domain,
                 rpu.username AS reply_reply_username,
+                rpu.location AS reply_reply_location,
+                rpu.industry AS reply_reply_industry,
                 rpu.`status` AS reply_reply_status
             FROM s_comment rc
             LEFT JOIN p_user pu ON rc.user_id = pu.uid
@@ -184,6 +186,8 @@
             <result column="reply_reply_domain" property="replyUserInfo.domain"/>
             <result column="reply_reply_username" property="replyUserInfo.username"/>
             <result column="reply_reply_level" property="replyUserInfo.level"/>
+            <result column="reply_reply_location" property="replyUserInfo.location"/>
+            <result column="reply_reply_industry" property="replyUserInfo.industry"/>
             <result column="reply_reply_status" property="replyUserInfo.status"/>
         </collection>
     </resultMap>

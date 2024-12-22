@@ -86,7 +86,7 @@ public class SocialActionServiceImpl implements SocialActionService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void handlerCommentAction(List<ReplyCommentDo> actionList) {
-        // 点赞明细入库
+        // 评论明细入库
         replyCommentDao.insert(actionList);
         // 过滤出楼中楼回复对父级评论更新统计
         List<ReplyCommentDo> replyList = new ArrayList<>();
