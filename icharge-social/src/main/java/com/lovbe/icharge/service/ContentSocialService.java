@@ -59,4 +59,13 @@ public interface ContentSocialService {
      * @date: 2024/12/20 18:51
      */
     List<ReplyCommentVo> getCommentReplyList(BaseRequest<TargetCommentDTO> baseRequest, Long userId);
+
+    /**
+     * @description: 评论删除
+     * @param: Long
+     * @return: ReplyCommentVo
+     * @author: lovbe0210
+     * @date: 2024/12/22 22:31
+     */
+    void deleteReplyComment(Long uid, Long userId);
 }

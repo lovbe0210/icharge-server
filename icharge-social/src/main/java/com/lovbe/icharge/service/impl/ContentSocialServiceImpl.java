@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
@@ -35,6 +36,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -244,5 +246,29 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                     return replyVo;
                 }).collect(Collectors.toList());
         return collect;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void deleteReplyComment(Long uid, Long userId) {
+        ReplyCommentDo replyCommentDo = replyCommentDao.selectById(uid);
+        if (replyCommentDo == null) {
+            return;
+        }
+
+        if (!Objects.equals(replyCommentDo.getUserId(), userId)) {
+            throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
+        }
+        // 判断是评论还是楼中楼回复
+        if (replyCommentDo.getParentId() == null) {
+            replyCommentDao.delete(new LambdaQueryWrapper<ReplyCommentDo>()
+                    .eq(ReplyCommentDo::getParentId, uid));
+        } else {
+            // 更新父级评论的统计数
+            replyCommentDao.updateReplyCountBySub(replyCommentDo.getParentId());
+        }
+        replyCommentDao.deleteById(uid);
+        // 删除统计表
+        replyCommentDao.deleteStatistic(uid);
     }
 }

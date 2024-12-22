@@ -15,6 +15,18 @@
             #{reply.uid}
         </foreach>
     </update>
+
+    <!-- 统计数减1 -->
+    <update id="updateReplyCountBySub">
+        UPDATE s_comment
+        SET reply_count = IF(reply_count - 1 <![CDATA[ < ]]> 0, 0, reply_count - 1)
+        WHERE uid = #{uid}
+    </update>
+
+    <!-- 删除统计表 -->
+    <delete id="deleteStatistic">
+        DELETE FROM c_interaction_statistic WHERE uid = #{uid}
+    </delete>
     <!-- 获取评论统计 -->
     <select id="selectCommentStatistic" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
         SELECT * FROM c_interaction_statistic where uid = #{targetComment.targetId}

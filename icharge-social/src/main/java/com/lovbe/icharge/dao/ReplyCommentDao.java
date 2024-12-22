@@ -52,4 +52,22 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
      * @date: 2024/12/21 11:20
      */
     void updateReplyCount(@Param("replyList") List<ReplyCommentDo> replyList);
+
+    /**
+     * @description: 统计数减1
+     * @param: Long
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/22 22:46
+     */
+    void updateReplyCountBySub(@Param("uid") Long uid);
+
+    /**
+     * @description: 删除统计表
+     * @param: Long
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/22 22:51
+     */
+    void deleteStatistic(@Param("uid") Long uid);
 }

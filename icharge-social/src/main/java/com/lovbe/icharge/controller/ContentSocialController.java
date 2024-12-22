@@ -105,4 +105,18 @@ public class ContentSocialController {
         ReplyCommentVo replyCommentVo = socialService.replyComment(replyCommentDTO, userId);
         return ResponseBean.ok(replyCommentVo);
     }
+
+    /**
+     * @description: 删除评论或回复
+     * @param: BaseRequest<ReplyCommentDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/20 0:22
+     */
+    @PutMapping("/target/delete/{targetId}")
+    public ResponseBean deleteReplyComment(@PathVariable("uid") Long uid,
+                                     @RequestHeader("userId") Long userId) {
+        socialService.deleteReplyComment(uid, userId);
+        return ResponseBean.ok();
+    }
 }
