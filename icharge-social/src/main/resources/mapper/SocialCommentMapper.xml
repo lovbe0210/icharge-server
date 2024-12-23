@@ -97,7 +97,7 @@
                 rpu.`status` AS reply_reply_status
             FROM s_comment rc
             LEFT JOIN p_user pu ON rc.user_id = pu.uid
-            LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
+            LEFT JOIN p_user rpu ON rc.reply_user_id = rpu.uid
             LEFT JOIN c_interaction_statistic cis ON rc.uid = cis.uid AND cis.status = 'A'
             WHERE rc.`status` = 'A'
               AND rc.target_id = #{commentDTO.targetId}
@@ -144,7 +144,7 @@
         INNER JOIN s_comment rc ON dc.uid = rc.parent_id
             AND rc.status = 'A'
         LEFT JOIN p_user pu ON rc.user_id = pu.uid
-        LEFT JOIN p_user rpu ON rc.reply_user = rpu.uid
+        LEFT JOIN p_user rpu ON rc.reply_user_id = rpu.uid
         LEFT JOIN c_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         WHERE dc.status = 'A'
         AND dc.uid = #{commentDTO.commentId}

@@ -113,9 +113,9 @@ public class ContentSocialController {
      * @author: lovbe0210
      * @date: 2024/12/20 0:22
      */
-    @PutMapping("/target/delete/{targetId}")
+    @PostMapping("/comment/delete/{uid}")
     public ResponseBean deleteReplyComment(@PathVariable("uid") Long uid,
-                                     @RequestHeader("userId") Long userId) {
+                                           @RequestHeader("userId") Long userId) {
         socialService.deleteReplyComment(uid, userId);
         return ResponseBean.ok();
     }

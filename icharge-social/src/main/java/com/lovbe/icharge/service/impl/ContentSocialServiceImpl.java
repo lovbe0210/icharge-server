@@ -259,8 +259,8 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         if (!Objects.equals(replyCommentDo.getUserId(), userId)) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
         }
-        // 判断是评论还是楼中楼回复
         if (replyCommentDo.getParentId() == null) {
+            // 删除楼中楼回复
             replyCommentDao.delete(new LambdaQueryWrapper<ReplyCommentDo>()
                     .eq(ReplyCommentDo::getParentId, uid));
         } else {

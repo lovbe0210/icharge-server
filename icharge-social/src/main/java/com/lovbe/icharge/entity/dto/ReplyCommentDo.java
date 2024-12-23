@@ -51,6 +51,7 @@ public class ReplyCommentDo extends BaseEntity {
     /**
      * 评论点赞数
      */
+    @TableField(exist = false)
     private int likeCount;
     /**
      * 回复总条数
