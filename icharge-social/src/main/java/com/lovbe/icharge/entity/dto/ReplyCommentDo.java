@@ -23,6 +23,11 @@ public class ReplyCommentDo extends BaseEntity {
      */
     private Long targetId;
     /**
+     * 评论对象类型 1文章 2专栏 3随笔 4评论
+     */
+    @TableField(exist = false)
+    private String targetType;
+    /**
      * 父级评论id
      */
     private Long parentId;
@@ -35,6 +40,10 @@ public class ReplyCommentDo extends BaseEntity {
      */
     @TableField(exist = false)
     private UserInfoDo userInfo;
+    /**
+     * 楼中楼回复@用户id
+     */
+    private Long replyUserId;
     /**
      * 楼中楼回复用户信息
      */
@@ -56,11 +65,8 @@ public class ReplyCommentDo extends BaseEntity {
     /**
      * 回复总条数
      */
+    @TableField(exist = false)
     private int replyCount;
-    /**
-     * 楼中楼回复@用户id
-     */
-    private Long replyUserId;
     /**
      * 评论提交ip
      */

@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ReplyCommentDao;
@@ -89,17 +90,37 @@ public class SocialActionServiceImpl implements SocialActionService {
         // 评论明细入库
         replyCommentDao.insert(actionList);
         // 过滤出楼中楼回复对父级评论更新统计
-        List<ReplyCommentDo> replyList = new ArrayList<>();
+        Map<Long, TargetStatisticDo> statisticMap = new HashMap<>();
         actionList.stream()
+                .peek(replyCommentDo -> {
+                    TargetStatisticDo statisticDo = statisticMap.get(replyCommentDo.getTargetId());
+                    if (statisticDo == null) {
+                        statisticDo = new TargetStatisticDo()
+                                .setCommentCount(1)
+                                .setType(replyCommentDo.getTargetType());
+                        statisticDo.setUid(replyCommentDo.getTargetId());
+                        statisticMap.put(replyCommentDo.getTargetId(), statisticDo);
+                    } else {
+                        statisticDo.setCommentCount(statisticDo.getCommentCount() + 1);
+                    }
+                })
                 .filter(replyCommentDo -> replyCommentDo.getParentId() != null)
                 .collect(Collectors.groupingBy(ReplyCommentDo::getParentId))
                 .forEach((parentId, list) -> {
-                    ReplyCommentDo replyCommentDo = new ReplyCommentDo().setReplyCount(list.size());
-                    replyCommentDo.setUid(parentId);
-                    replyList.add(replyCommentDo);
+                    TargetStatisticDo statisticDo = statisticMap.get(parentId);
+                    ReplyCommentDo commentDo = list.get(0);
+                    if (statisticDo == null) {
+                        statisticDo = new TargetStatisticDo()
+                                .setCommentCount(list.size())
+                                .setType(commentDo.getTargetType());
+                        statisticDo.setUid(parentId);
+                        statisticMap.put(parentId, statisticDo);
+                    } else {
+                        statisticDo.setCommentCount(statisticDo.getCommentCount() + list.size());
+                    }
                 });
-        if (replyList.size() > 0) {
-            replyCommentDao.updateReplyCount(replyList);
+        if (statisticMap.size() > 0) {
+            replyCommentDao.updateCommentCount(statisticMap.values());
         }
     }
 

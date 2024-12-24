@@ -3,23 +3,20 @@
 <mapper namespace="com.lovbe.icharge.dao.ReplyCommentDao">
 
     <!-- 更新评论的回复数 -->
-    <update id="updateReplyCount">
-        UPDATE s_comment SET reply_count = reply_count +
-        CASE uid
-        <foreach collection="replyList" item="reply">
-            WHEN #{reply.uid} THEN #{reply.replyCount}
+    <insert id="updateCommentCount">
+        INSERT INTO c_interaction_statistic (uid, type, comment_count)
+        VALUES
+        <foreach collection="statisticList" item="statistic" separator=",">
+            (#{statistic.uid}, #{statistic.type}, #{statistic.commentCount})
         </foreach>
-        ELSE 0 END
-        WHERE uid IN
-        <foreach collection="replyList" item="reply" open="(" close=")" separator=",">
-            #{reply.uid}
-        </foreach>
-    </update>
+        ON DUPLICATE KEY UPDATE
+        comment_count = comment_count + VALUES(comment_count)
+    </insert>
 
     <!-- 统计数减1 -->
     <update id="updateReplyCountBySub">
-        UPDATE s_comment
-        SET reply_count = IF(reply_count - 1 <![CDATA[ < ]]> 0, 0, reply_count - 1)
+        UPDATE c_interaction_statistic
+        SET comment_count = IF(comment_count - #{deleteCount} <![CDATA[ < ]]> 0, 0, comment_count - #{deleteCount})
         WHERE uid = #{uid}
     </update>
 
@@ -33,12 +30,12 @@
     </select>
 
     <!-- 获取评论列表 -->
-    <select id="selectReplyCommentList" resultMap="replyCommentMap">
+    <select id="selectReplyCommentList" resultMap="commentMap">
         SELECT
             dc.uid,
             dc.target_id,
             cis.like_count,
-            dc.reply_count,
+            cis.comment_count AS reply_count,
             dc.is_top,
             dc.is_feature,
             dc.user_id,
@@ -56,7 +53,6 @@
         FROM (SELECT
                  uid,
                  target_id,
-                 reply_count,
                  is_top,
                  is_feature,
                  user_id,
@@ -111,11 +107,10 @@
             ORDER BY rc.create_time
         ) rc ON dc.uid = rc.reply_parent_id
             AND rc.reply_target_id = #{commentDTO.targetId}
-
     </select>
 
     <!-- 获取楼中楼回复列表 -->
-    <select id="selectCommentReplyList" resultMap="replyCommentMap">
+    <select id="selectCommentReplyList" resultMap="replyMap">
         SELECT rc.uid,
                rc.target_id,
                rc.parent_id,
@@ -152,7 +147,7 @@
         LIMIT #{commentDTO.offset}, #{commentDTO.limit}
     </select>
 
-    <resultMap id="replyCommentMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">
+    <resultMap id="commentMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">
         <id column="uid" property="uid"/>
         <result column="target_id" property="targetId"/>
         <result column="like_count" property="likeCount"/>
@@ -167,14 +162,6 @@
         <result column="industry" property="userInfo.industry"/>
         <result column="level" property="userInfo.level"/>
         <result column="status" property="userInfo.status"/>
-        <result column="reply_user_id" property="replyUserInfo.uid"/>
-        <result column="reply_username" property="replyUserInfo.username"/>
-        <result column="reply_avatar_url" property="replyUserInfo.avatarUrl"/>
-        <result column="reply_domain" property="replyUserInfo.domain"/>
-        <result column="reply_location" property="replyUserInfo.location"/>
-        <result column="reply_industry" property="replyUserInfo.industry"/>
-        <result column="reply_level" property="replyUserInfo.level"/>
-        <result column="reply_status" property="replyUserInfo.status"/>
         <result column="content" property="content"/>
         <result column="content_img_url" property="contentImgUrl"/>
         <result column="create_time" property="createTime"/>
@@ -202,5 +189,33 @@
             <result column="reply_reply_industry" property="replyUserInfo.industry"/>
             <result column="reply_reply_status" property="replyUserInfo.status"/>
         </collection>
+    </resultMap>
+
+    <resultMap id="replyMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">
+        <id column="uid" property="uid"/>
+        <result column="target_id" property="targetId"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="reply_count" property="replyCount"/>
+        <result column="is_top" property="isTop"/>
+        <result column="is_feature" property="isFeature"/>
+        <result column="user_id" property="userInfo.uid"/>
+        <result column="username" property="userInfo.username"/>
+        <result column="avatar_url" property="userInfo.avatarUrl"/>
+        <result column="domain" property="userInfo.domain"/>
+        <result column="location" property="userInfo.location"/>
+        <result column="industry" property="userInfo.industry"/>
+        <result column="level" property="userInfo.level"/>
+        <result column="status" property="userInfo.status"/>
+        <result column="reply_user_id" property="replyUserInfo.uid"/>
+        <result column="reply_username" property="replyUserInfo.username"/>
+        <result column="reply_avatar_url" property="replyUserInfo.avatarUrl"/>
+        <result column="reply_domain" property="replyUserInfo.domain"/>
+        <result column="reply_location" property="replyUserInfo.location"/>
+        <result column="reply_industry" property="replyUserInfo.industry"/>
+        <result column="reply_level" property="replyUserInfo.level"/>
+        <result column="reply_status" property="replyUserInfo.status"/>
+        <result column="content" property="content"/>
+        <result column="content_img_url" property="contentImgUrl"/>
+        <result column="create_time" property="createTime"/>
     </resultMap>
 </mapper>

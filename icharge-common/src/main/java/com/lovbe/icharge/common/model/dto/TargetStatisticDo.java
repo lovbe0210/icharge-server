@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class TargetStatisticDo extends BaseEntity {
     /**
-     * 类型 1文章 2专栏 3随笔
+     * 类型 1文章 2专栏 3随笔 4评论
      */
      private String type;
     /**

@@ -113,6 +113,7 @@ public class KafkaConsumer {
                         // 参数校验
                         if (actionDo.getUserId() == null ||
                                 actionDo.getTargetId() == null ||
+                                actionDo.getTargetType() == null ||
                                 actionDo.getContent() == null ||
                                 (actionDo.getParentId() == null && actionDo.getReplyUserId() != null) ||
                                 actionDo.getUpdateTime() == null ||

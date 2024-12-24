@@ -3,9 +3,6 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -15,10 +12,8 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -33,7 +28,6 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -259,16 +253,17 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         if (!Objects.equals(replyCommentDo.getUserId(), userId)) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
         }
+        int deleteCount = 1;
         if (replyCommentDo.getParentId() == null) {
             // 删除楼中楼回复
-            replyCommentDao.delete(new LambdaQueryWrapper<ReplyCommentDo>()
+            deleteCount += replyCommentDao.delete(new LambdaQueryWrapper<ReplyCommentDo>()
                     .eq(ReplyCommentDo::getParentId, uid));
         } else {
             // 更新父级评论的统计数
-            replyCommentDao.updateReplyCountBySub(replyCommentDo.getParentId());
+            replyCommentDao.updateReplyCountBySub(replyCommentDo.getParentId(), deleteCount);
         }
         replyCommentDao.deleteById(uid);
-        // 删除统计表
-        replyCommentDao.deleteStatistic(uid);
+        // 更新target统计表
+        replyCommentDao.updateReplyCountBySub(replyCommentDo.getTargetId(), deleteCount);
     }
 }

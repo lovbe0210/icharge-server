@@ -67,4 +67,12 @@ public class SysConstant {
     public static final long DAY_30 = 60 * 60 * 24 * 30;
 
     public static final String NORMAL_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    /**
+     * 内容对象类型 1文章 2专栏 3随笔 4评论
+     */
+    public static final String TARGET_TYPE_ARTICLE = "1";
+    public static final String TARGET_TYPE_COLUMN = "2";
+    public static final String TARGET_TYPE_ESSAY = "3";
+    public static final String TARGET_TYPE_COMMENT = "4";
 }

@@ -7,7 +7,7 @@ import com.lovbe.icharge.entity.dto.TargetCommentDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -51,7 +51,7 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
      * @author: lovbe0210
      * @date: 2024/12/21 11:20
      */
-    void updateReplyCount(@Param("replyList") List<ReplyCommentDo> replyList);
+    void updateCommentCount(@Param("statisticList") Collection<TargetStatisticDo> statisticList);
 
     /**
      * @description: 统计数减1
@@ -60,7 +60,7 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
      * @author: lovbe0210
      * @date: 2024/12/22 22:46
      */
-    void updateReplyCountBySub(@Param("uid") Long uid);
+    void updateReplyCountBySub(@Param("uid") Long uid, @Param("deleteCount") int deleteCount);
 
     /**
      * @description: 删除统计表
