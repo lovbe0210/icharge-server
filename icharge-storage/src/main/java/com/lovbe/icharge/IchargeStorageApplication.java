@@ -1,6 +1,8 @@
 package com.lovbe.icharge;
 
 import com.lovbe.icharge.common.config.RedisConfig;
+import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.common.service.impl.CommonServiceImpl;
 import com.lovbe.icharge.config.OssStorageFactory;
 import com.lovbe.icharge.service.OssStorageService;
 import org.springframework.boot.SpringApplication;

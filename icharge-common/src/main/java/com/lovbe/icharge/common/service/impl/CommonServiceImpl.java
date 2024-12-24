@@ -8,6 +8,7 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.annotation.Resource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
  * @Date: 2024/12/20 20:20
  * @Description: 公共服务
  */
+@Lazy
 @Service
 public class CommonServiceImpl implements CommonService {
     @Resource
