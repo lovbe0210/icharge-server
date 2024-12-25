@@ -1,5 +1,6 @@
 package com.lovbe.icharge.entity.dto;
 
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -18,6 +19,7 @@ public class BrowseHistoryDo {
     /**
      * targetId + 日期
      */
+    @TableId
     private String uid;
     /**
      * 历史日期
