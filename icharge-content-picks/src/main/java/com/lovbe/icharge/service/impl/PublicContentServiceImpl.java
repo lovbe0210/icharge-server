@@ -1,6 +1,10 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.crypto.digest.MD5;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -10,6 +14,7 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
@@ -20,6 +25,7 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.PublicContentDao;
+import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.PublicColumnVo;
@@ -29,12 +35,16 @@ import com.lovbe.icharge.service.feign.SocialService;
 import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,6 +60,13 @@ public class PublicContentServiceImpl implements PublicContentService {
     private PublicContentDao publicContentDao;
     @Resource
     private UserService userService;
+    @Resource
+    private KafkaTemplate kafkaTemplate;
+    // 文档，专栏，随笔，阅读
+    @Value("${spring.kafka.topics.user-action-browse}")
+    private String browseActionTopic;
+    @Value("${spring.application.name}")
+    private String appName;
 
     @Override
     public PublicArticleVo getArticleInfo(String articleUri, Long userId) {
@@ -115,6 +132,10 @@ public class PublicContentServiceImpl implements PublicContentService {
             return articleVo;
         }
         articleVo.setContent(contentDo.getContent());
+        // 如果不是本人，发送阅读记录和统计
+        if (userId != null && !Objects.equals(userId, articleDo.getUserId())) {
+            sendBrowseMessage(userId, articleDo.getUid(), SysConstant.TARGET_TYPE_ARTICLE);
+        }
         return articleVo;
     }
 
@@ -302,6 +323,39 @@ public class PublicContentServiceImpl implements PublicContentService {
                 Object child = childrenIterator.next();
                 checkNodeInfo(authorId, userId, (JSONObject) child, childrenIterator, articleMap);
             }
+        }
+    }
+
+    /**
+     * @description 发送浏览记录消息
+     * @param[1] userId
+     * @param[2] targetId
+     * @param[3] targetType
+     * @author lovbe0210
+     * @date 2024/11/24 0:10
+     */
+    public void sendBrowseMessage(Long userId, Long targetId, String targetType) {
+        BrowseHistoryDo historyDo = new BrowseHistoryDo();
+        Date now = new Date();
+        historyDo.setHistoryDate(now)
+                .setTargetId(targetId)
+                .setTargetType(targetType)
+                .setUserId(userId)
+                .setUid(MD5.create().digestHex(targetId + DateUtil.today() + userId));
+        historyDo.setStatus(CommonStatusEnum.NORMAL.getStatus())
+                .setCreateTime(now)
+                .setUpdateTime(now);
+        KafkaMessage message = new KafkaMessage<>(appName, browseActionTopic, historyDo);
+        try {
+            CompletableFuture send = kafkaTemplate.send(browseActionTopic, JSONUtil.toJsonStr(message));
+            send.thenAccept(result -> {
+                log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
+            }).exceptionally(ex -> {
+                log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));
+                return null;
+            });
+        } catch (Exception e) {
+            log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
         }
     }
 }

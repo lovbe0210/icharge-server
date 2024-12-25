@@ -9,7 +9,7 @@ import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
-import com.lovbe.icharge.service.SocialActionService;
+import com.lovbe.icharge.service.ActionHandlerService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * @Description: 社交行为处理逻辑，点赞、评论
  */
 @Service
-public class SocialActionServiceImpl implements SocialActionService {
+public class ActionHandlerServiceImpl implements ActionHandlerService {
     @Resource
     private SocialLikeDao socialLikeDao;
     @Resource

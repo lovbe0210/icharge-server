@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RefreshScope
 public class KafkaConsumer {
     @Resource
-    private SocialActionService socialActionService;
+    private ActionHandlerService actionHandler;
 
     /**
      * 点赞消息消费
@@ -73,7 +73,7 @@ public class KafkaConsumer {
             if (CollectionUtils.isEmpty(collect)) {
                 return;
             }
-            socialActionService.handlerLikeAction(collect);
+            actionHandler.handlerLikeAction(collect);
         } catch (Exception e) {
             log.error("[点赞消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
@@ -127,7 +127,7 @@ public class KafkaConsumer {
             if (CollectionUtils.isEmpty(collect)) {
                 return;
             }
-            socialActionService.handlerCommentAction(collect);
+            actionHandler.handlerCommentAction(collect);
         } catch (Exception e) {
             log.error("[点赞消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {

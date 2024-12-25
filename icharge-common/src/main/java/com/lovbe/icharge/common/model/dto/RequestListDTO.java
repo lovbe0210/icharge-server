@@ -17,4 +17,17 @@ public class RequestListDTO {
      * 排序类型 1更新时间 2创建时间
      */
     private Integer sort;
+    /**
+     * 分页查询
+     */
+    private int offset = 0;
+    private int limit = 100;
+
+    public int getOffset() {
+        return offset < 0 ? 0 : offset;
+    }
+
+    public int getLimit() {
+        return limit <= 0 ? 100 : limit > 1000 ? 1000 : limit;
+    }
 }

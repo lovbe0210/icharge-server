@@ -4,12 +4,8 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -42,9 +38,9 @@ public class KafkaProduceConfig {
         //比如说，kafka里的消息5秒钟Batch才凑满了16KB，才能发送出去。那这些消息的延迟就是5秒钟
         //实测batchSize这个参数没有用
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, kafkaProperties.getBatchSize());
-        //有的时刻消息比较少,过了很久,比如5min也没有凑够16KB,这样延时就很大,所以需要一个参数. 再设置一个时间,到了这个时间,
+        //有的时刻消息比较少,过了很久,比如2s也没有凑够16KB,这样延时就很大,所以需要一个参数. 再设置一个时间,到了这个时间,
         //即使数据没达到16KB,也将这个批次发送出去
-        props.put(ProducerConfig.LINGER_MS_CONFIG, "5000");
+        props.put(ProducerConfig.LINGER_MS_CONFIG, "2000");
         //生产者内存缓冲区的大小
         props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, kafkaProperties.getBufferMemory());
         //反序列化，和生产者的序列化方式对应

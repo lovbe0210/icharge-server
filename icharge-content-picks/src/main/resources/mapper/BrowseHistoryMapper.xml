@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.BrowseHistoryDao">
+    <update id="updateViewStatistic">
+        INSERT INTO c_interaction_statistic (uid, type, view_count)
+        VALUES
+        <foreach collection="statisticList" item="statistic" separator=",">
+            (#{statistic.uid}, #{statistic.type}, #{statistic.viewCount})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        view_count = view_count + VALUES(view_count)
+    </update>
+    <!-- 获取历史记录 -->
+    <select id="selectHistoryList" resultMap="browseHistoryMap">
+        SELECT
+            mt.*,
+            pu.domain,
+            pu.avatar_url,
+            pu.`level`,
+            pu.industry,
+            pu.location,
+            pu.`status`,
+            cis.view_count,
+            cis.like_count,
+            cis.comment_count
+        FROM (
+            SELECT
+                bh.uid,
+                bh.history_date,
+                bh.target_id,
+                bh.target_type,
+                bh.update_time,
+                CASE bh.target_type
+                WHEN '1' THEN ca.user_id
+                WHEN '2' THEN cc.user_id
+                WHEN '3' THEN ce.user_id ELSE NULL
+                END user_id,
+                CASE bh.target_type
+                WHEN '1' THEN ca.uri
+                WHEN '2' THEN cc.uri ELSE NULL
+                END uri,
+                CASE bh.target_type
+                WHEN '1' THEN ca.title
+                WHEN '2' THEN cc.title
+                WHEN '3' THEN ce.title ELSE NULL
+                END title,
+                CASE bh.target_type
+                WHEN '1' THEN ca.summary
+                WHEN '2' THEN cc.synopsis
+                WHEN '3' THEN ce.preview_content ELSE NULL
+                END content
+            FROM p_browse_history bh
+            INNER JOIN c_article ca ON bh.target_type = '1'
+                AND bh.target_id = ca.uid
+            INNER JOIN c_column cc ON bh.target_type = '2'
+                AND bh.target_id = cc.uid
+            INNER JOIN c_essay ce ON bh.target_type = '3'
+                AND bh.target_id = ce.uid
+            WHERE bh.user_id = 1
+            ORDER BY bh.update_time DESC
+            LIMIT 0, 100
+        ) mt
+        LEFT JOIN p_user pu ON mt.user_id = pu.uid
+        LEFT JOIN c_interaction_statistic cis ON mt.target_id = cis.uid
+    </select>
+
+    <resultMap id="browseHistoryMap" type="com.lovbe.icharge.entity.dto.BrowseHistoryDTO">
+        <id column="uid" property="uid"/>
+        <result column="history_date" property="historyDate"/>
+        <result column="target_id" property="targetId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="uri" property="uri"/>
+        <result column="title" property="title"/>
+        <result column="content" property="previewContent"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="user_id" property="userInfo.uid"/>
+        <result column="domain" property="userInfo.domain"/>
+        <result column="avatar_url" property="userInfo.avatarUrl"/>
+        <result column="level" property="userInfo.level"/>
+        <result column="industry" property="userInfo.industry"/>
+        <result column="location" property="userInfo.location"/>
+        <result column="status" property="userInfo.status"/>
+    </resultMap>
+</mapper>

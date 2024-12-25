@@ -10,7 +10,7 @@ import java.util.List;
  * @Date: 2024/12/8 22:57
  * @Description: 社交点赞数据流处理服务
  */
-public interface SocialActionService {
+public interface ActionHandlerService {
     /**
      * @description: 点赞数据流逻辑处理
      * @param: LikeActionDo
