@@ -341,7 +341,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                 .setTargetId(targetId)
                 .setTargetType(targetType)
                 .setUserId(userId)
-                .setUid(MD5.create().digestHex(targetId + DateUtil.today() + userId));
+                .setUid(targetId + "_" + userId);
         historyDo.setStatus(CommonStatusEnum.NORMAL.getStatus())
                 .setCreateTime(now)
                 .setUpdateTime(now);

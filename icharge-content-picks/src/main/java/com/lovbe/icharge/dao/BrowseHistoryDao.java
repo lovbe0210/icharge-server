@@ -26,5 +26,12 @@ public interface BrowseHistoryDao extends BaseMapper<BrowseHistoryDo> {
      */
     List<BrowseHistoryDTO> selectHistoryList(@Param("data") RequestListDTO data, @Param("userId") Long userId);
 
+    /**
+     * @description: 浏览统计更新
+     * @param: List<TargetStatisticDo>
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/26 22:38
+     */
     void updateViewStatistic(@Param("statisticList") List<TargetStatisticDo> statisticList);
 }

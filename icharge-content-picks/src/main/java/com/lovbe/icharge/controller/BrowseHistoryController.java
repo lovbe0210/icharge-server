@@ -3,11 +3,13 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
-import com.lovbe.icharge.entity.dto.BrowseHistoryDTO;
 import com.lovbe.icharge.entity.vo.BrowseHistoryVo;
 import com.lovbe.icharge.service.BrowseHistoryService;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 

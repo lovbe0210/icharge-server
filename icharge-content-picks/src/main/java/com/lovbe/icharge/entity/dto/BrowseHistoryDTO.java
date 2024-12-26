@@ -25,6 +25,10 @@ public class BrowseHistoryDTO extends BrowseHistoryDo {
      */
     private String uri;
     /**
+     * 文章所属专栏
+     */
+    private String columnUri;
+    /**
      *作者用户名
      */
     private UserInfoDo userInfo;

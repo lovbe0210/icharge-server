@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 @FeignClient(name = "storage", fallback = StorageServiceFallback.class)
 public interface StorageService {
 
-    @PostMapping(value = "/api/storage/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/api/st/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseBean<String> upload(FileUploadDTO fileUploadDTO);
 }
