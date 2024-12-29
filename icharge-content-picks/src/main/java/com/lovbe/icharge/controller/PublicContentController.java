@@ -8,6 +8,7 @@ import com.lovbe.icharge.entity.vo.RecommendArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
+import org.springframework.data.repository.query.Param;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,7 +56,9 @@ public class PublicContentController {
      * @param sign
      */
     @GetMapping("/ae/view")
-    public void reportView(Double st, Double csh, Double sh,
+    public void reportView(@RequestParam("st") Double st,
+                           @RequestParam("csh") Double csh,
+                           @RequestParam ("sh")Double sh,
                            @RequestHeader("sign") String sign,
                            @RequestHeader(value = "userId", required = false) Long userId) {
         if (st == null || csh == null || sh == null || !StringUtils.hasLength(sign)) {
