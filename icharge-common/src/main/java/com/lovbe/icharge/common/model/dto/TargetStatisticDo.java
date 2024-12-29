@@ -5,6 +5,8 @@ import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.Date;
+
 /**
  * @Author: lovbe0210
  * @Date: 2024/12/18 0:35
@@ -16,7 +18,7 @@ public class TargetStatisticDo extends BaseEntity {
     /**
      * 类型 1文章 2专栏 3随笔 4评论
      */
-     private String type;
+     private Integer type;
     /**
      * 点赞数
      */
@@ -33,4 +35,8 @@ public class TargetStatisticDo extends BaseEntity {
      * 浏览量
      */
     private int viewCount;
+    /**
+     * 首次发布时间
+     */
+    private Date publishTime;
 }

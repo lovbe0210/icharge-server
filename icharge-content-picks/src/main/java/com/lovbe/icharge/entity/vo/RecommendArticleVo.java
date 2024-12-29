@@ -1,6 +1,5 @@
 package com.lovbe.icharge.entity.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
@@ -13,11 +12,11 @@ import java.util.Map;
 /**
  * @Author: lovbe0210
  * @Date: 2024/11/19 1:32
- * @Description: 公开文章信息
+ * @Description: 推荐文章信息
  */
 @Accessors(chain = true)
 @Data
-public class PublicArticleVo extends BaseEntity {
+public class RecommendArticleVo extends BaseEntity {
     /**
      * 文章标题
      */
@@ -27,25 +26,21 @@ public class PublicArticleVo extends BaseEntity {
      */
     private String uri;
     /**
-     * 文章内容
+     * 所属用户信息
      */
-    private String content;
-    /**
-     * 所属用户id
-     */
-    private Long userId;
-    /**
-     * 字数
-     */
-    private int wordsNum;
+    private UserInfoDo userInfo;
     /**
      * 所属专栏
      */
     private Long columnId;
     /**
-     * 专栏名称
+     * 所属专栏uri
      */
-    private String columnName;
+    private String columnUri;
+    /**
+     * 所属专栏标题
+     */
+    private String columnTitle;
     /**
      * 文章摘要
      */
@@ -58,14 +53,6 @@ public class PublicArticleVo extends BaseEntity {
      * 文章标签
      */
     private List<Map> tags = new ArrayList<>();
-    /**
-     * 是否公开访问 0否1是
-     */
-    private Integer isPublic;
-    /**
-     * 收藏id标识
-     */
-    private Long collectId;
     /**
      * 点赞数
      */
@@ -82,12 +69,4 @@ public class PublicArticleVo extends BaseEntity {
      * 是否点赞
      */
     private boolean ifLike;
-    /**
-     * 点赞用户列表
-     */
-    private List<UserInfoDo> likeUserList;
-    /**
-     * 阅读记录埋点
-     */
-    private String readerSign;
 }

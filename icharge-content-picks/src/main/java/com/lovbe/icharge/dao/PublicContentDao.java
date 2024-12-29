@@ -1,9 +1,8 @@
 package com.lovbe.icharge.dao;
 
-import com.lovbe.icharge.common.model.dto.ArticleDo;
-import com.lovbe.icharge.common.model.dto.ColumnDo;
-import com.lovbe.icharge.common.model.dto.ContentDo;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
+import com.lovbe.icharge.entity.vo.RecommendArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -121,11 +120,29 @@ public interface PublicContentDao{
     List<ColumnDo> selectColumnList(@Param("columnIds") List<Long> columnIds);
 
     /**
-     * @description &#x83B7;&#x53D6;&#x7528;&#x6237;&#x5217;&#x8868;
+     * @description 批量获取用户信息
      * @param[1] userIds
      * @return List<UserInfoDo>
      * @author lovbe0210
      * @date 2024/12/1 15:25
      */
     List<UserInfoDo> selectUserList(@Param("userIds") Collection<Long> userIds);
+
+    /**
+     * @description: 获取推荐列表
+     * @param: RecommendRequestDTO
+     * @return: List<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2024/12/27 13:50
+     */
+    List<RecommendArticleVo> selectRecommendArticle(@Param("data") RecommendRequestDTO data);
+
+    /**
+     * @description: 获取统计列表
+     * @param: String
+     * @return: List<TargetStatisticDo>
+     * @author: lovbe0210
+     * @date: 2024/12/29 13:18
+     */
+    List<TargetStatisticDo> selectContentStatisticList(@Param("targetType") Integer targetType);
 }

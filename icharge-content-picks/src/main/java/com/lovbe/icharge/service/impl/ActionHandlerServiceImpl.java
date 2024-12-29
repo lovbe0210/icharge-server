@@ -2,7 +2,9 @@ package com.lovbe.icharge.service.impl;
 
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.dao.BrowseHistoryDao;
+import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
+import com.lovbe.icharge.entity.dto.CollectActionDTO;
 import com.lovbe.icharge.service.ActionHandlerService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 public class ActionHandlerServiceImpl implements ActionHandlerService {
     @Resource
     private BrowseHistoryDao browseHistoryDao;
+    @Resource
+    private CollectDao collectDao;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -47,5 +51,28 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 });
         browseHistoryDao.updateViewStatistic(statisticList);
         browseHistoryDao.insertOrUpdate(historyDos);
+    }
+
+    @Override
+    public void handlerCollectAction(List<CollectActionDTO> collect) {
+        // 对uid进行分组然后相加得到最终的收藏状态
+        List<TargetStatisticDo> statisticList = new ArrayList<>();
+        collect.stream()
+                .peek(action -> {
+                    // 在计算的时候转换为-1便于计总和
+                    if (action.getAction() == 0) {
+                        action.setAction(-1);
+                    }
+                })
+                .collect(Collectors.groupingBy(CollectActionDTO::getUid))
+                .forEach((uid, list) -> {
+                    int count = list.stream().mapToInt(CollectActionDTO::getAction).sum();
+                    TargetStatisticDo statisticDo = new TargetStatisticDo()
+                            .setCollectCount(count)
+                            .setType(list.get(0).getTargetType());
+                    statisticDo.setUid(uid);
+                    statisticList.add(statisticDo);
+                });
+        collectDao.updateCollectStatistic(statisticList);
     }
 }

@@ -9,6 +9,7 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
@@ -33,7 +34,7 @@ public class SecurityServviceImpl implements SecurityService {
         // 解析data
         String sign = scvo.getSign();
         try {
-            String decodedStr = Base64.decodeStr(ValidationUtils.bitwiseInvert(sign));
+            String decodedStr = Base64.decodeStr(CommonUtils.bitwiseInvert(sign));
             JSONObject parseObj = JSONUtil.parseObj(decodedStr);
             String uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
             String svScene = parseObj.getStr(SysConstant.SV_SCENE);
@@ -42,7 +43,7 @@ public class SecurityServviceImpl implements SecurityService {
             }
             String svToken = IdUtil.simpleUUID();
             // 保存滑块验证cookie
-            String svTokenKey = RedisKeyConstant.geSvTokenKey(uniqueId, svScene, svToken);
+            String svTokenKey = RedisKeyConstant.getSvTokenKey(uniqueId, svScene, svToken);
             RedisUtil.set(svTokenKey, svToken, RedisKeyConstant.EXPIRE_1_HOUR);
             Map<String, Object> map = MapUtil.of(SysConstant.TN, svToken);
             return ResponseBean.ok(map);

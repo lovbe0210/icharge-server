@@ -15,6 +15,7 @@ import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
@@ -240,7 +241,7 @@ public class AuthLoginServiceImpl implements AuthService {
      */
     private boolean isPasswordMatch(String dbPassword, String loginPassword) {
         // 先转码为原始密码
-        String decodedPassword = Base64.decodeStr(ValidationUtils.bitwiseInvert(loginPassword));
+        String decodedPassword = Base64.decodeStr(CommonUtils.bitwiseInvert(loginPassword));
         return cryptPasswordEncoder.matches(decodedPassword, dbPassword);
     }
 

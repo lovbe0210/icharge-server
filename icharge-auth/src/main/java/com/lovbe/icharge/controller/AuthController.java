@@ -130,7 +130,7 @@ public class AuthController {
     }
 
     /**
-     * description: 推出登录
+     * description: 退出登录
      * @author: Lvhl
      * @date: 2024/8/2 17:49
      * @param rfToken
@@ -143,7 +143,7 @@ public class AuthController {
     }
 
     /**
-     * description: 推出登录
+     * description: 刷新token
      * @author: Lvhl
      * @date: 2024/8/2 17:49
      * @param rfToken

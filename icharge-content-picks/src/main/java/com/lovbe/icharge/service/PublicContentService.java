@@ -1,8 +1,11 @@
 package com.lovbe.icharge.service;
 
 
+import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.PublicColumnVo;
+import com.lovbe.icharge.entity.vo.RecommendArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 
 import java.util.List;
@@ -50,4 +53,23 @@ public interface PublicContentService {
      * @date 2024/11/23 22:21
      */
     PublicColumnVo getColumnDir(String uri, Long userId);
+
+    /**
+     * @description: 获取推荐文章列表
+     * @param: BaseRequest<RecommendRequestDTO>
+     * @return: List<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2024/12/27 13:23
+     */
+    List<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
+
+    /**
+     * @description: 阅读进度上报
+     * @param st
+     * @param csh
+     * @param sh
+     * @param sign
+     * @param userId
+     */
+    void reportArticleView(Double st, Double csh, Double sh, String sign, Long userId);
 }

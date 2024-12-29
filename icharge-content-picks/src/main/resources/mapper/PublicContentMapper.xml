@@ -59,6 +59,18 @@
         </foreach>
     </select>
 
+    <!-- 获取推荐列表 -->
+    <select id="selectRecommendArticle" resultType="com.lovbe.icharge.entity.vo.RecommendArticleVo">
+    </select>
+
+    <!-- 获取统计列表 -->
+    <select id="selectContentStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT * FROM c_interaction_statistic
+        WHERE type = #{targetType}
+          AND publish_time IS NOT NULL
+          AND status = 'A'
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>

@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
@@ -27,8 +28,10 @@ import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
+import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.PublicColumnVo;
+import com.lovbe.icharge.entity.vo.RecommendArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import com.lovbe.icharge.service.feign.SocialService;
@@ -132,10 +135,10 @@ public class PublicContentServiceImpl implements PublicContentService {
             return articleVo;
         }
         articleVo.setContent(contentDo.getContent());
-        // 如果不是本人，发送阅读记录和统计
-        if (userId != null && !Objects.equals(userId, articleDo.getUserId())) {
-            sendBrowseMessage(userId, articleDo.getUid(), SysConstant.TARGET_TYPE_ARTICLE);
-        }
+        /*// 如果不是本人，阅读记录埋点
+        if (userId == null || !Objects.equals(userId, articleDo.getUserId())) {
+            articleVo.setReaderSign();
+        }*/
         return articleVo;
     }
 
@@ -215,6 +218,38 @@ public class PublicContentServiceImpl implements PublicContentService {
         List dirNodeList = getColumnDirContent(authorId, userId, dirContentId, articleList, columnVo);
         columnVo.setDirContent(dirNodeList);
         return columnVo;
+    }
+
+    @Override
+    public List<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
+        RecommendRequestDTO data = baseRequest.getData();
+        data = data == null ? new RecommendRequestDTO() : data;
+        List<RecommendArticleVo> recommendArticleList = publicContentDao.selectRecommendArticle(data);
+        return List.of();
+    }
+
+    @Override
+    public void reportArticleView(Double st, Double csh, Double sh, String sign, Long userId) {
+        // 参数合法性校验 st:scrollTop(div滚动条移动的位置) csh:canScrollHeight(div除过可视区域的部分) sh:scrollHeight(div总高度)
+        // 1. 参数sign解析
+        String decodedStr = Base64.decodeStr(CommonUtils.bitwiseInvert(sign));
+        JSONObject parseObj = JSONUtil.parseObj(decodedStr);
+        String uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
+        Double pST = parseObj.getDouble(SysConstant.ST);
+        Double pCSH = parseObj.getDouble(SysConstant.CSH);
+        Double pSH = parseObj.getDouble(SysConstant.SH);
+        if (!Objects.equals(st, pST) || !Objects.equals(csh, pCSH) || !Objects.equals(sh, pSH) || !StringUtils.hasLength(uniqueId)) {
+            return;
+        }
+        // 2. 进度计算参数必须为csh不为0，且csh/sh < 0.1 或(csh/sh >= 0.1 && st/csh >= 0.1)
+        if (csh == 0 || sh == 0) {
+            return;
+        }
+        if ((csh / sh) > 0.1 && st / csh < 0.1) {
+            return;
+        }
+        // 3. 如果是登录用户
+
     }
 
     /**
@@ -334,7 +369,7 @@ public class PublicContentServiceImpl implements PublicContentService {
      * @author lovbe0210
      * @date 2024/11/24 0:10
      */
-    public void sendBrowseMessage(Long userId, Long targetId, String targetType) {
+    public void sendBrowseMessage(Long userId, Long targetId, Integer targetType) {
         BrowseHistoryDo historyDo = new BrowseHistoryDo();
         Date now = new Date();
         historyDo.setHistoryDate(now)

@@ -37,7 +37,7 @@ public class BrowseHistoryDo {
     /**
      * 记录类型 1文章 2专栏 3随笔
      */
-    private String targetType;
+    private Integer targetType;
     /**
      * 数据状态
      */

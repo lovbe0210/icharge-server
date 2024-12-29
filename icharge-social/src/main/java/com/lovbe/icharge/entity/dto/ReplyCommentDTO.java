@@ -28,7 +28,7 @@ public class ReplyCommentDTO extends BaseEntity {
      * 评论对象类型 1文章 2专栏 3随笔 4评论
      */
     @NotBlank(message = "评论对象类型不得为空")
-    private String targetType;
+    private Integer targetType;
     /**
      * 父级评论id
      */

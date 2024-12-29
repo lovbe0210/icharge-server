@@ -11,14 +11,18 @@
 
     <artifactId>icharge-content-picks</artifactId>
     <name>icharge-content-picks</name>
-    <description>内容精选服务</description>
-
+    <description>内容推荐服务</description>
 
     <dependencies>
         <dependency>
             <groupId>com.lovbe.icharge</groupId>
             <artifactId>icharge-common</artifactId>
             <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
         </dependency>
 
         <dependency>

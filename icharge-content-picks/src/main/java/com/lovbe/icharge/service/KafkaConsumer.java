@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
+import com.lovbe.icharge.entity.dto.CollectActionDTO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -77,6 +78,57 @@ public class KafkaConsumer {
             actionHandler.handlerBrowseAction(collect);
         } catch (Exception e) {
             log.error("[浏览记录消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+        } finally {
+            ack.acknowledge();
+        }
+    }
+
+    /**
+     * 收藏记录消息消费
+     *
+     * @param consumerRecords
+     * @param ack
+     */
+    @KafkaListener(topics = "${spring.kafka.topics.user-action-collect}",
+            containerFactory = "kafkaListenerContainerFactory", groupId = "action-collect")
+    public void listenActionCollect(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
+        if (consumerRecords.isEmpty()) {
+            return;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("received msgSize: " + consumerRecords.size());
+        }
+        try {
+            List<CollectActionDTO> collect = consumerRecords.parallelStream()
+                    .map(consumerRecord -> {
+                        String data = String.valueOf(consumerRecord.value());
+                        KafkaMessage kafkaMsg = JsonUtils.parseObject(data, KafkaMessage.class);
+                        if (log.isDebugEnabled()) {
+                            log.debug("received msg: " + data);
+                        }
+                        Object msgData = kafkaMsg.getData();
+                        if (msgData == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体内容为空", data);
+                            return null;
+                        }
+                        CollectActionDTO collectAction = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), CollectActionDTO.class);
+                        // 参数校验
+                        if (collectAction.getTargetType() == null ||
+                                collectAction.getUid() == null ||
+                                collectAction.getUpdateTime() == null ||
+                                collectAction.getCreateTime() == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);
+                            return null;
+                        }
+                        return collectAction;
+                    })
+                    .filter(actionDo -> actionDo != null).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(collect)) {
+                return;
+            }
+            actionHandler.handlerCollectAction(collect);
+        } catch (Exception e) {
+            log.error("[收藏记录消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

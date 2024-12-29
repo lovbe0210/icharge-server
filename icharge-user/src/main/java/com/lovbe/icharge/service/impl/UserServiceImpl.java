@@ -153,7 +153,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 密码加密入库
-        String decodedPassword = Base64.decodeStr(ValidationUtils.bitwiseInvert(data.getPassword()));
+        String decodedPassword = Base64.decodeStr(CommonUtils.bitwiseInvert(data.getPassword()));
         String encodePassword = cryptPasswordEncoder.encode(decodedPassword);
         account.setPassword(encodePassword);
         int updated = accountService.updateAccount(account);

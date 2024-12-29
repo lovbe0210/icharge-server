@@ -36,6 +36,33 @@ public class CommonUtils {
         return CommonUtils.getLengthRandomString(6);
     }
 
+    /**
+     * @description: 按位异或一个固定值，得到转码之后的数据，可再次异或得到原值
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/12/29 23:36
+     */
+    public static String bitwiseInvert(String input) {
+        char[] chars = input.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+            // 只针对数字或字母异或操作，对于异或之后超出数字或字母范围的还是使用原字符
+            if (Character.isLetterOrDigit(c) && Character.isLetterOrDigit(c ^ 1)) {
+                int invertedChar = c ^ 1;
+                chars[i] = (char) invertedChar;
+            }
+        }
+        return new String(chars);
+    }
+
+    /**
+     * @description: 用户状态检查，返回可用的userInfoDo
+     * @param: UserInfoDo
+     * @return: UserInfoDo
+     * @author: lovbe0210
+     * @date: 2024/12/29 23:36
+     */
     public static UserInfoDo checkUserStatus(UserInfoDo userInfo) {
         if (userInfo == null) {
             userInfo = new UserInfoDo()

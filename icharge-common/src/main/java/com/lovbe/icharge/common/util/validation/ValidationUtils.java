@@ -19,6 +19,8 @@ import org.springframework.util.StringUtils;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static com.lovbe.icharge.common.util.CommonUtils.bitwiseInvert;
+
 /**
  * 校验工具类
  *
@@ -86,7 +88,7 @@ public class ValidationUtils {
             String tn = parseObj.getStr(SysConstant.TN);
             String uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
             String svScene = parseObj.getStr(SysConstant.SV_SCENE);
-            String redisKey = RedisKeyConstant.geSvTokenKey(uniqueId, svScene, tn);
+            String redisKey = RedisKeyConstant.getSvTokenKey(uniqueId, svScene, tn);
             if (RedisUtil.get(redisKey) == null) {
                 return false;
             }
@@ -99,18 +101,7 @@ public class ValidationUtils {
     }
 
 
-    public static String bitwiseInvert(String input) {
-        char[] chars = input.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            char c = chars[i];
-            // 只针对数字或字母异或操作，对于异或之后超出数字或字母范围的还是使用原字符
-            if (Character.isLetterOrDigit(c) && Character.isLetterOrDigit(c ^ 1)) {
-                int invertedChar = c ^ 1;
-                chars[i] = (char) invertedChar;
-            }
-        }
-        return new String(chars);
-    }
+
 
     public static void main(String[] args) {
 //        String sss = "eyJ1bmlxdWVfaWQiOiJiYWNiOTJjYjQ4M2M0N2JjODQxNzE5ZjZkMmYxMDYwMCIsInRpbWVzdGFtcCI6MTcyNjQxOTc5Nzg4Mn0=";

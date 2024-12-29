@@ -1311,7 +1311,7 @@ public final class RedisUtil {
         return redisTemplate.execute((RedisConnection conn) -> conn.hashCommands().hLen(keyByte));
     }
 
-    public static <T> void zset(String key, long score, T val) {
+    public static <T> void zset(String key, double score, T val) {
         redisTemplate.opsForZSet().add(key, val, score);
     }
 

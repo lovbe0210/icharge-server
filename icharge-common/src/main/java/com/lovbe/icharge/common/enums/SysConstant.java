@@ -25,6 +25,9 @@ public class SysConstant {
     public static final String LOGIN_USER_ID = "x-login-id";
     public static final String ID = "id";
     public static final String TN = "tn";
+    public static final String ST = "st";
+    public static final String CSH = "csh";
+    public static final String SH = "sh";
     public static final String USERID = "userId";
 
     public static final String FILE_SCENE_AVATAR = "avatar";
@@ -71,8 +74,8 @@ public class SysConstant {
     /**
      * 内容对象类型 1文章 2专栏 3随笔 4评论
      */
-    public static final String TARGET_TYPE_ARTICLE = "1";
-    public static final String TARGET_TYPE_COLUMN = "2";
-    public static final String TARGET_TYPE_ESSAY = "3";
-    public static final String TARGET_TYPE_COMMENT = "4";
+    public static final Integer TARGET_TYPE_ARTICLE = 1;
+    public static final Integer TARGET_TYPE_COLUMN = 2;
+    public static final Integer TARGET_TYPE_ESSAY = 3;
+    public static final Integer TARGET_TYPE_COMMENT = 4;
 }

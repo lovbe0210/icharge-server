@@ -1,31 +1,33 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.CollectTagDao;
 import com.lovbe.icharge.dao.PublicContentDao;
-import com.lovbe.icharge.entity.dto.CollectDo;
-import com.lovbe.icharge.entity.dto.CollectRequestDTO;
-import com.lovbe.icharge.entity.dto.CollectTagsDTO;
-import com.lovbe.icharge.entity.dto.CollectTargetDTO;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.CollectVo;
 import com.lovbe.icharge.service.CollectService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.text.Collator;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,6 +45,13 @@ public class CollectServiceImpl implements CollectService {
     private CollectTagDao collectTagDao;
     @Resource
     private PublicContentDao publicContentDao;
+
+    private KafkaTemplate kafkaTemplate;
+    // 文档，专栏，随笔，阅读
+    @Value("${spring.kafka.topics.user-action-collect}")
+    private String collectActionTopic;
+    @Value("${spring.application.name}")
+    private String appName;
 
     @Override
     public Long marksContent(CollectTargetDTO data, Long userId) {
@@ -66,6 +75,8 @@ public class CollectServiceImpl implements CollectService {
                 .setUpdateTime(new Date());
         collectDo.setUserId(userId);
         collectDao.insertOrUpdate(collectDo);
+        // 添加收藏统计
+        sendCollectMessage(data.getTargetId(), data.getTargetType(), 1);
         return collectDo.getUid();
     }
 
@@ -291,5 +302,36 @@ public class CollectServiceImpl implements CollectService {
                 })
                 .collect(Collectors.toList());
         return newCollect;
+    }
+
+    /**
+     * @description 发送收藏统计消息
+     * @param[1] userId
+     * @param[2] targetId
+     * @param[3] targetType
+     * @author lovbe0210
+     * @date 2024/11/24 0:10
+     */
+    public void sendCollectMessage(Long targetId, Integer targetType, int action) {
+        CollectActionDTO collectDTO = new CollectActionDTO();
+        Date now = new Date();
+        collectDTO.setTargetType(targetType)
+                .setAction(action)
+                .setUid(targetId);
+        collectDTO.setStatus(CommonStatusEnum.NORMAL.getStatus())
+                .setCreateTime(now)
+                .setUpdateTime(now);
+        KafkaMessage message = new KafkaMessage<>(appName, collectActionTopic, collectDTO);
+        try {
+            CompletableFuture send = kafkaTemplate.send(collectActionTopic, JSONUtil.toJsonStr(message));
+            send.thenAccept(result -> {
+                log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
+            }).exceptionally(ex -> {
+                log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));
+                return null;
+            });
+        } catch (Exception e) {
+            log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
+        }
     }
 }

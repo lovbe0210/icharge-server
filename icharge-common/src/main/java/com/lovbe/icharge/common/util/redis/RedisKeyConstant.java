@@ -41,6 +41,10 @@ public abstract class RedisKeyConstant {
      * 内容生产服务
      */
     public static final String CONTENT = "content-product:";
+    /**
+     * 内容精选服务
+     */
+    public static final String PICKS = "content-picks:";
 
 
     /**
@@ -125,7 +129,7 @@ public abstract class RedisKeyConstant {
      * @author: lovbe0210
      * @date: 2024/8/18 14:25
      */
-    public static String geSvTokenKey(String uniqueId, String svScene, String svToken) {
+    public static String getSvTokenKey(String uniqueId, String svScene, String svToken) {
         return BASE_PROJECT + AUTH + "slider-verify:svToken:" + uniqueId + ":" + svScene + ":" + svToken;
     }
 
@@ -191,5 +195,9 @@ public abstract class RedisKeyConstant {
      */
     public static String getCacheUserKey(Long userId) {
         return BASE_PROJECT + USER + userId;
+    }
+
+    public static String getArticleRankSetKey(Integer targetType) {
+        return BASE_PROJECT + PICKS + "rank:" + targetType;
     }
 }
