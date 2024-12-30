@@ -31,10 +31,25 @@ public class RecommendPicksSchedule {
      * @date: 2024/12/29 11:27
      */
     @Scheduled(initialDelay = 10000, fixedRate = 12 * 60 * 60 * 1000)
-    public void runTask() {
+    public void runRankUpdate() {
         log.info("[内容排行榜] --- 计算开始");
         long start = System.currentTimeMillis();
         recommendPicksService.articleRankUpdate();
         log.info("[内容排行榜] --- 计算结束，耗时：{}ms", System.currentTimeMillis() - start);
+    }
+
+    /**
+     * @description: 计算对每篇已发布的文章进行标签提取，然后间隔10分钟运行一次
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/29 11:27
+     */
+    @Scheduled(initialDelay = 60000, fixedRate = 10 * 60 * 1000)
+    public void runContentTagExtract() {
+        log.info("[内容标签提取] --- 请求开始");
+        long start = System.currentTimeMillis();
+        recommendPicksService.contentTagExtract();
+        log.info("[内容标签提取] --- 请求结束，耗时：{}ms", System.currentTimeMillis() - start);
     }
 }

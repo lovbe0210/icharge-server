@@ -1388,20 +1388,30 @@ public final class RedisUtil {
 
     /**
      * 获取zset中的元素包含分数
-     * @param likedSetKey
+     * @param key
      * @param startIndex
      * @param endIndex
      * @param reverse
      * @return
      */
-    public static Set<ZSetOperations.TypedTuple<Object>> zsGetSet(String likedSetKey, int startIndex, int endIndex, boolean reverse) {
+    public static Set<ZSetOperations.TypedTuple<Object>> zsGetSet(String key, int startIndex, int endIndex, boolean reverse) {
         Set<ZSetOperations.TypedTuple<Object>> typedTuples;
         if (reverse) {
-            typedTuples = redisTemplate.opsForZSet().reverseRangeWithScores(likedSetKey, startIndex, endIndex);
+            typedTuples = redisTemplate.opsForZSet().reverseRangeWithScores(key, startIndex, endIndex);
         } else {
-            typedTuples = redisTemplate.opsForZSet().rangeWithScores(likedSetKey, startIndex, endIndex);
+            typedTuples = redisTemplate.opsForZSet().rangeWithScores(key, startIndex, endIndex);
         }
         return typedTuples == null ? Set.of() : typedTuples;
+    }
+
+    /**
+     * 弹出zset中的分数最小的元素
+     * @param key
+     * @return
+     */
+    public static Object zsPopMin(String key) {
+        ZSetOperations.TypedTuple<Object> tuple = redisTemplate.opsForZSet().popMin(key);
+        return tuple == null ? null : tuple.getValue();
     }
 
     /**

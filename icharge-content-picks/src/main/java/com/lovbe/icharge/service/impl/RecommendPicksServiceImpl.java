@@ -1,7 +1,10 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
@@ -9,8 +12,10 @@ import com.lovbe.icharge.config.ContentPicksConfigProperties;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.service.RecommendPicksService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -21,6 +26,7 @@ import java.util.stream.Collectors;
  * @Date: 2024/12/29 11:35
  * @Description: MS
  */
+@Slf4j
 @Service
 public class RecommendPicksServiceImpl implements RecommendPicksService {
     @Resource
@@ -58,5 +64,29 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
             double finalScore = score / Math.pow(sincePublishDay + 2, G);
             RedisUtil.zset(rankSetKey, finalScore, statistic.getUid());
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void contentTagExtract() {
+        String publishContentIdKey = RedisKeyConstant.getPublishContentIdKey();
+        String publishedId = (String) RedisUtil.zsPopMin(publishContentIdKey);
+        while (publishedId != null) {
+            // 文档id_正文id
+            String[] split = publishedId.split(SysConstant.SEPARATOR);
+            ContentDo contentDo = contentDao.selectContent(Long.valueOf(split[1]));
+            if (contentDo != null && StringUtils.hasLength(contentDo.getContent())) {
+                try {
+                    JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
+                    String content = getTextContentValue(parseObj);
+                } catch (Exception e) {
+                    log.error("[文章标签提取] --- 当前文章内文内容解析异常，publishedId: {}, 提取失败，errorInfo: {}", publishedId, e.toString());
+                }
+            }
+            publishedId = (String) RedisUtil.zsPopMin(publishContentIdKey);
+        }
+    }
+
+    private String getTextContentValue(JSONObject parseObj) {
+        return null;
     }
 }

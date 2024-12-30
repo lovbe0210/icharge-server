@@ -1,9 +1,13 @@
 package com.lovbe.icharge.common.util;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Random;
 
@@ -84,5 +88,34 @@ public class CommonUtils {
                     .setDomain(SysConstant.LOGOFF_USER_NAME);
         }
         return userInfo;
+    }
+
+    public static String getContentTextValue(JSONObject parseObj) {
+        StringBuilder builder = new StringBuilder();
+        recursiveParseText(builder, parseObj);
+        return builder.toString();
+    }
+
+    static void recursiveParseText(StringBuilder builder, JSONObject child) {
+        if (child == null) {
+            return;
+        }
+        // 获取children
+        JSONArray jsonArray = child.getJSONArray(SysConstant.CHILDREN);
+        if (!CollectionUtils.isEmpty(jsonArray)) {
+            for (Object object : jsonArray) {
+                recursiveParseText(builder, (JSONObject) object);
+            }
+        } else {
+            // 没有下级或下级为空是获取text文本
+            String text = child.getStr(SysConstant.TEXT);
+            if (StringUtils.hasLength(text)) {
+                text = text.replaceAll("\\s+", " ");
+                text = text.replaceAll("\\r?\\n", "");
+                if (text.length() > 0) {
+                    builder.append(text);
+                }
+            }
+        }
     }
 }

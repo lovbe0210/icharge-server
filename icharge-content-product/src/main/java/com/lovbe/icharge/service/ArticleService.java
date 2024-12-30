@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
+import com.lovbe.icharge.entity.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 
@@ -113,4 +114,10 @@ public interface ArticleService {
      * @date 2024/11/13 23:23
      */
     Map<Long, ArticleVo> copyArticle(ArticleOperateDTO data, long userId);
+
+    /**
+     * 内容发布处理
+     * @param collect
+     */
+    void handlerPublishAction(List<ContentPublishDTO> collect);
 }

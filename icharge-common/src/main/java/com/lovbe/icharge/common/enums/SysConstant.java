@@ -81,4 +81,14 @@ public class SysConstant {
     public static final Integer TARGET_TYPE_COLUMN = 2;
     public static final Integer TARGET_TYPE_ESSAY = 3;
     public static final Integer TARGET_TYPE_COMMENT = 4;
+
+    /**
+     * 分隔符
+     */
+    public static final String SEPARATOR = "_";
+    /**
+     * 正文结构类型
+     */
+    public static final String CHILDREN = "children";
+    public static final String TEXT = "text";
 }

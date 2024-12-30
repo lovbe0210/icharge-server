@@ -1,8 +1,8 @@
 package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.entity.dto.MenuDTO;
-import com.lovbe.icharge.service.CommonService;
+import com.lovbe.icharge.common.model.dto.MenuDTO;
+import com.lovbe.icharge.common.service.CommonService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;

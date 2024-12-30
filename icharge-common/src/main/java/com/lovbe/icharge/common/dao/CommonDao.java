@@ -1,8 +1,11 @@
 package com.lovbe.icharge.common.dao;
 
+import com.lovbe.icharge.common.model.dto.MenuDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210
@@ -16,4 +19,17 @@ public interface CommonDao {
                     SELECT * FROM p_user WHERE uid = #{userId}
                     """)
     UserInfoDo getUserById(Long userId);
+
+    @Select(value = """
+                    SELECT Distinct uri FROM 
+                    (SELECT uri FROM c_article WHERE status = 'A'
+                    UNION ALL
+                    SELECT uri FROM c_column WHERE status = 'A') result
+                    """)
+    List<String> selectAllUri();
+
+    @Select(value = """
+                    SELECT * FROM s_menu WHERE type = 'A' ORDER BY type,sort
+                    """)
+    List<MenuDTO> selectList();
 }

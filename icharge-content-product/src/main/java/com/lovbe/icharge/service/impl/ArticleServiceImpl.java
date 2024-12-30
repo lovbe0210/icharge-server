@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
@@ -13,17 +14,28 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
-import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.dto.ArticleDTO;
+import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
+import com.lovbe.icharge.entity.dto.ContentDTO;
+import com.lovbe.icharge.entity.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
-import com.lovbe.icharge.service.CommonService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.ChatClient;
+import org.springframework.ai.chat.ChatResponse;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +66,13 @@ public class ArticleServiceImpl implements ArticleService {
     private ColumnDao columnDao;
     @Resource
     private CommonService commonService;
+    // 文档，专栏，随笔，阅读
+    @Value("${spring.kafka.topics.action-content-publish}")
+    private String publishActionTopic;
+    @Value("${spring.application.name}")
+    private String appName;
+    @Resource
+    private ChatClient chatClient;
 
     @Override
     public ArticleVo createBlankDoc(Long columnId, long userId) {
@@ -214,14 +233,24 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDo.getIsPublic() != null && articleDo.getIsPublic() == 0) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED);
         }
+        // 获取最后一次编辑的正文信息
+        ContentDo contentDo = contentDao.selectById(articleDo.getLatestContentId());
+        if (contentDo == null) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_EMPTY_PUBLISH_FAILED);
+        }
         // 判断状态：如果是未审核，则更新为1,如果是审核中则提示无需发布，如果是审核失败，可重新发布
         Integer publishStatus = articleDo.getPublishStatus();
         if (publishStatus != null && publishStatus == 1) {
             return;
         }
         articleDo.setPublishStatus(1);
-        // TODO 发消息进行文章内容审核
         articleDao.updateById(articleDo);
+        // 发送消息进行内容审核（发布n次，审核n次，这样才能保证内容不会遗漏）
+        commonService.sendMessage(appName, publishActionTopic,
+                new ContentPublishDTO(articleDo.getUid(),
+                        SysConstant.TARGET_TYPE_ARTICLE,
+                        articleDo.getLatestContentId(),
+                        new Date()));
     }
 
     @Override
@@ -343,6 +372,47 @@ public class ArticleServiceImpl implements ArticleService {
         return map;
     }
 
+    @Override
+    public void handlerPublishAction(List<ContentPublishDTO> collect) {
+        // 对同一target进行过滤，只审核一次，取最新的contentId即可
+        Map<Long, ContentPublishDTO> publishDTOMap = collect.stream()
+                .collect(Collectors.toMap(ContentPublishDTO::getTargetId,
+                        Function.identity(),
+                        (a, b) -> b.getPublishTime().after(a.getPublishTime()) ? b : a
+                ));
+        for (ContentPublishDTO publishDTO : publishDTOMap.values()) {
+            // 获取最新id内容进行审核
+            ContentDo contentDo = contentDao.selectById(publishDTO.getContentId());
+            if (contentDo == null || !StringUtils.hasLength(contentDo.getContent())) {
+                continue;
+            }
+            try {
+                // 对内容进行解析，获取纯文本内容
+                JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
+                String textValue = CommonUtils.getContentTextValue(parseObj);
+                log.error("textValue: {}", textValue);
+                // 发送文章内容审核请求
+                String result = sendChatMessage(textValue);
+                JSONObject resultObj = JSONUtil.parseObj(result);
+                if (!CollectionUtils.isEmpty(resultObj)) {
+                    // 结果解析ok
+                    Boolean kimiResult = resultObj.getBool("result");
+                    if (kimiResult != null && kimiResult) {
+                        log.info("[文章内容审核] --- kimi审核通过");
+                        // 存入redis进行文章标签提取
+                        String publishKey = RedisKeyConstant.getPublishContentIdKey();
+                        String publishId = publishDTO.getTargetId() + SysConstant.SEPARATOR + publishDTO.getContentId();
+                        RedisUtil.zset(publishKey, System.currentTimeMillis(), publishId);
+                    } else if (kimiResult != null && !kimiResult) {
+                        log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultObj.getJSONArray("reason"));
+                    }
+                }
+            } catch (Exception e) {
+                log.error("[文章内容审核] --- 正文内容解析失败，contentId: {}", publishDTO.getContentId());
+            }
+        }
+    }
+
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
@@ -353,5 +423,22 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDo.getUserId() != userId) {
             throw new ServiceException(GlobalErrorCodes.LOCKED);
         }
+    }
+
+    private String sendChatMessage(String textValue) {
+        String message = """
+                        {
+                          "messages": [
+                            {"role": "system", "content": "你是文章内容审核管理员，分析内容是否包含违反政治正确、色情淫秽传播等内容，你只需要返回true表示审核通过，false表示审核不通过即可，注意需要联系上下文判断语境是否违规，而不是仅针对单个单词或词语就认定违规，只需要判断出明确违规的内容，不用关心链接或者二维码或者文件什么，不用关心外链是否会存在不合规或非法分享版权的内容，只需要判断链接本身有没有违反包含违反政治正确、包含色情淫秽传播等内容；使用json格式输出。其中result字段表示通过与否，使用true或false；reason字段表示违规内容和原因，指出哪些词语违规了，使用数组表示。"},
+                            {"role": "user", "content": "%s"}
+                          ],
+                          response_format={"type": "json_object"}
+                        }
+                        """.formatted(textValue);
+        String call = this.chatClient.call(message);
+        if (log.isDebugEnabled()) {
+            log.debug("kimi返回审核结果: {}", call);
+        }
+        return call;
     }
 }

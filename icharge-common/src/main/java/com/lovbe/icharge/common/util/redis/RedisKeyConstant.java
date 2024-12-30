@@ -226,4 +226,8 @@ public abstract class RedisKeyConstant {
     public static String getViewReportIpLimit(String ipaddress, Long targetId) {
         return BASE_PROJECT + PICKS + "ip-limit-view:" + ipaddress + ":" + targetId;
     }
+
+    public static String getPublishContentIdKey() {
+        return BASE_PROJECT + CONTENT + "published-content-id";
+    }
 }
