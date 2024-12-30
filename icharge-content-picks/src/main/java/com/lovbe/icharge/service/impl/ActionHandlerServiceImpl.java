@@ -31,16 +31,9 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void handlerBrowseAction(List<BrowseHistoryDo> collect) {
-        // 对同一批次中的同一uid进行去重,只算一次阅读
-        Collection<BrowseHistoryDo> historyDos = collect.stream()
-                .collect(Collectors.toMap(
-                        BrowseHistoryDo::getUid,
-                        Function.identity(),
-                        (b1, b2) -> b1.getUpdateTime().after(b2.getUpdateTime()) ? b1 : b2))
-                .values();
         // 对target进行分组，然后添加浏览记录统计
         List<TargetStatisticDo> statisticList = new ArrayList<>();
-        historyDos.stream()
+        collect.stream()
                 .collect(Collectors.groupingBy(BrowseHistoryDo::getTargetId))
                 .forEach((targetId, list) -> {
                     TargetStatisticDo statisticDo = new TargetStatisticDo()
@@ -50,7 +43,6 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                     statisticList.add(statisticDo);
                 });
         browseHistoryDao.updateViewStatistic(statisticList);
-        browseHistoryDao.insertOrUpdate(historyDos);
     }
 
     @Override

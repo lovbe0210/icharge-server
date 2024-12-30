@@ -59,11 +59,9 @@ public class KafkaConsumer {
                         }
                         BrowseHistoryDo historyDo = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), BrowseHistoryDo.class);
                         // 参数校验
-                        if (historyDo.getUserId() == null ||
-                                historyDo.getTargetId() == null ||
+                        if (historyDo.getTargetId() == null ||
                                 historyDo.getTargetType() == null ||
                                 historyDo.getHistoryDate() == null ||
-                                historyDo.getUid() == null ||
                                 historyDo.getUpdateTime() == null ||
                                 historyDo.getCreateTime() == null) {
                             log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);

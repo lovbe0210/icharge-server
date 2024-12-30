@@ -34,4 +34,13 @@ public interface BrowseHistoryDao extends BaseMapper<BrowseHistoryDo> {
      * @date: 2024/12/26 22:38
      */
     void updateViewStatistic(@Param("statisticList") List<TargetStatisticDo> statisticList);
+
+    /**
+     * @description: 插入或保存原子操作
+     * @param: BrowseHistoryDo
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2024/12/30 12:17
+     */
+    int atomicInsertOrUpdate(@Param("history") BrowseHistoryDo historyDo);
 }

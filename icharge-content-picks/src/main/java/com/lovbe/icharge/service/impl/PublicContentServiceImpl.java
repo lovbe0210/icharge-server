@@ -25,6 +25,8 @@ import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.common.util.servlet.ServletUtils;
+import com.lovbe.icharge.dao.BrowseHistoryDao;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
 import com.lovbe.icharge.entity.dto.ContentLikeDTO;
@@ -61,6 +63,8 @@ import java.util.stream.Collectors;
 public class PublicContentServiceImpl implements PublicContentService {
     @Resource
     private PublicContentDao publicContentDao;
+    @Resource
+    private BrowseHistoryDao browseHistoryDao;
     @Resource
     private UserService userService;
     @Resource
@@ -135,10 +139,6 @@ public class PublicContentServiceImpl implements PublicContentService {
             return articleVo;
         }
         articleVo.setContent(contentDo.getContent());
-        /*// 如果不是本人，阅读记录埋点
-        if (userId == null || !Objects.equals(userId, articleDo.getUserId())) {
-            articleVo.setReaderSign();
-        }*/
         return articleVo;
     }
 
@@ -232,24 +232,65 @@ public class PublicContentServiceImpl implements PublicContentService {
     public void reportArticleView(Double st, Double csh, Double sh, String sign, Long userId) {
         // 参数合法性校验 st:scrollTop(div滚动条移动的位置) csh:canScrollHeight(div除过可视区域的部分) sh:scrollHeight(div总高度)
         // 1. 参数sign解析
-        String decodedStr = Base64.decodeStr(CommonUtils.bitwiseInvert(sign));
-        JSONObject parseObj = JSONUtil.parseObj(decodedStr);
-        String uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
-        Double pST = parseObj.getDouble(SysConstant.ST);
-        Double pCSH = parseObj.getDouble(SysConstant.CSH);
-        Double pSH = parseObj.getDouble(SysConstant.SH);
-        if (!Objects.equals(st, pST) || !Objects.equals(csh, pCSH) || !Objects.equals(sh, pSH) || !StringUtils.hasLength(uniqueId)) {
-            return;
+        Long targetId = null;
+        String uniqueId = null;
+        try {
+            String decodedStr = Base64.decodeStr(CommonUtils.bitwiseInvert(sign));
+            JSONObject parseObj = JSONUtil.parseObj(decodedStr);
+            uniqueId = parseObj.getStr(SysConstant.UNIQUE_ID);
+            targetId = parseObj.getLong(SysConstant.TARGET_ID);
+            Double pST = parseObj.getDouble(SysConstant.ST);
+            Double pCSH = parseObj.getDouble(SysConstant.CSH);
+            Double pSH = parseObj.getDouble(SysConstant.SH);
+            if (!Objects.equals(st, pST) || !Objects.equals(csh, pCSH) || !Objects.equals(sh, pSH) ||
+                    !StringUtils.hasLength(uniqueId) || targetId == null) {
+                return;
+            }
+            // 2. 进度计算参数必须为csh不为0，且csh/sh < 0.1 或(csh/sh >= 0.1 && st/csh >= 0.1)
+            if (csh == 0 || sh == 0) {
+                return;
+            }
+            if ((csh / sh) > 0.1 && st / csh < 0.1) {
+                return;
+            }
+        } catch (Exception e) {
+            log.error("[阅读记录上报] --- sign解析异常，errorInfo: {}", e.toString());
         }
-        // 2. 进度计算参数必须为csh不为0，且csh/sh < 0.1 或(csh/sh >= 0.1 && st/csh >= 0.1)
-        if (csh == 0 || sh == 0) {
-            return;
-        }
-        if ((csh / sh) > 0.1 && st / csh < 0.1) {
-            return;
-        }
-        // 3. 如果是登录用户
 
+        BrowseHistoryDo historyDo = new BrowseHistoryDo();
+        Date now = new Date();
+        historyDo.setStatus(CommonStatusEnum.NORMAL.getStatus())
+                .setCreateTime(now)
+                .setUpdateTime(now);
+        // 3. 如果是登录用户直接用userId作为唯一id
+        if (userId != null) {
+            // 阅读记录入库，判断是更新还是新增
+            historyDo.setUserId(userId)
+                    .setHistoryDate(new Date())
+                    .setTargetId(targetId)
+                    .setTargetType(1)
+                    .setUid(targetId + "_" + userId);
+            int update = browseHistoryDao.atomicInsertOrUpdate(historyDo);
+            if (update == 1) {
+                // 新增时统计阅读量
+                sendBrowseMessage(historyDo);
+            }
+            return;
+        }
+        // 4. 如果未登录，先进行ip地址限制判断， 然后取uniqueId进行验证
+        String ipLimit = RedisKeyConstant.getViewReportIpLimit(ServletUtils.getClientIP(), targetId);
+        if (RedisUtil.hasKey(ipLimit)) {
+            return;
+        }
+        RedisUtil.set(ipLimit, null, SysConstant.DAY_1);
+        String reportLimitKey = RedisKeyConstant.getViewReportFrequencyLimit(uniqueId, targetId);
+        if (RedisUtil.hasKey(reportLimitKey)) {
+            return;
+        }
+        RedisUtil.set(reportLimitKey, null, SysConstant.DAY_1);
+        historyDo.setTargetId(targetId)
+                .setTargetType(1);
+        sendBrowseMessage(historyDo);
     }
 
     /**
@@ -363,23 +404,11 @@ public class PublicContentServiceImpl implements PublicContentService {
 
     /**
      * @description 发送浏览记录消息
-     * @param[1] userId
-     * @param[2] targetId
-     * @param[3] targetType
+     * @param[1] historyDo
      * @author lovbe0210
      * @date 2024/11/24 0:10
      */
-    public void sendBrowseMessage(Long userId, Long targetId, Integer targetType) {
-        BrowseHistoryDo historyDo = new BrowseHistoryDo();
-        Date now = new Date();
-        historyDo.setHistoryDate(now)
-                .setTargetId(targetId)
-                .setTargetType(targetType)
-                .setUserId(userId)
-                .setUid(targetId + "_" + userId);
-        historyDo.setStatus(CommonStatusEnum.NORMAL.getStatus())
-                .setCreateTime(now)
-                .setUpdateTime(now);
+    public void sendBrowseMessage(BrowseHistoryDo historyDo) {
         KafkaMessage message = new KafkaMessage<>(appName, browseActionTopic, historyDo);
         try {
             CompletableFuture send = kafkaTemplate.send(browseActionTopic, JSONUtil.toJsonStr(message));

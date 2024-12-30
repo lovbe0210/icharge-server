@@ -197,7 +197,33 @@ public abstract class RedisKeyConstant {
         return BASE_PROJECT + USER + userId;
     }
 
+    /**
+     * 获取文章排行榜set
+     * @param targetType
+     * @return
+     */
     public static String getArticleRankSetKey(Integer targetType) {
         return BASE_PROJECT + PICKS + "rank:" + targetType;
+    }
+
+    /**
+     * 获取未登录用户的阅读记录
+     *
+     * @param uniqueId
+     * @param targetId
+     * @return
+     */
+    public static String getViewReportFrequencyLimit(String uniqueId, Long targetId) {
+        return BASE_PROJECT + PICKS + "un-login-view:" + uniqueId + ":" + targetId;
+    }
+
+    /**
+     * 获取未登录用户ip限制记录
+     * @param ipaddress
+     * @param targetId
+     * @return
+     */
+    public static String getViewReportIpLimit(String ipaddress, Long targetId) {
+        return BASE_PROJECT + PICKS + "ip-limit-view:" + ipaddress + ":" + targetId;
     }
 }

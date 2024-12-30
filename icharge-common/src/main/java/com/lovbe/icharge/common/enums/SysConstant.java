@@ -35,6 +35,8 @@ public class SysConstant {
     public static final String FILE_SCENE_COMMENT = "comment";
     public static final String UPDATE_TIME = "updateTime";
     public static final String CONTENT_ID = "contentId";
+    public static final String TARGET_ID = "targetId";
+    public static final String TARGET_TYPE = "targetType";
     public static final String TOTAL = "total";
     public static final String LIST = "list";
 
@@ -65,9 +67,10 @@ public class SysConstant {
 
     public static final long SIZE_10MB = 10 * 1024 * 1024;
     /**
-     * 缓存时间 30天，单位秒
+     * 缓存时间，单位秒
      */
     public static final long DAY_30 = 60 * 60 * 24 * 30;
+    public static final long DAY_1 = 60 * 60 * 24;
 
     public static final String NORMAL_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 

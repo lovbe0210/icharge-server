@@ -2,12 +2,15 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.util.FeignRequestUtils;
+import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.RecommendArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.repository.query.Param;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
