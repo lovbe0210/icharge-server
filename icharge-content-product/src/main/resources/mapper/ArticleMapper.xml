@@ -22,4 +22,21 @@
             #{article.uid}
         </foreach>
     </update>
+    <update id="updateByPublishContent">
+        UPDATE c_article set
+            publish_status = #{publishStatus}
+            <if test="publishStatus == 2">
+                , published_content_id = #{publishDTO.contentId}
+            </if>
+        WHERE uid = #{publishDTO.targetId}
+            AND status = 'A'
+            AND latest_content_id = #{publishDTO.contentId}
+            AND exists(
+                        SELECT *
+                        FROM c_content
+                        WHERE uid = #{publishDTO.contentId}
+                            AND status = 'A'
+                            AND update_time = #{publishDTO.publishTime}
+                        )
+    </update>
 </mapper>

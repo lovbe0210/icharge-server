@@ -58,7 +58,7 @@ public class ArticleDTO {
      */
     @Min(value = 0, message = "访问权限状态错误")
     @Max(value = 1, message = "访问权限状态错误")
-    private int isPublic;
+    private Integer isPublic;
     /**
      * 一级分类
      */

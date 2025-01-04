@@ -25,11 +25,3 @@ spring:
 #        ip: "2409:8962:37c:7a02:ceeb:e37e:5c16:c658"
 #        ip: 127.0.0.1
         ip: 10.2.2.104
-
-  ai:
-    openai:
-      api-key: ${open-api.moonshot.api-key}
-      base-url: https://api.moonshot.cn
-      chat:
-        options:
-          model: moonshot-v1-auto

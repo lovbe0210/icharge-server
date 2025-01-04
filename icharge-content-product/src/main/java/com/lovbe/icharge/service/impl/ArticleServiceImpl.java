@@ -1,11 +1,13 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.annotation.Alias;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.config.AIPromptProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -31,10 +33,13 @@ import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.ai.chat.ChatClient;
-import org.springframework.ai.chat.ChatResponse;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -43,8 +48,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +73,8 @@ public class ArticleServiceImpl implements ArticleService {
     private ColumnDao columnDao;
     @Resource
     private CommonService commonService;
+    @Resource
+    private AIPromptProperties aiPromptProperties;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.action-content-publish}")
     private String publishActionTopic;
@@ -73,6 +82,8 @@ public class ArticleServiceImpl implements ArticleService {
     private String appName;
     @Resource
     private ChatClient chatClient;
+    @Resource
+    RestHighLevelClient highLevelClient;
 
     @Override
     public ArticleVo createBlankDoc(Long columnId, long userId) {
@@ -250,7 +261,7 @@ public class ArticleServiceImpl implements ArticleService {
                 new ContentPublishDTO(articleDo.getUid(),
                         SysConstant.TARGET_TYPE_ARTICLE,
                         articleDo.getLatestContentId(),
-                        new Date()));
+                        contentDo.getUpdateTime()));
     }
 
     @Override
@@ -380,9 +391,19 @@ public class ArticleServiceImpl implements ArticleService {
                         Function.identity(),
                         (a, b) -> b.getPublishTime().after(a.getPublishTime()) ? b : a
                 ));
+
+        // 获取当前批量的contentId进行批量查询
+        Set<Long> contentIds = new HashSet<>();
+        publishDTOMap.values().forEach(publishDTO -> contentIds.add(publishDTO.getContentId()));
+        List<ContentDo> contentList = contentDao.selectBatchIds(contentIds);
+        HashMap<Long, ContentDo> contentMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(contentList)) {
+            contentMap.putAll(contentList.stream().collect(Collectors.toMap(ContentDo::getUid, Function.identity())));
+        }
+
         for (ContentPublishDTO publishDTO : publishDTOMap.values()) {
             // 获取最新id内容进行审核
-            ContentDo contentDo = contentDao.selectById(publishDTO.getContentId());
+            ContentDo contentDo = contentMap.get(publishDTO.getContentId());
             if (contentDo == null || !StringUtils.hasLength(contentDo.getContent())) {
                 continue;
             }
@@ -390,24 +411,35 @@ public class ArticleServiceImpl implements ArticleService {
                 // 对内容进行解析，获取纯文本内容
                 JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
                 String textValue = CommonUtils.getContentTextValue(parseObj);
-                log.error("textValue: {}", textValue);
+                if (log.isDebugEnabled()) {
+                    log.debug("[文章内容审核] --- textValue: {}", textValue);
+                }
                 // 发送文章内容审核请求
-                String result = sendChatMessage(textValue);
-                JSONObject resultObj = JSONUtil.parseObj(result);
-                if (!CollectionUtils.isEmpty(resultObj)) {
-                    // 结果解析ok
-                    Boolean kimiResult = resultObj.getBool("result");
-                    if (kimiResult != null && kimiResult) {
-                        log.info("[文章内容审核] --- kimi审核通过");
-                        // 存入redis进行文章标签提取
-                        String publishKey = RedisKeyConstant.getPublishContentIdKey();
-                        String publishId = publishDTO.getTargetId() + SysConstant.SEPARATOR + publishDTO.getContentId();
-                        RedisUtil.zset(publishKey, System.currentTimeMillis(), publishId);
-                    } else if (kimiResult != null && !kimiResult) {
-                        log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultObj.getJSONArray("reason"));
+                AIAuditResultDTO resultDto = sendChatMessage(textValue);
+                if (resultDto == null) {
+                    log.error("[文章内容审核] --- kimi审核结果为空，请在日志中查看详细错误");
+                    // TODO 对于审核异常的需要放入死信队列手动审核
+                    continue;
+                }
+                // 结果解析ok
+                if (resultDto != null && resultDto.isResult()) {
+                    log.info("[文章内容审核] --- kimi审核通过");
+                    // 根据发布时间contentId更新发布状态
+                    int update = articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_SUCCESS);
+                    // 说明自上次发布后再无修改
+                    if (update != 0) {
+                        // 文章信息录入Elasticsearch
+                        updateElasticsearchDocument();
+//                        String publishKey = RedisKeyConstant.getPublishContentIdKey();
+//                        String publishId = publishDTO.getTargetId() + SysConstant.SEPARATOR + publishDTO.getContentId();
+//                        RedisUtil.zset(publishKey, System.currentTimeMillis(), publishId);
                     }
+                } else if (resultDto != null && !resultDto.isResult()) {
+                    log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
+                    articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_FAILED);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 log.error("[文章内容审核] --- 正文内容解析失败，contentId: {}", publishDTO.getContentId());
             }
         }
@@ -425,20 +457,75 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
-    private String sendChatMessage(String textValue) {
+    private AIAuditResultDTO sendChatMessage(String textValue) {
         String message = """
-                        {
-                          "messages": [
-                            {"role": "system", "content": "你是文章内容审核管理员，分析内容是否包含违反政治正确、色情淫秽传播等内容，你只需要返回true表示审核通过，false表示审核不通过即可，注意需要联系上下文判断语境是否违规，而不是仅针对单个单词或词语就认定违规，只需要判断出明确违规的内容，不用关心链接或者二维码或者文件什么，不用关心外链是否会存在不合规或非法分享版权的内容，只需要判断链接本身有没有违反包含违反政治正确、包含色情淫秽传播等内容；使用json格式输出。其中result字段表示通过与否，使用true或false；reason字段表示违规内容和原因，指出哪些词语违规了，使用数组表示。"},
-                            {"role": "user", "content": "%s"}
-                          ],
-                          response_format={"type": "json_object"}
-                        }
-                        """.formatted(textValue);
-        String call = this.chatClient.call(message);
-        if (log.isDebugEnabled()) {
-            log.debug("kimi返回审核结果: {}", call);
+                {
+                  "messages": [
+                    {"role": "system", "content": "%s"},
+                    {"role": "user", "content": "%s"}
+                  ],
+                  response_format={"type": "json_object"}
+                }
+                """.formatted(aiPromptProperties.getPromptContent(), textValue);
+        AIAuditResultDTO resultDTO = null;
+        try {
+//            String call = this.chatClient.call(message);
+            String call = "";
+            if (log.isDebugEnabled()) {
+                log.debug("kimi返回审核结果: {}", call);
+            }
+            if (StringUtils.hasLength(call)) {
+                call = call.replace("```json", "");
+                call = call.replace("```", "");
+            }
+            resultDTO = JSONUtil.toBean(call, AIAuditResultDTO.class);
+        } catch (Exception e) {
+            // kimi有一类异常是文本本身就违规或输出内容违规，需要转换此类异常为审核失败
+            String errorMsg = e.toString();
+            if (errorMsg != null && errorMsg.indexOf(SysConstant.KIMI_FAILED_TYPE) != -1) {
+                resultDTO = new AIAuditResultDTO(false, Arrays.asList("文章内容可能包含不安全或敏感内容"));
+            } else {
+                log.error("[kimi请求失败] --- errorInfo: {}", errorMsg);
+            }
         }
-        return call;
+        return resultDTO;
+    }
+
+    public void updateElasticsearchDocument() throws IOException {
+        CreateIndexRequest request = new CreateIndexRequest("twitter");
+
+        // 2、设置索引的settings
+        request.settings(Settings.builder()
+                // 分片数
+                // .put("index.number_of_shards", 3)
+                // 副本数
+                // .put("index.number_of_replicas", 2)
+//                .put("analysis.analyzer.default.tokenizer", "ik_max_word") // 默认分词器
+        );
+
+        // 3、设置索引的mapping
+        request.mapping("_doc",
+                """
+                        {
+                            "properties": {
+                                "id": {"type":"long","store":true},
+                                "username" :{"type":"text","store":true},
+                                "email": {"type":"text","store":true}
+                            }
+                        }
+                        """,
+                XContentType.JSON);
+
+        // 5、 发送请求
+        // 5.1 同步方式发送请求
+        CreateIndexResponse createIndexResponse = highLevelClient.indices()
+                .create(request, RequestOptions.DEFAULT);
+
+        // 6、处理响应
+        boolean acknowledged = createIndexResponse.isAcknowledged();
+        boolean shardsAcknowledged = createIndexResponse
+                .isShardsAcknowledged();
+        log.info("acknowledged = " + acknowledged);
+        log.info("shardsAcknowledged = " + shardsAcknowledged);
     }
 }

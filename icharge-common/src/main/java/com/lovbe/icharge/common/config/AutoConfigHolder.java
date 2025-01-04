@@ -12,12 +12,13 @@ import org.springframework.context.annotation.Import;
  * @Description: MS
  */
 @Configuration
-@EnableConfigurationProperties(KafkaProperties.class)
+@EnableConfigurationProperties({KafkaProperties.class, AIPromptProperties.class, ElasticsearchProperties.class})
 @EnableAutoConfiguration(exclude = KafkaAutoConfiguration.class)
 @Import({
         KafkaProduceConfig.class,
         KafkaConsumerConfig.class,
-        RedisConfig.class
+        RedisConfig.class,
+        ElasticsearchConfig.class
 })
 public class AutoConfigHolder {
 }

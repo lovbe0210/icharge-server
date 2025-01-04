@@ -83,6 +83,14 @@ public class SysConstant {
     public static final Integer TARGET_TYPE_COMMENT = 4;
 
     /**
+     * 0未发布 1审核中 2审核失败 3已发布
+     */
+    public static final int PUBLISH_WAIT = 0;
+    public static final int PUBLISH_AUDIT = 1;
+    public static final int PUBLISH_FAILED = 2;
+    public static final int PUBLISH_SUCCESS = 3;
+
+    /**
      * 分隔符
      */
     public static final String SEPARATOR = "_";
@@ -91,4 +99,6 @@ public class SysConstant {
      */
     public static final String CHILDREN = "children";
     public static final String TEXT = "text";
+    public static final String KIMI_FAILED_TYPE = "content_filter";
+    public static final String KIMI_FAILED_KEYWORDS = "risk";
 }
