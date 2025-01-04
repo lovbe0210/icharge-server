@@ -1,6 +1,5 @@
 package com.lovbe.icharge.service.impl;
 
-import cn.hutool.core.annotation.Alias;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONObject;
@@ -18,8 +17,8 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
-import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
-import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.common.util.ElasticSearchUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -33,11 +32,10 @@ import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.ai.chat.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +49,6 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -429,7 +426,7 @@ public class ArticleServiceImpl implements ArticleService {
                     // 说明自上次发布后再无修改
                     if (update != 0) {
                         // 文章信息录入Elasticsearch
-                        updateElasticsearchDocument();
+                        updateElasticsearchDocument(new ArticleEsEntity());
 //                        String publishKey = RedisKeyConstant.getPublishContentIdKey();
 //                        String publishId = publishDTO.getTargetId() + SysConstant.SEPARATOR + publishDTO.getContentId();
 //                        RedisUtil.zset(publishKey, System.currentTimeMillis(), publishId);
@@ -470,7 +467,9 @@ public class ArticleServiceImpl implements ArticleService {
         AIAuditResultDTO resultDTO = null;
         try {
 //            String call = this.chatClient.call(message);
-            String call = "";
+            String call = """
+                          {"result": true}
+                          """;
             if (log.isDebugEnabled()) {
                 log.debug("kimi返回审核结果: {}", call);
             }
@@ -491,41 +490,14 @@ public class ArticleServiceImpl implements ArticleService {
         return resultDTO;
     }
 
-    public void updateElasticsearchDocument() throws IOException {
-        CreateIndexRequest request = new CreateIndexRequest("twitter");
-
-        // 2、设置索引的settings
-        request.settings(Settings.builder()
-                // 分片数
-                // .put("index.number_of_shards", 3)
-                // 副本数
-                // .put("index.number_of_replicas", 2)
-//                .put("analysis.analyzer.default.tokenizer", "ik_max_word") // 默认分词器
-        );
-
-        // 3、设置索引的mapping
-        request.mapping("_doc",
-                """
-                        {
-                            "properties": {
-                                "id": {"type":"long","store":true},
-                                "username" :{"type":"text","store":true},
-                                "email": {"type":"text","store":true}
-                            }
-                        }
-                        """,
-                XContentType.JSON);
-
-        // 5、 发送请求
-        // 5.1 同步方式发送请求
-        CreateIndexResponse createIndexResponse = highLevelClient.indices()
-                .create(request, RequestOptions.DEFAULT);
-
-        // 6、处理响应
-        boolean acknowledged = createIndexResponse.isAcknowledged();
-        boolean shardsAcknowledged = createIndexResponse
-                .isShardsAcknowledged();
-        log.info("acknowledged = " + acknowledged);
-        log.info("shardsAcknowledged = " + shardsAcknowledged);
+    public void updateElasticsearchDocument(ArticleEsEntity articleEsEntity) throws IOException {
+        CreateIndexRequest request = new CreateIndexRequest(ElasticSearchUtils.getIndexName(articleEsEntity.getClass()));
+        Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(articleEsEntity.getClass());
+        String json = JsonUtils.toJsonString(indexSource);
+        log.warn(json);
+        request.source(json, XContentType.JSON);
+        CreateIndexResponse response = highLevelClient.indices().create(request, RequestOptions.DEFAULT);
+        String index = response.index();
+        log.error("created index: {}", index);
     }
 }
