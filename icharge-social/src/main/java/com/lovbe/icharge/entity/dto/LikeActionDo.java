@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName(value = "p_like_item")
+@TableName(value = "s_like_item")
 public class LikeActionDo extends BaseEntity {
     /**
      * 点赞对象id

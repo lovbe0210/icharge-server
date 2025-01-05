@@ -4,7 +4,7 @@
 
     <!-- 更新评论的回复数 -->
     <insert id="updateCommentCount">
-        INSERT INTO c_interaction_statistic (uid, type, comment_count)
+        INSERT INTO s_interaction_statistic (uid, type, comment_count)
         VALUES
         <foreach collection="statisticList" item="statistic" separator=",">
             (#{statistic.uid}, #{statistic.type}, #{statistic.commentCount})
@@ -15,18 +15,18 @@
 
     <!-- 统计数减1 -->
     <update id="updateReplyCountBySub">
-        UPDATE c_interaction_statistic
+        UPDATE s_interaction_statistic
         SET comment_count = IF(comment_count - #{deleteCount} <![CDATA[ < ]]> 0, 0, comment_count - #{deleteCount})
         WHERE uid = #{uid}
     </update>
 
     <!-- 删除统计表 -->
     <delete id="deleteStatistic">
-        DELETE FROM c_interaction_statistic WHERE uid = #{uid}
+        DELETE FROM s_interaction_statistic WHERE uid = #{uid}
     </delete>
     <!-- 获取评论统计 -->
     <select id="selectCommentStatistic" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
-        SELECT * FROM c_interaction_statistic where uid = #{targetComment.targetId}
+        SELECT * FROM s_interaction_statistic where uid = #{targetComment.targetId}
     </select>
 
     <!-- 获取评论列表 -->
@@ -67,7 +67,7 @@
              LIMIT #{commentDTO.offset}, #{commentDTO.limit}
              ) dc
         LEFT JOIN p_user pu ON dc.user_id = pu.uid
-        LEFT JOIN c_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
+        LEFT JOIN s_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         LEFT JOIN (
             SELECT
                 rc.uid AS reply_uid,
@@ -94,7 +94,7 @@
             FROM s_comment rc
             LEFT JOIN p_user pu ON rc.user_id = pu.uid
             LEFT JOIN p_user rpu ON rc.reply_user_id = rpu.uid
-            LEFT JOIN c_interaction_statistic cis ON rc.uid = cis.uid AND cis.status = 'A'
+            LEFT JOIN s_interaction_statistic cis ON rc.uid = cis.uid AND cis.status = 'A'
             WHERE rc.`status` = 'A'
               AND rc.target_id = #{commentDTO.targetId}
               AND rc.parent_id IS NOT NULL
@@ -140,7 +140,7 @@
             AND rc.status = 'A'
         LEFT JOIN p_user pu ON rc.user_id = pu.uid
         LEFT JOIN p_user rpu ON rc.reply_user_id = rpu.uid
-        LEFT JOIN c_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
+        LEFT JOIN s_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         WHERE dc.status = 'A'
         AND dc.uid = #{commentDTO.commentId}
         ORDER BY rc.create_time

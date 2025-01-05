@@ -262,11 +262,11 @@ public class PublicContentServiceImpl implements PublicContentService {
         historyDo.setStatus(CommonStatusEnum.NORMAL.getStatus())
                 .setCreateTime(now)
                 .setUpdateTime(now);
+        historyDo.setHistoryDate(now);
         // 3. 如果是登录用户直接用userId作为唯一id
         if (userId != null) {
             // 阅读记录入库，判断是更新还是新增
             historyDo.setUserId(userId)
-                    .setHistoryDate(new Date())
                     .setTargetId(targetId)
                     .setTargetType(1)
                     .setUid(targetId + "_" + userId);

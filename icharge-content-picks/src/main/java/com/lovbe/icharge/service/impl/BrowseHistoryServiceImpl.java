@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 /**
  * @Author: lovbe0210
  * @Date: 2024/12/25 20:16
- * @Description: MS
+ * @Description: 历史记录
  */
 @Service
 public class BrowseHistoryServiceImpl implements BrowseHistoryService {

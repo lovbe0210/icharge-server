@@ -14,17 +14,14 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class AIAuditResultDTO {
+public class AIPortraitTagResultDTO {
+    private boolean result = true;
     /**
-     * 审核结果
+     * 兴趣爱好标签
      */
-    private boolean result;
+    private List<String> category;
     /**
-     * 错误原因
-     */
-    private List<String> reason;
-    /**
-     * 提取的文章标签
+     * 内容推荐标签
      */
     private List<String> tags;
 }

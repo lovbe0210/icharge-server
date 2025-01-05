@@ -16,12 +16,12 @@ public interface RecommendPicksService {
     void articleRankUpdate();
 
     /**
-     * @description: 内容标签提取
+     * @description: 人物画像标签提取
      * @param:
      * @return: void
      * @author: lovbe0210
      * @date: 2024/12/30 20:09
      */
-    void contentTagExtract();
+    void portraitTagExtraction();
 
 }

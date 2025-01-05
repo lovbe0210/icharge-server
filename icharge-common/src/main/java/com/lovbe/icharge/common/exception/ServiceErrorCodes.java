@@ -48,6 +48,7 @@ public interface ServiceErrorCodes {
     ErrorCode ARTICLE_STATUS_ERROR = new ErrorCode(400, "文章违规屏蔽，不可浏览或编辑");
     ErrorCode ARTICLE_INFO_UPDATE_FAILED = new ErrorCode(400, "文章更新失败，请稍后再试");
     ErrorCode ARTICLE_EMPTY_PUBLISH_FAILED = new ErrorCode(400, "文章内容为空，发布失败");
+    ErrorCode ARTICLE_REPEAT_PUBLISH_FAILED = new ErrorCode(400, "最新内容已发布，无需再次发布");
     ErrorCode ARTICLE_PUBLISH_FAILED = new ErrorCode(400, "请先将阅读权限设置为互联网可访问再进行发布");
 
     //========== 内容推荐精选 ==========

@@ -8,6 +8,7 @@ import com.lovbe.icharge.entity.dto.BrowseHistoryDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -43,4 +44,15 @@ public interface BrowseHistoryDao extends BaseMapper<BrowseHistoryDo> {
      * @date: 2024/12/30 12:17
      */
     int atomicInsertOrUpdate(@Param("history") BrowseHistoryDo historyDo);
+
+    /**
+     * @param lastTime
+     * @param targetType
+     * @description: 从历史记录中获取有历史记录的用户id
+     * @param:
+     * @return: List<Long>
+     * @author: lovbe0210
+     * @date: 2025/1/5 15:48
+     */
+    List<Long> selectUserListFromHistory(@Param("lastTime") Date lastTime, @Param("targetType") Integer targetType);
 }

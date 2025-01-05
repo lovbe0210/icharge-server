@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ public interface PublicContentDao{
                            cis.collect_count collectCount,
                            cis.view_count viewCount
                     FROM c_article c
-                    LEFT JOIN c_interaction_statistic cis ON c.uid = cis.uid
+                    LEFT JOIN s_interaction_statistic cis ON c.uid = cis.uid
                     LEFT JOIN p_collect_item ci ON c.uid = ci.target_id 
                         AND ci.user_id = #{userId}
                         AND ci.status = 'A'

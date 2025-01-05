@@ -55,7 +55,7 @@
         FROM p_user
         WHERE uid IN
         <foreach collection="userIds" item="userId" separator="," open="(" close=")">
-            #{userIds}
+            #{userId}
         </foreach>
     </select>
 
@@ -65,10 +65,21 @@
 
     <!-- 获取统计列表 -->
     <select id="selectContentStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
-        SELECT * FROM c_interaction_statistic
-        WHERE type = #{targetType}
-          AND publish_time IS NOT NULL
-          AND status = 'A'
+        SELECT
+            sis.uid,
+            sis.type,
+            IF (ca.uid IS NOT NULL, sis.like_count, 0 ) like_count,
+            IF (ca.uid IS NOT NULL, sis.comment_count, 0 ) comment_count,
+            IF (ca.uid IS NOT NULL, sis.collect_count, 0 ) collect_count,
+            IF (ca.uid IS NOT NULL, sis.view_count, 0 ) view_count,
+            IF (ca.uid IS NOT NULL, ca.publish_time, null) publish_time
+        FROM s_interaction_statistic sis
+        LEFT JOIN c_article ca ON sis.uid = ca.uid
+            AND ca.published_content_id IS NOT NULL
+            AND ca.publish_time IS NOT NULL
+            AND ca.`status` = 'A'
+        WHERE sis.type = #{targetType}
+          AND sis.STATUS = 'A'
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">

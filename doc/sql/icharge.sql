@@ -78,10 +78,10 @@ CREATE TABLE `c_essay`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '写作模块-随笔信息表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Table structure for c_interaction_statistic
+-- Table structure for s_interaction_statistic
 -- ----------------------------
-DROP TABLE IF EXISTS `c_interaction_statistic`;
-CREATE TABLE `c_interaction_statistic`  (
+DROP TABLE IF EXISTS `s_interaction_statistic`;
+CREATE TABLE `s_interaction_statistic`  (
   `uid` int NOT NULL COMMENT '关联文章、专栏、随笔的uid',
   `type` tinyint NOT NULL COMMENT '类型 1文章 2专栏 3随笔',
   `like_count` int UNSIGNED NULL DEFAULT 0 COMMENT '点赞数',

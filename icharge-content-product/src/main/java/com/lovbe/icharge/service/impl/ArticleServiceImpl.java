@@ -6,7 +6,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
-import com.lovbe.icharge.common.config.AIPromptProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -17,8 +16,6 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
-import com.lovbe.icharge.common.util.ElasticSearchUtils;
-import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -32,12 +29,7 @@ import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.CreateIndexResponse;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.springframework.ai.chat.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -46,7 +38,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -70,17 +61,11 @@ public class ArticleServiceImpl implements ArticleService {
     private ColumnDao columnDao;
     @Resource
     private CommonService commonService;
-    @Resource
-    private AIPromptProperties aiPromptProperties;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.action-content-publish}")
     private String publishActionTopic;
     @Value("${spring.application.name}")
     private String appName;
-    @Resource
-    private ChatClient chatClient;
-    @Resource
-    RestHighLevelClient highLevelClient;
 
     @Override
     public ArticleVo createBlankDoc(Long columnId, long userId) {
@@ -246,10 +231,10 @@ public class ArticleServiceImpl implements ArticleService {
         if (contentDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_EMPTY_PUBLISH_FAILED);
         }
-        // 判断状态：如果是未审核，则更新为1,如果是审核中则提示无需发布，如果是审核失败，可重新发布
+        // 判断状态：只有在文档内容更新时才能二次发布
         Integer publishStatus = articleDo.getPublishStatus();
-        if (publishStatus != null && publishStatus == 1) {
-            return;
+        if (publishStatus == null || publishStatus != 0) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_REPEAT_PUBLISH_FAILED);
         }
         articleDo.setPublishStatus(1);
         articleDao.updateById(articleDo);
@@ -397,7 +382,6 @@ public class ArticleServiceImpl implements ArticleService {
         if (!CollectionUtils.isEmpty(contentList)) {
             contentMap.putAll(contentList.stream().collect(Collectors.toMap(ContentDo::getUid, Function.identity())));
         }
-
         for (ContentPublishDTO publishDTO : publishDTOMap.values()) {
             // 获取最新id内容进行审核
             ContentDo contentDo = contentMap.get(publishDTO.getContentId());
@@ -412,7 +396,7 @@ public class ArticleServiceImpl implements ArticleService {
                     log.debug("[文章内容审核] --- textValue: {}", textValue);
                 }
                 // 发送文章内容审核请求
-                AIAuditResultDTO resultDto = sendChatMessage(textValue);
+                AIAuditResultDTO resultDto = commonService.sendAuditChat(textValue);
                 if (resultDto == null) {
                     log.error("[文章内容审核] --- kimi审核结果为空，请在日志中查看详细错误");
                     // TODO 对于审核异常的需要放入死信队列手动审核
@@ -426,22 +410,41 @@ public class ArticleServiceImpl implements ArticleService {
                     // 说明自上次发布后再无修改
                     if (update != 0) {
                         // 文章信息录入Elasticsearch
-                        updateElasticsearchDocument(new ArticleEsEntity());
-//                        String publishKey = RedisKeyConstant.getPublishContentIdKey();
-//                        String publishId = publishDTO.getTargetId() + SysConstant.SEPARATOR + publishDTO.getContentId();
-//                        RedisUtil.zset(publishKey, System.currentTimeMillis(), publishId);
+                        ArticleEsEntity articleEsEntity = new ArticleEsEntity()
+                                .setUid(publishDTO.getTargetId())
+                                .setContent(textValue);
+                        // 获取文章title
+                        ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
+                        if (articleDo != null) {
+                            articleEsEntity.setTitle(articleDo.getTitle());
+                        }
+                        List<String> tags = resultDto.getTags();
+                        if (!CollectionUtils.isEmpty(tags)) {
+                            articleEsEntity.setCategory(tags.get(0));
+                            if (tags.size() > 1) {
+                                List<String> subList = tags.subList(1, tags.size());
+                                articleEsEntity.setTags(StringUtils.collectionToDelimitedString(subList, ","));
+                            }
+                        }
+                        commonService.updateElasticsearchArticle(articleEsEntity);
                     }
                 } else if (resultDto != null && !resultDto.isResult()) {
                     log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
                     articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_FAILED);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                log.error("[文章内容审核] --- 正文内容解析失败，contentId: {}", publishDTO.getContentId());
+                log.error("[文章内容审核] --- 正文内容解析失败，contentId: {}, errorInfo: {}", publishDTO.getContentId(), e.toString());
             }
         }
     }
 
+    /**
+     * @description: 文章状态判断
+     * @param: long
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2025/1/5 11:05
+     */
     private static void checkArticleStatus(long userId, ArticleDo articleDo) {
         if (articleDo == null) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
@@ -452,52 +455,5 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDo.getUserId() != userId) {
             throw new ServiceException(GlobalErrorCodes.LOCKED);
         }
-    }
-
-    private AIAuditResultDTO sendChatMessage(String textValue) {
-        String message = """
-                {
-                  "messages": [
-                    {"role": "system", "content": "%s"},
-                    {"role": "user", "content": "%s"}
-                  ],
-                  response_format={"type": "json_object"}
-                }
-                """.formatted(aiPromptProperties.getPromptContent(), textValue);
-        AIAuditResultDTO resultDTO = null;
-        try {
-//            String call = this.chatClient.call(message);
-            String call = """
-                          {"result": true}
-                          """;
-            if (log.isDebugEnabled()) {
-                log.debug("kimi返回审核结果: {}", call);
-            }
-            if (StringUtils.hasLength(call)) {
-                call = call.replace("```json", "");
-                call = call.replace("```", "");
-            }
-            resultDTO = JSONUtil.toBean(call, AIAuditResultDTO.class);
-        } catch (Exception e) {
-            // kimi有一类异常是文本本身就违规或输出内容违规，需要转换此类异常为审核失败
-            String errorMsg = e.toString();
-            if (errorMsg != null && errorMsg.indexOf(SysConstant.KIMI_FAILED_TYPE) != -1) {
-                resultDTO = new AIAuditResultDTO(false, Arrays.asList("文章内容可能包含不安全或敏感内容"));
-            } else {
-                log.error("[kimi请求失败] --- errorInfo: {}", errorMsg);
-            }
-        }
-        return resultDTO;
-    }
-
-    public void updateElasticsearchDocument(ArticleEsEntity articleEsEntity) throws IOException {
-        CreateIndexRequest request = new CreateIndexRequest(ElasticSearchUtils.getIndexName(articleEsEntity.getClass()));
-        Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(articleEsEntity.getClass());
-        String json = JsonUtils.toJsonString(indexSource);
-        log.warn(json);
-        request.source(json, XContentType.JSON);
-        CreateIndexResponse response = highLevelClient.indices().create(request, RequestOptions.DEFAULT);
-        String index = response.index();
-        log.error("created index: {}", index);
     }
 }

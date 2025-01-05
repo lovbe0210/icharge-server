@@ -12,7 +12,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "spring.ai.fine-tune")
 public class AIPromptProperties {
     /**
-     * 系统引导语句
+     * 文章审核系统引导语句
      */
-    private String promptContent;
+    private String auditPromptContent;
+    /**
+     * 人物画像系统引导语句
+     */
+    private String portraitTagPromptContent;
 }

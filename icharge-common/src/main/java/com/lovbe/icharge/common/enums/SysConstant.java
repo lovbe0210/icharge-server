@@ -101,4 +101,10 @@ public class SysConstant {
     public static final String TEXT = "text";
     public static final String KIMI_FAILED_TYPE = "content_filter";
     public static final String KIMI_FAILED_KEYWORDS = "risk";
+
+    /**
+     * es索引名称
+     */
+    public static final String ES_INDEX_ARTICLE = "c_article";
+    public static final String ES_INDEX_USER = "p_user";
 }

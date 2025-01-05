@@ -39,17 +39,17 @@ public class RecommendPicksSchedule {
     }
 
     /**
-     * @description: 计算对每篇已发布的文章进行标签提取，然后间隔10分钟运行一次
+     * @description: 通过阅读记录进行人物画像，提炼推荐标签，间隔6小时
      * @param:
      * @return: void
      * @author: lovbe0210
      * @date: 2024/12/29 11:27
      */
-    @Scheduled(initialDelay = 60000, fixedRate = 10 * 60 * 1000)
-    public void runContentTagExtract() {
-        log.info("[内容标签提取] --- 请求开始");
+    @Scheduled(initialDelay = 10000, fixedRate = 6 * 60 * 60 * 1000)
+    public void runPortraitTagExtract() {
+        log.info("[人物画像标签提取] --- 计算开始");
         long start = System.currentTimeMillis();
-        recommendPicksService.contentTagExtract();
-        log.info("[内容标签提取] --- 请求结束，耗时：{}ms", System.currentTimeMillis() - start);
+        recommendPicksService.portraitTagExtraction();
+        log.info("[人物画像标签提取] --- 请求结束，耗时：{}ms", System.currentTimeMillis() - start);
     }
 }

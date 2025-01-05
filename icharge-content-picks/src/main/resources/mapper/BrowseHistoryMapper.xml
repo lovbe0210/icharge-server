@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lovbe.icharge.dao.BrowseHistoryDao">
+    <!-- 从历史记录中获取有历史记录的用户id -->
+    <select id="selectUserListFromHistory" resultType="java.lang.Long">
+        SELECT
+            DISTINCT user_id
+        FROM
+            `p_browse_history`
+        WHERE
+            `status` = 'A'
+            AND target_type = #{targetType}
+            <if test="lastTime != null">
+                AND create_time <![CDATA[ > ]]> #{lastTime}
+            </if>
+    </select>
+
     <!-- 插入或保存原子操作 -->
     <insert id="atomicInsertOrUpdate">
         INSERT INTO p_browse_history (uid, user_id, history_date, target_id, target_type, status)
@@ -11,7 +25,7 @@
             update_time = NOW()
     </insert>
     <update id="updateViewStatistic">
-        INSERT INTO c_interaction_statistic (uid, type, view_count)
+        INSERT INTO s_interaction_statistic (uid, type, view_count)
         VALUES
         <foreach collection="statisticList" item="statistic" separator=",">
             (#{statistic.uid}, #{statistic.type}, #{statistic.viewCount})
@@ -78,7 +92,7 @@
             LIMIT #{data.offset}, #{data.limit}
         ) mt
         LEFT JOIN p_user pu ON mt.user_id = pu.uid
-        LEFT JOIN c_interaction_statistic cis ON mt.target_id = cis.uid
+        LEFT JOIN s_interaction_statistic cis ON mt.target_id = cis.uid
     </select>
 
     <resultMap id="browseHistoryMap" type="com.lovbe.icharge.entity.dto.BrowseHistoryDTO">

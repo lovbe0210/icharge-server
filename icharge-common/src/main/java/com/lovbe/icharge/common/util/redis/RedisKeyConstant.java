@@ -227,7 +227,11 @@ public abstract class RedisKeyConstant {
         return BASE_PROJECT + PICKS + "ip-limit-view:" + ipaddress + ":" + targetId;
     }
 
-    public static String getPublishContentIdKey() {
-        return BASE_PROJECT + CONTENT + "published-content-id";
+    /**
+     * 获取上一次计算人物画像标签的时间
+     * @return
+     */
+    public static String getLastPortraitTagTimeKey() {
+        return BASE_PROJECT + PICKS + "last-portrait-time";
     }
 }

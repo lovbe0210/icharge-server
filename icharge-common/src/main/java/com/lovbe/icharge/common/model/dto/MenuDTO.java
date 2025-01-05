@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true)
-@TableName(value = "s_menu")
+@TableName(value = "t_menu")
 public class MenuDTO extends BaseEntity {
     /**
      * 菜单code

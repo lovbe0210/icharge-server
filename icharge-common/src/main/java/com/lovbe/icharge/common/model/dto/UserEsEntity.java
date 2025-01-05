@@ -8,8 +8,8 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-@EsIndex(SysConstant.ES_INDEX_ARTICLE)
-public class ArticleEsEntity {
+@EsIndex(SysConstant.ES_INDEX_USER)
+public class UserEsEntity {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
@@ -19,20 +19,15 @@ public class ArticleEsEntity {
      * 文章标题
      */
     @EsFieldType("text")
-    private String title;
+    private String username;
     /**
-     * 文章内容
-     */
-    @EsFieldType("text")
-    private String content;
-    /**
-     * 文章标签
-     */
-    @EsFieldType(value = "text", analyzer = "ik_smart")
-    private String tags;
-    /**
-     * 文章分类
+     * 兴趣爱好
      */
     @EsFieldType(value = "text", analyzer = "ik_smart")
     private String category;
+    /**
+     * 推荐系统标签
+     */
+    @EsFieldType(value = "text", analyzer = "ik_smart")
+    private String tags;
 }
