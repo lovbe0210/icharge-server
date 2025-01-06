@@ -60,7 +60,22 @@
     </select>
 
     <!-- 获取推荐列表 -->
-    <select id="selectRecommendArticle" resultType="com.lovbe.icharge.entity.vo.RecommendArticleVo">
+    <select id="selectPublicArticleList" resultMap="publicArticleVoMap">
+        SELECT a.*,
+               c.uri column_uri, c.title column_name,
+               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
+               sis.like_count, sis.comment_count, sis.collect_count, sis.view_count
+        FROM c_article a
+        LEFT JOIN p_user u ON a.user_id = u.uid
+        LEFT JOIN c_column c ON a.column_id = c.uid
+        LEFT JOIN s_interaction_statistic sis ON a.uid = sis.uid
+        WHERE a.uid IN
+        <foreach collection="articleIds" item="articleId" separator="," open="(" close=")">
+            #{articleId}
+        </foreach>
+            AND a.status = 'A'
+            AND a.is_public = 1
+            AND a.published_content_id IS NOT NULL
     </select>
 
     <!-- 获取统计列表 -->
@@ -97,5 +112,26 @@
             <result column="articleUri" property="uri"/>
             <result column="published_content_id" property="publishedContentId"/>
         </collection>
+    </resultMap>
+
+    <resultMap id="publicArticleVoMap" type="com.lovbe.icharge.entity.vo.RecommendArticleVo">
+        <id property="uid" column="uid"/>
+        <result property="title" column="title"/>
+        <result property="uri" column="uri"/>
+        <result property="userInfo.uid" column="user_id"/>
+        <result property="userInfo.username" column="username"/>
+        <result property="userInfo.domain" column="domain"/>
+        <result property="userInfo.level" column="level"/>
+        <result property="userInfo.avatarUrl" column="avatar_url"/>
+        <result property="userInfo.location" column="location"/>
+        <result property="userInfo.industry" column="industry"/>
+        <result property="columnId" column="column_id"/>
+        <result property="columnUri" column="column_uri"/>
+        <result property="columnName" column="column_name"/>
+        <result property="summary" column="summary"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="commentCount" column="comment_count"/>
     </resultMap>
 </mapper>

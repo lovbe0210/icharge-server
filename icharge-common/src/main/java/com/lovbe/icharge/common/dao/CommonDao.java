@@ -29,7 +29,7 @@ public interface CommonDao {
     List<String> selectAllUri();
 
     @Select(value = """
-                    SELECT * FROM s_menu WHERE type = 'A' ORDER BY type,sort
+                    SELECT * FROM t_menu WHERE status = 'A' ORDER BY type,sort
                     """)
     List<MenuDTO> selectList();
 }

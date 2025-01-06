@@ -40,7 +40,7 @@ public class RecommendArticleVo extends BaseEntity {
     /**
      * 所属专栏标题
      */
-    private String columnTitle;
+    private String columnName;
     /**
      * 文章摘要
      */

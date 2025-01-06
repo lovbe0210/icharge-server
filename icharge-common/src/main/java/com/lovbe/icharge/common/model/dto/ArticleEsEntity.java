@@ -26,13 +26,28 @@ public class ArticleEsEntity {
     @EsFieldType("text")
     private String content;
     /**
-     * 文章标签
+     * 系统推荐文章标签
      */
     @EsFieldType(value = "text", analyzer = "ik_smart")
     private String tags;
     /**
-     * 文章分类
+     * 系统推荐文章分类
      */
     @EsFieldType(value = "text", analyzer = "ik_smart")
     private String category;
+    /**
+     * 用户输入标签
+     */
+    @EsFieldType(value = "text", analyzer = "ik_smart")
+    private String userTags;
+    /**
+     * 用户输入一级分类
+     */
+    @EsFieldType(value = "text", analyzer = "ik_smart")
+    private String firstCategory;
+    /**
+     * 用户输入二级分类
+     */
+    @EsFieldType(value = "text", analyzer = "ik_smart")
+    private String secondCategory;
 }

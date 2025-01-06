@@ -1,6 +1,7 @@
 package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.FeignRequestUtils;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
@@ -11,9 +12,14 @@ import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.data.repository.query.Param;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe0210
@@ -106,10 +112,11 @@ public class PublicContentController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      */
-    @GetMapping("/article/recommended")
-    public ResponseBean<RecommendArticleVo> getRecommendedArticleList(@RequestBody BaseRequest<RecommendRequestDTO> baseRequest,
+    @PostMapping("/article/rcd")
+    public ResponseBean<Map> getRecommendedArticleList(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
                                                                       @RequestHeader(value = "userId", required = false) Long userId) {
-        return ResponseBean.ok(contentService.getRecommendedArticleList(baseRequest, userId));
+        PageBean<RecommendArticleVo> recommendArticle = contentService.getRecommendedArticleList(baseRequest, userId);
+        return ResponseBean.ok(recommendArticle);
     }
 
 }

@@ -107,4 +107,14 @@ public class SysConstant {
      */
     public static final String ES_INDEX_ARTICLE = "c_article";
     public static final String ES_INDEX_USER = "p_user";
+    /**
+     * es索引字段名
+     */
+    public static final String ES_FILED_TAG = "tags";
+    public static final String ES_FILED_CATEGORY = "category";
+
+    /**
+     * 标签json字段-内容
+     */
+    public static final String TAG_FIELD_CONTENT = "content";
 }

@@ -118,8 +118,8 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         // 如果为登录用户，则获取每条评论的点赞状态
         Set<Object> likeTargets = new HashSet<>();
         if (userId != null) {
-            String targetLikedSet = RedisKeyConstant.getUserLikesSet(userId);
-            Set<Object> rangeSet = RedisUtil.zsGetSet(targetLikedSet, 0, -1);
+            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            Set<Object> rangeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
             if (!CollectionUtils.isEmpty(rangeSet)) {
                 likeTargets.addAll(rangeSet);
             }
@@ -209,8 +209,8 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         }
         Set<Object> likeTargets = new HashSet<>();
         if (userId != null) {
-            String targetLikedSet = RedisKeyConstant.getUserLikesSet(userId);
-            Set<Object> rangeSet = RedisUtil.zsGetSet(targetLikedSet, 0, -1);
+            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            Set<Object> rangeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
             if (!CollectionUtils.isEmpty(rangeSet)) {
                 likeTargets.addAll(rangeSet);
             }

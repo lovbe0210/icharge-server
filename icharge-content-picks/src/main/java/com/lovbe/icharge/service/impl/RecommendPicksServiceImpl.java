@@ -64,7 +64,7 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
             return;
         }
         Date now = new Date();
-        String rankSetKey = RedisKeyConstant.getArticleRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
         statisticList.stream().peek(statistic -> {
             // 点赞 0.3 收藏 0.25 播放 0.2 评论 0.25
             double viewWeight = properties.getViewWeight();

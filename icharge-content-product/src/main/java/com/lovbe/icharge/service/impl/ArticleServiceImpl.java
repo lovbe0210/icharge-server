@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -114,7 +115,7 @@ public class ArticleServiceImpl implements ArticleService {
         checkArticleStatus(userId, articleDo);
         String tags = articleDTO.getTagsArray();
         if (StringUtils.hasLength(tags)) {
-            articleDo.setTags(JSONUtil.toList(tags, java.util.Map.class));
+            articleDo.setTags(JSONUtil.toList(tags, Map.class));
         }
         articleDo.setUpdateTime(new Date());
         BeanUtil.copyProperties(articleDTO, articleDo);
@@ -130,6 +131,30 @@ public class ArticleServiceImpl implements ArticleService {
             articleDo.setCoverUrl(upload.getData());
         }
         articleDao.updateById(articleDo);
+        // 如果文章已发布则需要更新文章的title、category等搜索字段
+        if (articleDo.getPublishedContentId() != null) {
+            ArticleEsEntity esEntity = new ArticleEsEntity()
+                    .setUid(articleDo.getUid())
+                    .setTitle(articleDo.getTitle())
+                    .setFirstCategory(articleDo.getFirstCategory())
+                    .setSecondCategory(articleDo.getSecondCategory());
+            List<Map> userTags = articleDo.getTags();
+            if (!CollectionUtils.isEmpty(userTags)) {
+                StringBuilder tagStr = new StringBuilder();
+                for (Map tag : userTags) {
+                    if (tagStr.length() > 0) {
+                        tagStr.append(",");
+                    }
+                    tagStr.append(tag.get(SysConstant.TAG_FIELD_CONTENT));
+                }
+                esEntity.setUserTags(tagStr.toString());
+            }
+            try {
+                commonService.updateElasticsearchArticle(esEntity);
+            } catch (IOException e) {
+                log.error("[更新文章信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
+            }
+        }
     }
 
     @Override
@@ -413,10 +438,23 @@ public class ArticleServiceImpl implements ArticleService {
                         ArticleEsEntity articleEsEntity = new ArticleEsEntity()
                                 .setUid(publishDTO.getTargetId())
                                 .setContent(textValue);
-                        // 获取文章title
+                        // 获取文章title、category等其他搜索字段
                         ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
                         if (articleDo != null) {
-                            articleEsEntity.setTitle(articleDo.getTitle());
+                            articleEsEntity.setTitle(articleDo.getTitle())
+                                    .setFirstCategory(articleDo.getFirstCategory())
+                                    .setSecondCategory(articleDo.getSecondCategory());
+                            List<Map> tags = articleDo.getTags();
+                            if (!CollectionUtils.isEmpty(tags)) {
+                                StringBuilder tagStr = new StringBuilder();
+                                for (Map tag : tags) {
+                                    if (tagStr.length() > 0) {
+                                        tagStr.append(",");
+                                    }
+                                    tagStr.append(tag.get(SysConstant.TAG_FIELD_CONTENT));
+                                }
+                                articleEsEntity.setUserTags(tagStr.toString());
+                            }
                         }
                         List<String> tags = resultDto.getTags();
                         if (!CollectionUtils.isEmpty(tags)) {

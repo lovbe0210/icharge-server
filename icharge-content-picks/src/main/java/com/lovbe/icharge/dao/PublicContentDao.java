@@ -100,7 +100,7 @@ public interface PublicContentDao{
      * @author lovbe0210
      * @date 2024/12/1 14:30
      */
-    List<ArticleDo> selectArticleList(@Param("articleIds") List<Long> articleIds);
+    List<ArticleDo> selectArticleList(@Param("articleIds") Collection<Long> articleIds);
 
     /**
      * @description 获取专栏信息
@@ -136,7 +136,7 @@ public interface PublicContentDao{
      * @author: lovbe0210
      * @date: 2024/12/27 13:50
      */
-    List<RecommendArticleVo> selectRecommendArticle(@Param("data") RecommendRequestDTO data);
+    List<RecommendArticleVo> selectPublicArticleList(@Param("articleIds") Collection<Long> articleIdList);
 
     /**
      * @description: 获取统计列表

@@ -9,4 +9,28 @@ import lombok.Data;
  */
 @Data
 public class RecommendRequestDTO {
+    /**
+     * 一级分类
+     */
+    private String firstCategory;
+    /**
+     * 二级分类
+     */
+    private String secondCategory;
+    /**
+     * 单次请求数据
+     */
+    private int limit = 20;
+    /**
+     * 请求坐标
+     */
+    private int offset = 0;
+
+    public int getLimit() {
+        return limit < 1 ? 20 : limit > 100 ? 20 : limit;
+    }
+
+    public int getOffset() {
+        return offset < 0 ? 0 : offset;
+    }
 }

@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
@@ -10,17 +11,16 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.system.UserInfo;
+import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.ArticleDo;
-import com.lovbe.icharge.common.model.dto.ColumnDo;
-import com.lovbe.icharge.common.model.dto.ContentDo;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -40,6 +40,18 @@ import com.lovbe.icharge.service.feign.SocialService;
 import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.ml.GetRecordsRequest;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -47,6 +59,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -69,6 +82,8 @@ public class PublicContentServiceImpl implements PublicContentService {
     private UserService userService;
     @Resource
     private KafkaTemplate kafkaTemplate;
+    @Resource
+    private RestHighLevelClient highLevelClient;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.user-action-browse}")
     private String browseActionTopic;
@@ -221,11 +236,74 @@ public class PublicContentServiceImpl implements PublicContentService {
     }
 
     @Override
-    public List<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
+    public PageBean<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
         RecommendRequestDTO data = baseRequest.getData();
-        data = data == null ? new RecommendRequestDTO() : data;
-        List<RecommendArticleVo> recommendArticleList = publicContentDao.selectRecommendArticle(data);
-        return List.of();
+        /**
+         * 获取思路：1. 未登录用户直接获取排行榜数据，每次取20条，然后打乱顺序，并且保证第一二三不在前面
+         *         2. 登录用户先从elasticsearch获取用户画像
+         *              如果用户画像为空，则直接获取推荐系统
+         *              如果推荐系统为空，则获取最新公开发布的文章
+         *         3. 获取到用户画像，拿到category和tags，搜索elasticsearch中的文章列表
+         *              如果没有搜索到文章，则直接获取推荐系统
+         */
+        if (userId == null) {
+            return getRankArticleList(data, userId);
+        }
+        // 登录用户
+        try {
+            GetRequest getRequest = new GetRequest(SysConstant.ES_INDEX_USER, String.valueOf(userId));
+            GetResponse getResponse = highLevelClient.get(getRequest, RequestOptions.DEFAULT);
+            UserEsEntity esUser = JSONUtil.toBean(getResponse.getSourceAsString(), UserEsEntity.class);
+            if (esUser != null && (StringUtils.hasLength(esUser.getCategory()) || StringUtils.hasLength(esUser.getTags()))) {
+                SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_ARTICLE);
+                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+                // 设置字段分词匹配
+                BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                if (StringUtils.hasLength(esUser.getCategory())) {
+                    boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY, esUser.getCategory()).boost(0.8F));
+                }
+                if (StringUtils.hasLength(esUser.getTags())) {
+                    boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TAG, esUser.getTags()).boost(1.0F));
+                }
+                searchSourceBuilder.query(boolQuery);
+                // 设置分页参数
+                searchSourceBuilder.from(data.getOffset());
+                searchSourceBuilder.size(data.getLimit());
+                // 只获取id字段
+                searchSourceBuilder.fetchSource(new String[] {"uid"}, null);
+                searchRequest.source(searchSourceBuilder);
+                // 发送请求并处理响应
+                SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+                SearchHits searchHits = response.getHits();
+                if (searchHits != null && searchHits.getTotalHits().value == 0) {
+                    // 搜索结果为空
+                    return new PageBean<>(false, List.of());
+                }
+                boolean hasMore = searchHits.getTotalHits().value == data.getLimit();
+                List<Long> articleIds = Arrays.stream(searchHits.getHits())
+                        .map(hit -> Long.parseLong(hit.getId()))
+                        .collect(Collectors.toList());
+                List<RecommendArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
+                if (CollectionUtils.isEmpty(articleList)) {
+                    return new PageBean<>(hasMore, List.of());
+                }
+                // 查询点赞记录
+                String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+                Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
+                Map<Long, RecommendArticleVo> articleMap = articleList.stream()
+                        .collect(Collectors.toMap(RecommendArticleVo::getUid, Function.identity()));
+                List<RecommendArticleVo> recommendArticles = articleIds.stream()
+                        .map(articleId -> articleMap.get(articleId))
+                        .peek(articleVo -> articleVo.setIfLike(likeSet.contains(articleVo.getUid())))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                return new PageBean<>(hasMore, recommendArticles);
+            }
+            return getRankArticleList(data, userId);
+        } catch (Exception e) {
+            log.error("[获取推荐文章] --- 请求es数据错误，errorInfo: {}", e.toString());
+            return getRankArticleList(data, userId);
+        }
     }
 
     @Override
@@ -421,5 +499,42 @@ public class PublicContentServiceImpl implements PublicContentService {
         } catch (Exception e) {
             log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
         }
+    }
+
+    /**
+     * @description: 获取排行榜文章
+     * @param: RecommendRequestDTO
+     * @return: PageBean<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/6 23:45
+     */
+    private PageBean<RecommendArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
+        Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
+                rankSetKey, data.getOffset(), data.getOffset()+ data.getLimit()-1, true);
+        if (CollectionUtils.isEmpty(typedTuples)) {
+            return new PageBean<>(false, List.of());
+        }
+        List<Long> articleIds = typedTuples.stream()
+                .map(tuple -> (Long)tuple.getValue())
+                .collect(Collectors.toList());
+        List<RecommendArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
+        // 如果是登录用户获取点赞状态
+        if (userId != null && !CollectionUtils.isEmpty(articleList)) {
+            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
+            articleList.forEach(article -> article.setIfLike(likeSet.contains(article.getUid())));
+        }
+        // 过滤私有的和无法正常访问的
+        if (CollectionUtils.isEmpty(articleList) || articleList.size() <= 3) {
+            return articleList == null ? new PageBean<>(true, List.of()) : new PageBean<>(true, articleList);
+        }
+        // 如果offset是从0开始，需要重新排序，最好不要将123放到最前面
+        if (data.getOffset() == 0 && (Objects.equals(articleIds.get(0),articleList.get(0).getUid()) ||
+                Objects.equals(articleIds.get(1),articleList.get(1).getUid()) ||
+                Objects.equals(articleIds.get(2),articleList.get(2).getUid()) )) {
+            Collections.shuffle(articleList);
+        }
+        return new PageBean<>(true, articleList);
     }
 }

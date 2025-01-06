@@ -198,11 +198,11 @@ public abstract class RedisKeyConstant {
     }
 
     /**
-     * 获取文章排行榜set
+     * 获取排行榜set
      * @param targetType
      * @return
      */
-    public static String getArticleRankSetKey(Integer targetType) {
+    public static String getRankSetKey(Integer targetType) {
         return BASE_PROJECT + PICKS + "rank:" + targetType;
     }
 

@@ -1375,7 +1375,7 @@ public final class RedisUtil {
     }
 
     /**
-     * 获取zset中的元素包含分数
+     * 获取zset中的元素 默认分数从小到大
      * @param likedSetKey
      * @param startIndex
      * @param endIndex
@@ -1391,7 +1391,7 @@ public final class RedisUtil {
      * @param key
      * @param startIndex
      * @param endIndex
-     * @param reverse
+     * @param reverse true：从大到小 false：从小到大
      * @return
      */
     public static Set<ZSetOperations.TypedTuple<Object>> zsGetSet(String key, int startIndex, int endIndex, boolean reverse) {
