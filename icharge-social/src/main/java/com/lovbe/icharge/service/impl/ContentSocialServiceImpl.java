@@ -85,18 +85,7 @@ public class ContentSocialServiceImpl implements ContentSocialService {
             RedisUtil.zRemove(targetLikedSetKey, userId);
         }
         // 消息队列异步纠正
-        KafkaMessage message = new KafkaMessage<>(appName, likeActionTopic, actionDo);
-        try {
-            CompletableFuture send = kafkaTemplate.send(likeActionTopic, JSONUtil.toJsonStr(message));
-            send.thenAccept(result -> {
-                log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
-            }).exceptionally(ex -> {
-                log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));
-                return null;
-            });
-        } catch (Exception e) {
-            log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
-        }
+        commonService.sendMessage(appName, likeActionTopic, actionDo);
     }
 
     @Override

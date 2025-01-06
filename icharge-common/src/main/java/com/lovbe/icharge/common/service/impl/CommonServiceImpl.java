@@ -53,8 +53,6 @@ public class CommonServiceImpl implements CommonService {
     @Resource
     private ChatClient chatClient;
     @Resource
-    RestHighLevelClient highLevelClient;
-    @Resource
     private AIPromptProperties aiPromptProperties;
 
     @Override
@@ -201,6 +199,7 @@ public class CommonServiceImpl implements CommonService {
         // 判断是否存在索引
         String indexName = ElasticSearchUtils.getIndexName(articleEsEntity.getClass());
         GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
+        RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
         boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
         if (!exists) {
             CreateIndexRequest request = new CreateIndexRequest(indexName);
@@ -232,6 +231,7 @@ public class CommonServiceImpl implements CommonService {
         // 判断是否存在索引
         String indexName = ElasticSearchUtils.getIndexName(userEsEntity.getClass());
         GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
+        RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
         boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
         if (!exists) {
             CreateIndexRequest request = new CreateIndexRequest(indexName);
