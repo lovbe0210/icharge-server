@@ -80,7 +80,7 @@ public class ArticleDo extends BaseEntity {
     /**
      * 是否自动生成摘要 0否1是
      */
-    private int autoSummary = 1;
+    private Integer autoSummary = 1;
     /**
      * 封面地址
      */

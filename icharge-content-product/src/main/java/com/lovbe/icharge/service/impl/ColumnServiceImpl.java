@@ -26,11 +26,14 @@ import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -56,6 +59,8 @@ public class ColumnServiceImpl implements ColumnService {
     private ContentDao contentDao;
     @Resource
     private CommonService commonService;
+    @Resource
+    private ArticleService articleService;
 
     @Override
     public ColumnVo createColumn(CreateColumnDTO data, long userId) {
@@ -87,10 +92,15 @@ public class ColumnServiceImpl implements ColumnService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateColumn(ColumnDTO columnDTO, long userId) {
         ColumnDo columnDo = columnDao.selectById(columnDTO.getUid());
         checkColumnStatus(userId, columnDo);
         columnDo.setUpdateTime(new Date());
+        Integer isPublic = null;
+        if (columnDTO.getIsPublic() != null && !Objects.equals(columnDTO.getIsPublic(), columnDo.getIsPublic())) {
+            isPublic = columnDTO.getIsPublic();
+        }
         BeanUtil.copyProperties(columnDTO, columnDo);
         // 判断是否需要更新封面文件
         if (columnDTO.getCoverFile() != null) {
@@ -104,6 +114,10 @@ public class ColumnServiceImpl implements ColumnService {
             columnDo.setCoverUrl(upload.getData());
         }
         columnDao.updateById(columnDo);
+        ArticleDo articleDo = new ArticleDo().setIsPublic(isPublic);
+        articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getColumnId, columnDTO.getUid())
+                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
     }
 
     @Override
@@ -124,11 +138,16 @@ public class ColumnServiceImpl implements ColumnService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteColumnInfo(ColumnDTO columnDTO, long userId) {
         ColumnDo columnDo = columnDao.selectById(columnDTO.getUid());
         checkColumnStatus(userId, columnDo);
         columnDo.setStatus(CommonStatusEnum.DELETE.getStatus());
         columnDao.updateById(columnDo);
+        ArticleDo articleDo = new ArticleDo();
+        articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getColumnId, columnDo.getUid()));
     }
 
     @Override
@@ -221,7 +240,7 @@ public class ColumnServiceImpl implements ColumnService {
     }
 
     @Override
-    public void updateColumnDir(ColumnDTO columnDTO, long userId) {
+    public Long updateColumnDir(ColumnDTO columnDTO, long userId) {
         ColumnDo columnDo = columnDao.selectById(columnDTO.getUid());
         checkColumnStatus(userId, columnDo);
         Long dirContentId = columnDo.getDirContentId();
@@ -240,9 +259,11 @@ public class ColumnServiceImpl implements ColumnService {
         columnDo.setUpdateTime(new Date());
         columnDo.setDirContentId(dirContentId);
         columnDao.updateById(columnDo);
+        return dirContentId;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchOperate(BaseRequest<ColumnOperateDTO> columnRequest, long userId) {
         ColumnOperateDTO data = columnRequest.getData();
         List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
@@ -261,15 +282,9 @@ public class ColumnServiceImpl implements ColumnService {
             if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
                 throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_EXIST);
             }
-            if (columnDo.getIsPublic() == 0) {
-                throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED);
-            }
-            List<ArticleDo> collect = selectedList.stream()
-                    .filter(articleDo -> CommonStatusEnum.isNormal(articleDo.getStatus()) && articleDo.getPublishStatus() != 3)
-                    .collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(collect)) {
-                articleDao.batchUpdate(collect, data.getColumnId(), data.getOperateType());
-            }
+            selectedList.forEach(articleDo -> {
+                articleService.publishArticle(articleDo.getUid(), userId);
+            });
             return;
         }
         // 批量移出专栏/删除文章

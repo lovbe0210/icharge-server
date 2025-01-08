@@ -18,6 +18,7 @@ import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
@@ -61,6 +62,8 @@ public class UserServiceImpl implements UserService {
     private UserMapper userMapper;
     @Resource
     private BCryptPasswordEncoder cryptPasswordEncoder;
+    @Resource
+    private CommonService commonService;
 
     @Value("${service.batch-request-size}")
     private int batchSize;
@@ -166,12 +169,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserInfoDo getUserInfo(Long userId) {
-        UserInfoDo userInfoDo = userMapper.selectById(userId);
-        if (userInfoDo == null) {
-            throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
-        }
+        UserInfoDo userInfoDo = commonService.getCacheUser(userId);
         if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
+        }
+        if (userInfoDo.getUid() == null) {
+            throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
         }
         return userInfoDo;
     }
@@ -210,6 +213,8 @@ public class UserServiceImpl implements UserService {
             userInfo.setAvatarUrl(upload.getData());
         }
         userMapper.updateById(userInfo);
+        String cacheUserKey = RedisKeyConstant.getCacheUserKey(userId);
+        RedisUtil.del(cacheUserKey);
     }
 
     @Override

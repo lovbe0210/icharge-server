@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.PageUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -26,15 +27,13 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.ml.GetRecordsRequest;
 import org.elasticsearch.index.get.GetResult;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,37 +57,81 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
 
     @Override
     public void articleRankUpdate() {
-        // 获取所有文章的统计参数
-        List<TargetStatisticDo> statisticList = contentDao.selectContentStatisticList(SysConstant.TARGET_TYPE_ARTICLE);
-        if (CollectionUtils.isEmpty(statisticList)) {
+        // 获取所有文章的统计数
+        Integer count = contentDao.selectStatisticCount(SysConstant.TARGET_TYPE_ARTICLE);
+        if (count == 0) {
             return;
         }
+        int totalPage = PageUtil.totalPage(count, properties.getRankBatchSize());
         Date now = new Date();
         String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
-        statisticList.stream().peek(statistic -> {
-            // 点赞 0.3 收藏 0.25 播放 0.2 评论 0.25
-            double viewWeight = properties.getViewWeight();
-            int viewCount = statistic.getViewCount();
-            double likeWeight = properties.getLikeWeight();
-            int likeCount = statistic.getLikeCount();
-            double collectWeight = properties.getCollectWeight();
-            int collectCount = statistic.getCollectCount();
-            double commentWeight = properties.getCommentWeight();
-            int commentCount = statistic.getCommentCount();
-            Date publishTime = statistic.getPublishTime();
-            if (publishTime == null) {
-                publishTime = new Date(0L);
+        for (int i = 1; i <= totalPage; i++) {
+            int offset = (i - 1) * properties.getRankBatchSize();
+            List<TargetStatisticDo> statisticList = contentDao.selectArticleStatisticList(SysConstant.TARGET_TYPE_ARTICLE, offset, properties.getRankBatchSize());
+            if (CollectionUtils.isEmpty(statisticList)) {
+                continue;
             }
-            double G = properties.getG();
+            Set<ZSetOperations.TypedTuple<Object>> tupleList = statisticList.stream()
+                    .map(statistic -> getRankTypedTuple(statistic, now))
+                    .collect(Collectors.toSet());
+            RedisUtil.zSetTuple(rankSetKey, tupleList);
+        }
+    }
 
-            // 1. 计算权重分数
-            double score = likeWeight * Math.log(likeCount + 1) + collectWeight * Math.log(collectCount + 1) +
-                    viewWeight * Math.log(viewCount + 1) + commentWeight * Math.log(commentCount + 1);
-            // 2. 根据权重分数和时间衰减因子得到最终分数
-            double sincePublishDay = DateUtil.betweenDay(publishTime, now, false);
-            double finalScore = score / Math.pow(sincePublishDay + 2, G);
-            RedisUtil.zset(rankSetKey, finalScore, statistic.getUid());
-        }).collect(Collectors.toList());
+    @Override
+    public void columnRankUpdate() {
+        // 获取所有专栏的统计数
+        Integer count = contentDao.selectStatisticCount(SysConstant.TARGET_TYPE_COLUMN);
+        if (count == 0) {
+            return;
+        }
+        int totalPage = PageUtil.totalPage(count, properties.getRankBatchSize());
+        Date now = new Date();
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_COLUMN);
+        for (int i = 1; i <= totalPage; i++) {
+            int offset = (i - 1) * properties.getRankBatchSize();
+            List<TargetStatisticDo> statisticList = contentDao.selectColumnStatisticList(SysConstant.TARGET_TYPE_COLUMN, offset, properties.getRankBatchSize());
+            if (CollectionUtils.isEmpty(statisticList)) {
+                continue;
+            }
+            Set<ZSetOperations.TypedTuple<Object>> tupleList = statisticList.stream()
+                    .map(statistic -> getRankTypedTuple(statistic, now))
+                    .collect(Collectors.toSet());
+            RedisUtil.zSetTuple(rankSetKey, tupleList);
+        }
+    }
+
+    /**
+     * @description: 获取计算分数
+     * @param: TargetStatisticDo
+     * @return: TypedTuple<Object>
+     * @author: lovbe0210
+     * @date: 2025/1/8 16:14
+     */
+    private ZSetOperations.TypedTuple<Object> getRankTypedTuple(TargetStatisticDo statistic, Date now) {
+        // 点赞 0.3 收藏 0.25 浏览 0.2 评论 0.25
+        double viewWeight = properties.getViewWeight();
+        int viewCount = statistic.getViewCount();
+        double likeWeight = properties.getLikeWeight();
+        int likeCount = statistic.getLikeCount();
+        double collectWeight = properties.getCollectWeight();
+        int collectCount = statistic.getCollectCount();
+        double commentWeight = properties.getCommentWeight();
+        int commentCount = statistic.getCommentCount();
+        Date publishTime = statistic.getPublishTime();
+        if (publishTime == null) {
+            publishTime = new Date(0L);
+        }
+        double G = properties.getG();
+
+        // 1. 计算权重分数
+        double score = likeWeight * Math.log(likeCount + 1) + collectWeight * Math.log(collectCount + 1) +
+                viewWeight * Math.log(viewCount + 1) + commentWeight * Math.log(commentCount + 1);
+        // 2. 根据权重分数和时间衰减因子得到最终分数
+        double sincePublishDay = DateUtil.betweenDay(publishTime, now, false);
+        double finalScore = score / Math.pow(sincePublishDay + 2, G);
+        ZSetOperations.TypedTuple<Object> longTypedTuple = ZSetOperations.TypedTuple.of(statistic.getUid(), finalScore);
+        return longTypedTuple;
     }
 
     @Override
@@ -118,6 +161,38 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
         }
         // 将执行时间保存到redis
         RedisUtil.set(lastTimeKey, current);
+    }
+
+    @Override
+    public void columnStatisticUpdate() {
+        Integer columnCount = contentDao.selectColumnCount();
+        if (columnCount == 0) {
+            return;
+        }
+        int totalPage = PageUtil.totalPage(columnCount, properties.getColumnStatisticBatchSize());
+        for (int i = 1; i <= totalPage; i++) {
+            int offset = (i - 1) * properties.getColumnStatisticBatchSize();
+            List<TargetStatisticDo> statisticList = contentDao.selectColumnArticleList(offset, properties.getColumnStatisticBatchSize());
+            if (CollectionUtils.isEmpty(statisticList)) {
+                continue;
+            }
+            List<TargetStatisticDo> collect = statisticList.stream()
+                    .collect(Collectors.groupingBy(TargetStatisticDo::getUid))
+                    .entrySet().stream()
+                    .map(entry -> {
+                        TargetStatisticDo statistic = new TargetStatisticDo();
+                        statistic.setUid(entry.getKey());
+                        statistic.setType(SysConstant.TARGET_TYPE_COLUMN);
+                        entry.getValue().forEach(sts -> {
+                            statistic.setCommentCount(statistic.getCommentCount() + sts.getCommentCount())
+                                    .setLikeCount(statistic.getLikeCount() + sts.getLikeCount())
+                                    .setCollectCount(statistic.getCollectCount() + sts.getCollectCount())
+                                    .setViewCount(statistic.getViewCount() + sts.getViewCount());
+                        });
+                        return statistic;
+                    }).collect(Collectors.toList());
+            contentDao.updateColumnStatistic(collect);
+        }
     }
 
     /**

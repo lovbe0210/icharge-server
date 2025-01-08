@@ -5,7 +5,6 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
-import com.lovbe.icharge.common.model.dto.UserInfoDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;

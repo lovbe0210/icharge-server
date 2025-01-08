@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lovbe.icharge.dao.PublicContentDao">
+    <!-- 更新专栏统计信息 -->
+    <insert id="updateColumnStatistic">
+        INSERT INTO s_interaction_statistic (uid, type, like_count, comment_count, collect_count, view_count)
+        VALUES
+        <foreach collection="statisticList" item="statistic" separator=",">
+            (#{statistic.uid}, #{statistic.type}, #{statistic.likeCount}, #{statistic.commentCount}, #{statistic.collectCount}, #{statistic.viewCount})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            like_count = VALUES(like_count),
+            comment_count = VALUES(comment_count),
+            collect_count = VALUES(collect_count),
+            view_count = VALUES(view_count)
+    </insert>
     <!-- 获取专栏信息 -->
     <select id="selectColumnInfo" resultMap="columnInfoMap">
         SELECT
@@ -78,8 +91,15 @@
             AND a.published_content_id IS NOT NULL
     </select>
 
-    <!-- 获取统计列表 -->
-    <select id="selectContentStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+    <!-- 获取文章统计列表 -->
+    <select id="selectStatisticCount" resultType="java.lang.Integer">
+        SELECT
+            count(*)
+        FROM s_interaction_statistic sis
+        WHERE sis.type = #{targetType}
+          AND sis.STATUS = 'A'
+    </select>
+    <select id="selectArticleStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
         SELECT
             sis.uid,
             sis.type,
@@ -90,11 +110,53 @@
             IF (ca.uid IS NOT NULL, ca.publish_time, null) publish_time
         FROM s_interaction_statistic sis
         LEFT JOIN c_article ca ON sis.uid = ca.uid
+            AND ca.is_public = 1
             AND ca.published_content_id IS NOT NULL
             AND ca.publish_time IS NOT NULL
             AND ca.`status` = 'A'
         WHERE sis.type = #{targetType}
           AND sis.STATUS = 'A'
+          ORDER BY sis.uid
+        LIMIT #{offset}, #{batchSize}
+    </select>
+
+    <!-- 获取所有专栏文章列表 -->
+    <select id="selectColumnArticleList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT
+            cc.uid,
+            sis.like_count,
+            sis.comment_count,
+            sis.collect_count,
+            sis.view_count
+        FROM (SELECT * FROM c_column cc WHERE cc.STATUS = 'A' ORDER BY cc.uid LIMIT #{offset}, #{batchSize} ) cc
+        INNER JOIN c_article ca ON cc.uid = ca.column_id
+            AND ca.`status` = 'A'
+        INNER JOIN s_interaction_statistic sis ON ca.uid = sis.uid
+    </select>
+
+    <!-- 获取专栏总数 -->
+    <select id="selectColumnCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM c_column WHERE status = 'A'
+    </select>
+
+    <!-- 获取专栏统计信息 -->
+    <select id="selectColumnStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT
+            sis.uid,
+            sis.type,
+            IF (cc.uid IS NOT NULL, sis.like_count, 0 ) like_count,
+            IF (cc.uid IS NOT NULL, sis.comment_count, 0 ) comment_count,
+            IF (cc.uid IS NOT NULL, sis.collect_count, 0 ) collect_count,
+            IF (cc.uid IS NOT NULL, sis.view_count, 0 ) view_count,
+            IF (cc.uid IS NOT NULL, cc.create_time, null) publish_time
+        FROM s_interaction_statistic sis
+        LEFT JOIN c_column cc ON sis.uid = cc.uid
+            AND cc.is_public = 1
+            AND cc.`status` = 'A'
+        WHERE sis.type = #{targetType}
+          AND sis.STATUS = 'A'
+        ORDER BY sis.uid
+        LIMIT #{offset}, #{batchSize}
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
@@ -114,7 +176,7 @@
         </collection>
     </resultMap>
 
-    <resultMap id="publicArticleVoMap" type="com.lovbe.icharge.entity.vo.RecommendArticleVo">
+    <resultMap id="publicArticleVoMap" type="com.lovbe.icharge.entity.vo.FeaturedArticleVo">
         <id property="uid" column="uid"/>
         <result property="title" column="title"/>
         <result property="uri" column="uri"/>

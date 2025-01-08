@@ -12,11 +12,11 @@ import java.util.Map;
 /**
  * @Author: lovbe0210
  * @Date: 2024/11/19 1:32
- * @Description: 推荐文章信息
+ * @Description: 精选文章信息
  */
 @Accessors(chain = true)
 @Data
-public class RecommendArticleVo extends BaseEntity {
+public class FeaturedArticleVo extends BaseEntity {
     /**
      * 文章标题
      */

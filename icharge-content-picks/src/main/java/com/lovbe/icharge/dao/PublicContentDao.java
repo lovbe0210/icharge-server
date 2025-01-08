@@ -1,15 +1,13 @@
 package com.lovbe.icharge.dao;
 
 import com.lovbe.icharge.common.model.dto.*;
-import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
-import com.lovbe.icharge.entity.vo.RecommendArticleVo;
+import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -136,7 +134,7 @@ public interface PublicContentDao{
      * @author: lovbe0210
      * @date: 2024/12/27 13:50
      */
-    List<RecommendArticleVo> selectPublicArticleList(@Param("articleIds") Collection<Long> articleIdList);
+    List<FeaturedArticleVo> selectPublicArticleList(@Param("articleIds") Collection<Long> articleIdList);
 
     /**
      * @description: 获取统计列表
@@ -145,5 +143,31 @@ public interface PublicContentDao{
      * @author: lovbe0210
      * @date: 2024/12/29 13:18
      */
-    List<TargetStatisticDo> selectContentStatisticList(@Param("targetType") Integer targetType);
+    Integer selectStatisticCount(@Param("targetType") Integer targetType);
+    List<TargetStatisticDo> selectArticleStatisticList(@Param("targetType") Integer targetType,
+                                                       @Param("offset") Integer offset,
+                                                       @Param("batchSize") Integer articleRankBatchSize);
+    List<TargetStatisticDo> selectColumnStatisticList (@Param("targetType") Integer targetType,
+                                                       @Param("offset") Integer offset,
+                                                       @Param("batchSize") Integer articleRankBatchSize);
+
+    /**
+     * @description: 获取所有专栏文章列表
+     * @param:
+     * @return: List<ColumnDo>
+     * @author: lovbe0210
+     * @date: 2025/1/8 14:36
+     */
+    Integer selectColumnCount();
+    List<TargetStatisticDo> selectColumnArticleList(@Param("offset") Integer offset,
+                                           @Param("batchSize") Integer columnStatisticBatchSize);
+
+    /**
+     * @description: 更新专栏统计信息
+     * @param: List<TargetStatisticDo>
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2025/1/8 14:36
+     */
+    void updateColumnStatistic(@Param("statisticList") List<TargetStatisticDo> statisticList);
 }

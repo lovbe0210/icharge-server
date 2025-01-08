@@ -71,6 +71,16 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public ArticleVo createBlankDoc(Long columnId, long userId) {
         ArticleDo articleDo = new ArticleDo();
+        if (columnId != null) {
+            ColumnDo columnDo = columnDao.selectById(columnId);
+            if (columnDo == null || CommonStatusEnum.isDelete(columnDo.getStatus())) {
+                throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_EXIST);
+            }
+            if (CommonStatusEnum.isDisable(columnDo.getStatus())) {
+                throw new ServiceException(ServiceErrorCodes.COLUMN_STATUS_ERROR);
+            }
+            articleDo.setIsPublic(columnDo.getIsPublic());
+        }
         articleDo.setUid(YitIdHelper.nextId())
                 .setCreateTime(new Date())
                 .setUpdateTime(new Date());

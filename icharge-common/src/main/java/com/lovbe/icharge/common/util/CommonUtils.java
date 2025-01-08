@@ -80,12 +80,16 @@ public class CommonUtils {
                     .setGrowthValue(0)
                     .setLevel(0)
                     .setDomain(SysConstant.DISABLE_USER_NAME);
+            userInfo.setStatus(userInfo.getStatus())
+                    .setUid(userInfo.getUid());
         } else if (CommonStatusEnum.isDelete(userInfo.getStatus())) {
             userInfo = new UserInfoDo()
                     .setUsername(SysConstant.LOGOFF_USER_NAME)
                     .setGrowthValue(0)
                     .setLevel(0)
                     .setDomain(SysConstant.LOGOFF_USER_NAME);
+            userInfo.setStatus(userInfo.getStatus())
+                    .setUid(userInfo.getUid());
         }
         return userInfo;
     }

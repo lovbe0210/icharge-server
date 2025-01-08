@@ -32,4 +32,12 @@ public class ContentPicksConfigProperties {
      * 时间衰减重力因子,控制衰减的速率 0.5<G<1
      */
     private double G = 0.5;
+    /**
+     * 文章排行榜计算批量数
+     */
+    private Integer rankBatchSize = 1000;
+    /**
+     * 专栏统计数更新批量数
+     */
+    private Integer columnStatisticBatchSize = 30;
 }

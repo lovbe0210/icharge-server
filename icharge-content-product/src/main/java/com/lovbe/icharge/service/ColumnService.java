@@ -73,13 +73,14 @@ public interface ColumnService {
     JSONArray getColumnDir(Long columnId, long userId);
 
     /**
+     * @return
      * @description 专栏目录更新
      * @param[1] columnDTO
      * @param[2] userId
      * @author lovbe0210
      * @date 2024/11/7 23:53
      */
-    void updateColumnDir(ColumnDTO columnDTO, long userId);
+    Long updateColumnDir(ColumnDTO columnDTO, long userId);
 
     /**
      * @description 专栏文章批量操作

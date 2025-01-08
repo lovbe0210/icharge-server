@@ -31,11 +31,41 @@ public class RecommendPicksSchedule {
      * @date: 2024/12/29 11:27
      */
     @Scheduled(initialDelay = 10000, fixedRate = 12 * 60 * 60 * 1000)
-    public void runRankUpdate() {
-        log.info("[内容排行榜] --- 计算开始");
+    public void runArticleRankUpdate() {
+        log.info("[文章排行榜] --- 计算开始");
         long start = System.currentTimeMillis();
         recommendPicksService.articleRankUpdate();
-        log.info("[内容排行榜] --- 计算结束，耗时：{}ms", System.currentTimeMillis() - start);
+        log.info("[文章排行榜] --- 计算结束，耗时：{}ms", System.currentTimeMillis() - start);
+    }
+
+    /**
+     * @description: 计算排行榜 系统启动运行一次，然后每12小时运行一次
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/29 11:27
+     */
+    @Scheduled(initialDelay = 60000, fixedRate = 12 * 60 * 60 * 1000)
+    public void runColumnRankUpdate() {
+        log.info("[专栏排行榜] --- 计算开始");
+        long start = System.currentTimeMillis();
+        recommendPicksService.columnRankUpdate();
+        log.info("[专栏排行榜] --- 计算结束，耗时：{}ms", System.currentTimeMillis() - start);
+    }
+
+    /**
+     * @description: 专栏信息统计 系统启动运行一次，然后每1小时运行一次
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/29 11:27
+     */
+    @Scheduled(initialDelay = 5000, fixedRate = 60 * 60 * 1000)
+    public void runColumnStatistic() {
+        log.info("[专栏信息统计] --- 计算开始");
+        long start = System.currentTimeMillis();
+        recommendPicksService.columnStatisticUpdate();
+        log.info("[专栏信息统计] --- 计算结束，耗时：{}ms", System.currentTimeMillis() - start);
     }
 
     /**
@@ -45,7 +75,7 @@ public class RecommendPicksSchedule {
      * @author: lovbe0210
      * @date: 2024/12/29 11:27
      */
-    @Scheduled(initialDelay = 10000, fixedRate = 6 * 60 * 60 * 1000)
+    @Scheduled(initialDelay = 30000, fixedRate = 6 * 60 * 60 * 1000)
     public void runPortraitTagExtract() {
         log.info("[人物画像标签提取] --- 计算开始");
         long start = System.currentTimeMillis();

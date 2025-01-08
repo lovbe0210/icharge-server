@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.lovbe.icharge</groupId>
     <artifactId>icharge-server</artifactId>
-    <version>${revision}</version>
+    <version>1.0</version>
     <name>icharge-server</name>
     <description>it充电站后端服务</description>
     <packaging>pom</packaging>

@@ -7,7 +7,7 @@ package com.lovbe.icharge.service;
  */
 public interface RecommendPicksService {
     /**
-     * @description: 内容排行榜更新
+     * @description: 文章排行榜更新
      * @param:
      * @return: void
      * @author: lovbe0210
@@ -15,6 +15,14 @@ public interface RecommendPicksService {
      */
     void articleRankUpdate();
 
+    /**
+     * @description: 专栏排行榜更新
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/29 11:33
+     */
+    void columnRankUpdate();
     /**
      * @description: 人物画像标签提取
      * @param:
@@ -24,4 +32,12 @@ public interface RecommendPicksService {
      */
     void portraitTagExtraction();
 
+    /**
+     * @description: 专栏信息统计
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/30 20:09
+     */
+    void columnStatisticUpdate();
 }

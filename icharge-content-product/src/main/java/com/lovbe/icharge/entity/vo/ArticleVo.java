@@ -35,7 +35,7 @@ public class ArticleVo extends BaseEntity {
     /**
      * 字数
      */
-    private int wordsNum;
+    private Integer wordsNum = 0;
     /**
      * 所属专栏
      */
@@ -51,7 +51,7 @@ public class ArticleVo extends BaseEntity {
     /**
      * 是否自动生成摘要
      */
-    private int autoSummary = 1;
+    private Integer autoSummary = 1;
     /**
      * 是否置顶 当sort为空则不是置顶文章
      */
@@ -75,9 +75,9 @@ public class ArticleVo extends BaseEntity {
     /**
      * 是否公开访问 0否1是
      */
-    private int isPublic;
+    private Integer isPublic;
     /**
      * 发布状态 0未发布 1审核中 2审核失败 3已发布
      */
-    private int publishStatus;
+    private Integer publishStatus;
 }

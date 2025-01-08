@@ -3,19 +3,14 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.util.FeignRequestUtils;
-import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
-import com.lovbe.icharge.entity.vo.RecommendArticleVo;
+import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.data.repository.query.Param;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -115,7 +110,7 @@ public class PublicContentController {
     @PostMapping("/article/recommend")
     public ResponseBean<Map> getRecommendedArticleList(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
                                                        @RequestHeader(value = "userId", required = false) Long userId) {
-        PageBean<RecommendArticleVo> recommendArticle = contentService.getRecommendedArticleList(baseRequest, userId);
+        PageBean<FeaturedArticleVo> recommendArticle = contentService.getRecommendedArticleList(baseRequest, userId);
         return ResponseBean.ok(recommendArticle);
     }
 
@@ -128,7 +123,7 @@ public class PublicContentController {
      */
     @GetMapping("/article/featured")
     public ResponseBean getFeaturedArticle() {
-        List<RecommendArticleVo> featuredArticle = contentService.getFeaturedArticle();
+        List<FeaturedArticleVo> featuredArticle = contentService.getFeaturedArticle();
         return ResponseBean.ok(featuredArticle);
     }
 
@@ -141,7 +136,7 @@ public class PublicContentController {
      */
     @PostMapping("/article/rank")
     public ResponseBean getRankArticle(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest) {
-        PageBean<RecommendArticleVo> rankPageBean = contentService.getRankArticleList(baseRequest.getData(), null);
+        PageBean<FeaturedArticleVo> rankPageBean = contentService.getRankArticleList(baseRequest.getData(), null);
         return ResponseBean.ok(rankPageBean);
     }
 
@@ -154,7 +149,20 @@ public class PublicContentController {
      */
     @GetMapping("/column/featured")
     public ResponseBean getFeaturedColumn() {
-        List<RecommendArticleVo> featuredArticle = contentService.getFeaturedColumn();
+        List<FeaturedArticleVo> featuredArticle = contentService.getFeaturedColumn();
+        return ResponseBean.ok(featuredArticle);
+    }
+
+    /**
+     * description: 获取首页精选文章(排行榜前3）
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/column/rank")
+    public ResponseBean getRankColumn() {
+        List<FeaturedArticleVo> featuredArticle = contentService.getFeaturedColumn();
         return ResponseBean.ok(featuredArticle);
     }
 

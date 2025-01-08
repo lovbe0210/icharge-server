@@ -2,16 +2,9 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.crypto.digest.MD5;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import cn.hutool.system.UserInfo;
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
@@ -29,14 +22,12 @@ import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.dao.BrowseHistoryDao;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
-import com.lovbe.icharge.entity.dto.ContentLikeDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.PublicColumnVo;
-import com.lovbe.icharge.entity.vo.RecommendArticleVo;
+import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
-import com.lovbe.icharge.service.feign.SocialService;
 import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -46,10 +37,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.ml.GetRecordsRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,8 +48,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -236,7 +223,7 @@ public class PublicContentServiceImpl implements PublicContentService {
     }
 
     @Override
-    public PageBean<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
+    public PageBean<FeaturedArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
         RecommendRequestDTO data = baseRequest.getData();
         /**
          * 获取思路：1. 未登录用户直接获取排行榜数据，每次取20条，然后打乱顺序，并且保证第一二三不在前面
@@ -283,16 +270,16 @@ public class PublicContentServiceImpl implements PublicContentService {
                 List<Long> articleIds = Arrays.stream(searchHits.getHits())
                         .map(hit -> Long.parseLong(hit.getId()))
                         .collect(Collectors.toList());
-                List<RecommendArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
+                List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
                 if (CollectionUtils.isEmpty(articleList)) {
                     return new PageBean<>(hasMore, List.of());
                 }
                 // 查询点赞记录
                 String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
                 Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
-                Map<Long, RecommendArticleVo> articleMap = articleList.stream()
-                        .collect(Collectors.toMap(RecommendArticleVo::getUid, Function.identity()));
-                List<RecommendArticleVo> recommendArticles = articleIds.stream()
+                Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
+                        .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity()));
+                List<FeaturedArticleVo> recommendArticles = articleIds.stream()
                         .map(articleId -> articleMap.get(articleId))
                         .peek(articleVo -> articleVo.setIfLike(likeSet.contains(articleVo.getUid())))
                         .filter(Objects::nonNull)
@@ -313,10 +300,10 @@ public class PublicContentServiceImpl implements PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/7 15:37
      */
-    private PageBean<RecommendArticleVo> getRankPage(Long userId, RecommendRequestDTO data) {
-        PageBean<RecommendArticleVo> rankArticleList = getRankArticleList(data, userId);
+    private PageBean<FeaturedArticleVo> getRankPage(Long userId, RecommendRequestDTO data) {
+        PageBean<FeaturedArticleVo> rankArticleList = getRankArticleList(data, userId);
         // 如果获取的是排行榜，需要重新排序，最好不要将123放到最前面
-        List<RecommendArticleVo> list = rankArticleList.getList();
+        List<FeaturedArticleVo> list = rankArticleList.getList();
         if (list.size() > 0) {
             Collections.reverse(list);
             Collections.shuffle(list, new Random());
@@ -390,13 +377,13 @@ public class PublicContentServiceImpl implements PublicContentService {
     }
 
     @Override
-    public List<RecommendArticleVo> getFeaturedArticle() {
-        PageBean<RecommendArticleVo> rankArticleList = getRankArticleList(new RecommendRequestDTO(3, 0), null);
+    public List<FeaturedArticleVo> getFeaturedArticle() {
+        PageBean<FeaturedArticleVo> rankArticleList = getRankArticleList(new RecommendRequestDTO(3, 0), null);
         return rankArticleList.getList();
     }
 
     @Override
-    public List<RecommendArticleVo> getFeaturedColumn() {
+    public List<FeaturedArticleVo> getFeaturedColumn() {
         return List.of();
     }
 
@@ -537,7 +524,7 @@ public class PublicContentServiceImpl implements PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/6 23:45
      */
-    public PageBean<RecommendArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
+    public PageBean<FeaturedArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
         String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
         Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
                 rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
@@ -548,7 +535,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         List<Long> articleIds = typedTuples.stream()
                 .map(tuple -> (Long) tuple.getValue())
                 .collect(Collectors.toList());
-        List<RecommendArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
+        List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
         if (CollectionUtils.isEmpty(articleList)) {
             return new PageBean<>(hasMore, List.of());
         }
@@ -557,14 +544,14 @@ public class PublicContentServiceImpl implements PublicContentService {
             String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
             likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
         }
-        Map<Long, RecommendArticleVo> articleMap = articleList.stream()
+        Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
                 .peek(article -> {
                     // 如果是登录用户获取点赞状态
                     if (userId != null) {
                         article.setIfLike(likeSet.contains(article.getUid()));
                     }
                 })
-                .collect(Collectors.toMap(RecommendArticleVo::getUid, Function.identity(), (a, b) -> b));
+                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
         articleList = articleIds.stream()
                 .map(uid -> articleMap.get(uid))
                 .filter(Objects::nonNull)

@@ -1315,7 +1315,7 @@ public final class RedisUtil {
         redisTemplate.opsForZSet().add(key, val, score);
     }
 
-    public static <T> void zSetTuple(String key, Set<ZSetOperations.TypedTuple<Object>> values) {
+    public static void zSetTuple(String key, Set<ZSetOperations.TypedTuple<Object>> values) {
         HashSet<Object> set = new HashSet<>();
         redisTemplate.opsForZSet().add(key, values);
     }

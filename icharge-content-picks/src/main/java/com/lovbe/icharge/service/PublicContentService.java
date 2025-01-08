@@ -6,11 +6,10 @@ import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.PublicColumnVo;
-import com.lovbe.icharge.entity.vo.RecommendArticleVo;
+import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: lovbe0210
@@ -63,7 +62,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2024/12/27 13:23
      */
-    PageBean<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
+    PageBean<FeaturedArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
 
     /**
      * @description: 获取排行榜文章列表
@@ -72,7 +71,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/7 15:44
      */
-    PageBean<RecommendArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId);
+    PageBean<FeaturedArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId);
 
     /**
      * @description: 阅读进度上报
@@ -91,7 +90,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/7 14:03
      */
-    List<RecommendArticleVo> getFeaturedArticle();
+    List<FeaturedArticleVo> getFeaturedArticle();
 
     /**
      * @description: 获取精选专栏
@@ -100,6 +99,6 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/7 14:04
      */
-    List<RecommendArticleVo> getFeaturedColumn();
+    List<FeaturedArticleVo> getFeaturedColumn();
 
 }

@@ -191,8 +191,8 @@ public class ColumnController {
     @PostMapping("/column/dir/update")
     public ResponseBean<ArticleVo> updateColumnDir(@RequestBody @Valid BaseRequest<ColumnDTO> request,
                                                    @RequestHeader("userId") long userId) {
-        columnService.updateColumnDir(request.getData(), userId);
-        return ResponseBean.ok();
+        Long dirContentId = columnService.updateColumnDir(request.getData(), userId);
+        return ResponseBean.ok(dirContentId);
     }
 
     /**
