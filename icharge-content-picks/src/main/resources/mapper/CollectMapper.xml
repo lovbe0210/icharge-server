@@ -3,12 +3,12 @@
 <mapper namespace="com.lovbe.icharge.dao.CollectDao">
     <!-- 更新收藏统计 -->
     <update id="updateCollectStatistic">
-        INSERT INTO c_interaction_statistic (uid, type, collect_count)
-        VALUES
-        <foreach collection="statisticList" item="statistic" separator=",">
-            (#{statistic.uid}, #{statistic.type}, #{statistic.collectCount})
+        <foreach collection="statisticList" item="statistic" separator=";">
+            INSERT INTO s_interaction_statistic (uid, type, collect_count)
+            VALUES
+            (#{statistic.uid}, #{statistic.type}, IF(#{statistic.collectCount} <![CDATA[ < ]]> 0, 0, #{statistic.collectCount}))
+            ON DUPLICATE KEY UPDATE
+            collect_count = IF((collect_count + #{statistic.collectCount} <![CDATA[ < ]]> 0), 0, (collect_count + #{statistic.collectCount}))
         </foreach>
-        ON DUPLICATE KEY UPDATE
-        view_count = view_count + VALUES(view_count)
     </update>
 </mapper>

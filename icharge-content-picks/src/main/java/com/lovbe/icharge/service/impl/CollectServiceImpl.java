@@ -11,6 +11,7 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.ColumnDo;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.CollectTagDao;
 import com.lovbe.icharge.dao.PublicContentDao;
@@ -45,8 +46,8 @@ public class CollectServiceImpl implements CollectService {
     private CollectTagDao collectTagDao;
     @Resource
     private PublicContentDao publicContentDao;
-
-    private KafkaTemplate kafkaTemplate;
+    @Resource
+    private CommonService commonService;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.user-action-collect}")
     private String collectActionTopic;
@@ -82,11 +83,18 @@ public class CollectServiceImpl implements CollectService {
 
     @Override
     public void cancelMarkContent(Long ftId, Long userId) {
+        CollectDo collectDo = collectDao.selectById(ftId);
+        if (collectDo == null) {
+            return;
+        }
         int delete = collectDao.delete(new LambdaQueryWrapper<CollectDo>()
                 .eq(CollectDo::getUid, ftId)
                 .eq(CollectDo::getUserId, userId));
         if (delete < 1) {
             log.error("[收藏夹] --- 取消收藏失败，数据删除为ftId：{}，userId：{}", ftId, userId);
+        } else {
+          // 发送消息取消收藏统计
+            sendCollectMessage(collectDo.getTargetId(), collectDo.getTargetType(), 0);
         }
     }
 
@@ -321,17 +329,6 @@ public class CollectServiceImpl implements CollectService {
         collectDTO.setStatus(CommonStatusEnum.NORMAL.getStatus())
                 .setCreateTime(now)
                 .setUpdateTime(now);
-        KafkaMessage message = new KafkaMessage<>(appName, collectActionTopic, collectDTO);
-        try {
-            CompletableFuture send = kafkaTemplate.send(collectActionTopic, JSONUtil.toJsonStr(message));
-            send.thenAccept(result -> {
-                log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
-            }).exceptionally(ex -> {
-                log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));
-                return null;
-            });
-        } catch (Exception e) {
-            log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
-        }
+        commonService.sendMessage(appName, collectActionTopic, collectDTO);
     }
 }

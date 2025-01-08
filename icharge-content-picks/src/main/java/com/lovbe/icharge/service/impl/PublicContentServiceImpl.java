@@ -247,7 +247,7 @@ public class PublicContentServiceImpl implements PublicContentService {
          *              如果没有搜索到文章，则直接获取推荐系统
          */
         if (userId == null) {
-            return getRankArticleList(data, userId);
+            return getRankPage(null, data);
         }
         // 登录用户
         try {
@@ -270,7 +270,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                 searchSourceBuilder.from(data.getOffset());
                 searchSourceBuilder.size(data.getLimit());
                 // 只获取id字段
-                searchSourceBuilder.fetchSource(new String[] {"uid"}, null);
+                searchSourceBuilder.fetchSource(new String[]{"uid"}, null);
                 searchRequest.source(searchSourceBuilder);
                 // 发送请求并处理响应
                 SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -299,11 +299,29 @@ public class PublicContentServiceImpl implements PublicContentService {
                         .collect(Collectors.toList());
                 return new PageBean<>(hasMore, recommendArticles);
             }
-            return getRankArticleList(data, userId);
+            return getRankPage(userId, data);
         } catch (Exception e) {
             log.error("[获取推荐文章] --- 请求es数据错误，errorInfo: {}", e.toString());
-            return getRankArticleList(data, userId);
+            return getRankPage(userId, data);
         }
+    }
+
+    /**
+     * @description: 获取排行榜分页数据
+     * @param: Long
+     * @return: PageBean<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/7 15:37
+     */
+    private PageBean<RecommendArticleVo> getRankPage(Long userId, RecommendRequestDTO data) {
+        PageBean<RecommendArticleVo> rankArticleList = getRankArticleList(data, userId);
+        // 如果获取的是排行榜，需要重新排序，最好不要将123放到最前面
+        List<RecommendArticleVo> list = rankArticleList.getList();
+        if (list.size() > 0) {
+            Collections.reverse(list);
+            Collections.shuffle(list, new Random());
+        }
+        return rankArticleList;
     }
 
     @Override
@@ -369,6 +387,17 @@ public class PublicContentServiceImpl implements PublicContentService {
         historyDo.setTargetId(targetId)
                 .setTargetType(1);
         sendBrowseMessage(historyDo);
+    }
+
+    @Override
+    public List<RecommendArticleVo> getFeaturedArticle() {
+        PageBean<RecommendArticleVo> rankArticleList = getRankArticleList(new RecommendRequestDTO(3, 0), null);
+        return rankArticleList.getList();
+    }
+
+    @Override
+    public List<RecommendArticleVo> getFeaturedColumn() {
+        return List.of();
     }
 
     /**
@@ -508,33 +537,38 @@ public class PublicContentServiceImpl implements PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/6 23:45
      */
-    private PageBean<RecommendArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
+    public PageBean<RecommendArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
         String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
         Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
-                rankSetKey, data.getOffset(), data.getOffset()+ data.getLimit()-1, true);
+                rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
         if (CollectionUtils.isEmpty(typedTuples)) {
             return new PageBean<>(false, List.of());
         }
+        boolean hasMore = typedTuples.size() == data.getLimit();
         List<Long> articleIds = typedTuples.stream()
-                .map(tuple -> (Long)tuple.getValue())
+                .map(tuple -> (Long) tuple.getValue())
                 .collect(Collectors.toList());
         List<RecommendArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
-        // 如果是登录用户获取点赞状态
-        if (userId != null && !CollectionUtils.isEmpty(articleList)) {
+        if (CollectionUtils.isEmpty(articleList)) {
+            return new PageBean<>(hasMore, List.of());
+        }
+        Set<Object> likeSet = new HashSet<>();
+        if (userId != null) {
             String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
-            Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
-            articleList.forEach(article -> article.setIfLike(likeSet.contains(article.getUid())));
+            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
         }
-        // 过滤私有的和无法正常访问的
-        if (CollectionUtils.isEmpty(articleList) || articleList.size() <= 3) {
-            return articleList == null ? new PageBean<>(true, List.of()) : new PageBean<>(true, articleList);
-        }
-        // 如果offset是从0开始，需要重新排序，最好不要将123放到最前面
-        if (data.getOffset() == 0 && (Objects.equals(articleIds.get(0),articleList.get(0).getUid()) ||
-                Objects.equals(articleIds.get(1),articleList.get(1).getUid()) ||
-                Objects.equals(articleIds.get(2),articleList.get(2).getUid()) )) {
-            Collections.shuffle(articleList);
-        }
-        return new PageBean<>(true, articleList);
+        Map<Long, RecommendArticleVo> articleMap = articleList.stream()
+                .peek(article -> {
+                    // 如果是登录用户获取点赞状态
+                    if (userId != null) {
+                        article.setIfLike(likeSet.contains(article.getUid()));
+                    }
+                })
+                .collect(Collectors.toMap(RecommendArticleVo::getUid, Function.identity(), (a, b) -> b));
+        articleList = articleIds.stream()
+                .map(uid -> articleMap.get(uid))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageBean<>(hasMore, articleList);
     }
 }

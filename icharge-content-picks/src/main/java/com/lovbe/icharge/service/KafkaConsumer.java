@@ -126,6 +126,7 @@ public class KafkaConsumer {
             }
             actionHandler.handlerCollectAction(collect);
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("[收藏记录消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();

@@ -1,6 +1,8 @@
 package com.lovbe.icharge.entity.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @Author: lovbe0210
@@ -8,6 +10,7 @@ import lombok.Data;
  * @Description: 推荐内容请求体
  */
 @Data
+@NoArgsConstructor
 public class RecommendRequestDTO {
     /**
      * 一级分类
@@ -32,5 +35,10 @@ public class RecommendRequestDTO {
 
     public int getOffset() {
         return offset < 0 ? 0 : offset;
+    }
+
+    public RecommendRequestDTO(int limit, int offset) {
+        this.limit = limit;
+        this.offset = offset;
     }
 }

@@ -66,6 +66,10 @@ public class RecommendArticleVo extends BaseEntity {
      */
     private int commentCount;
     /**
+     * 收藏数
+     */
+    private int collectCount;
+    /**
      * 是否点赞
      */
     private boolean ifLike;

@@ -66,6 +66,15 @@ public interface PublicContentService {
     PageBean<RecommendArticleVo> getRecommendedArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
 
     /**
+     * @description: 获取排行榜文章列表
+     * @param: RecommendRequestDTO
+     * @return: PageBean<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/7 15:44
+     */
+    PageBean<RecommendArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId);
+
+    /**
      * @description: 阅读进度上报
      * @param st
      * @param csh
@@ -74,4 +83,23 @@ public interface PublicContentService {
      * @param userId
      */
     void reportArticleView(Double st, Double csh, Double sh, String sign, Long userId);
+
+    /**
+     * @description: 获取精选文章
+     * @param:
+     * @return: List<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/7 14:03
+     */
+    List<RecommendArticleVo> getFeaturedArticle();
+
+    /**
+     * @description: 获取精选专栏
+     * @param:
+     * @return: List<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/7 14:04
+     */
+    List<RecommendArticleVo> getFeaturedColumn();
+
 }

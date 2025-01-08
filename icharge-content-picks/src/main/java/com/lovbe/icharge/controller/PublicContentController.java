@@ -64,7 +64,7 @@ public class PublicContentController {
      * @param sh
      * @param sign
      */
-    @GetMapping("/ae/view")
+    @GetMapping("/article/view")
     public void reportView(@RequestParam("st") Double st,
                            @RequestParam("csh") Double csh,
                            @RequestParam ("sh")Double sh,
@@ -112,11 +112,50 @@ public class PublicContentController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      */
-    @PostMapping("/article/rcd")
+    @PostMapping("/article/recommend")
     public ResponseBean<Map> getRecommendedArticleList(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                                                      @RequestHeader(value = "userId", required = false) Long userId) {
+                                                       @RequestHeader(value = "userId", required = false) Long userId) {
         PageBean<RecommendArticleVo> recommendArticle = contentService.getRecommendedArticleList(baseRequest, userId);
         return ResponseBean.ok(recommendArticle);
+    }
+
+    /**
+     * description: 获取首页精选文章(排行榜前3）
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/article/featured")
+    public ResponseBean getFeaturedArticle() {
+        List<RecommendArticleVo> featuredArticle = contentService.getFeaturedArticle();
+        return ResponseBean.ok(featuredArticle);
+    }
+
+    /**
+     * description: 获取精选文章排行榜
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/article/rank")
+    public ResponseBean getRankArticle(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest) {
+        PageBean<RecommendArticleVo> rankPageBean = contentService.getRankArticleList(baseRequest.getData(), null);
+        return ResponseBean.ok(rankPageBean);
+    }
+
+    /**
+     * description: 获取首页精选文章(排行榜前3）
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/column/featured")
+    public ResponseBean getFeaturedColumn() {
+        List<RecommendArticleVo> featuredArticle = contentService.getFeaturedColumn();
+        return ResponseBean.ok(featuredArticle);
     }
 
 }

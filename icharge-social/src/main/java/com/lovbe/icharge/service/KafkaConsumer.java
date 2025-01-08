@@ -129,7 +129,7 @@ public class KafkaConsumer {
             }
             actionHandler.handlerCommentAction(collect);
         } catch (Exception e) {
-            log.error("[点赞消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+            log.error("[评论消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

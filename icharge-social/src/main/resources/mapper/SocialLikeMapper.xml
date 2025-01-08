@@ -12,7 +12,7 @@
         like_count = like_count + 1
     </insert>
     <insert id="updateStatisticBySub">
-        UPDATE s_interaction_statistic set like_count = IF(like_count = 0, 0, like_count -1)
+        UPDATE s_interaction_statistic set like_count = IF(like_count = 0, 0, like_count - 1)
         WHERE uid in
         <foreach collection="likeActionList" item="likeAction" separator="," open="(" close=")">
             #{likeAction.targetId}

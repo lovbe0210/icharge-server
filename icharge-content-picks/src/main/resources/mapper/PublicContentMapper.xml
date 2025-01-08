@@ -133,5 +133,6 @@
         <result property="likeCount" column="like_count"/>
         <result property="viewCount" column="view_count"/>
         <result property="commentCount" column="comment_count"/>
+        <result property="collectCount" column="collect_count"/>
     </resultMap>
 </mapper>
