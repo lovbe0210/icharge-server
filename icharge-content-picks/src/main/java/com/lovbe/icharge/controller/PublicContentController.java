@@ -162,7 +162,7 @@ public class PublicContentController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      */
-    @GetMapping("/column/rank")
+    @PostMapping("/column/rank")
     public ResponseBean getRankColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
                                       @RequestHeader(value = "userId", required = false) Long userId) {
         PageBean<RecommendColumnVo> featuredArticle = contentService.getRankColumn(baseRequest.getData(), userId);

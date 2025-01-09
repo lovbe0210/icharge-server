@@ -84,14 +84,16 @@ public class CollectServiceImpl implements CollectService {
     @Override
     public void cancelMarkContent(Long ftId, Long userId) {
         CollectDo collectDo = collectDao.selectById(ftId);
-        if (collectDo == null) {
+        if (collectDo == null || CommonStatusEnum.isDelete(collectDo.getStatus())) {
             return;
         }
-        int delete = collectDao.delete(new LambdaQueryWrapper<CollectDo>()
-                .eq(CollectDo::getUid, ftId)
-                .eq(CollectDo::getUserId, userId));
-        if (delete < 1) {
-            log.error("[收藏夹] --- 取消收藏失败，数据删除为ftId：{}，userId：{}", ftId, userId);
+        if (!Objects.equals(collectDo.getUserId(), userId)) {
+            throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
+        }
+        collectDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        int updated = collectDao.updateById(collectDo);
+        if (updated < 1) {
+            log.error("[收藏夹] --- 取消收藏失败，ftId：{}，userId：{}", ftId, userId);
         } else {
           // 发送消息取消收藏统计
             sendCollectMessage(collectDo.getTargetId(), collectDo.getTargetType(), 0);

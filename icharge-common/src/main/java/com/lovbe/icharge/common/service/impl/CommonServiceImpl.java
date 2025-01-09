@@ -1,6 +1,8 @@
 package com.lovbe.icharge.common.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.config.AIPromptProperties;
 import com.lovbe.icharge.common.dao.CommonDao;
@@ -61,8 +63,14 @@ public class CommonServiceImpl implements CommonService {
         UserInfoDo cacheUser = (UserInfoDo) RedisUtil.get(cacheUserKey);
         if (cacheUser == null) {
             // 获取用户信息
-            cacheUser = commonDao.getUserById(userId);
-            cacheUser = CommonUtils.checkUserStatus(cacheUser);
+            CacheUserDo cacheUserDo = commonDao.getUserById(userId);
+            UserInfoDo aDo = new UserInfoDo();
+            BeanUtil.copyProperties(cacheUserDo, aDo);
+            if (cacheUserDo != null && StringUtils.hasLength(cacheUserDo.getTagsStr())) {
+                List<Map> lists = JsonUtils.parseArray(cacheUserDo.getTagsStr(), Map.class);
+                aDo.setTags(lists);
+            }
+            cacheUser = CommonUtils.checkUserStatus(aDo);
             RedisUtil.set(cacheUserKey, cacheUser, SysConstant.DAY_30);
         } else {
             RedisUtil.expire(cacheUserKey, SysConstant.DAY_30);

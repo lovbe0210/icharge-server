@@ -401,8 +401,8 @@ public class PublicContentServiceImpl implements PublicContentService {
             return new PageBean<>(false, List.of());
         }
         boolean hasMore = typedTuples.size() == data.getLimit();
-        List<Long> columnIds = typedTuples.stream()
-                .map(tuple -> (Long) tuple.getValue())
+        List<Object> columnIds = typedTuples.stream()
+                .map(tuple -> tuple.getValue())
                 .collect(Collectors.toList());
         List<RecommendColumnVo> columnList = publicContentDao.selectPublicColumnList(columnIds);
         if (CollectionUtils.isEmpty(columnList)) {

@@ -1,5 +1,6 @@
 package com.lovbe.icharge.common.dao;
 
+import com.lovbe.icharge.common.model.dto.CacheUserDo;
 import com.lovbe.icharge.common.model.dto.MenuDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import org.apache.ibatis.annotations.Mapper;
@@ -16,9 +17,9 @@ import java.util.List;
 public interface CommonDao {
 
     @Select(value = """
-                    SELECT * FROM p_user WHERE uid = #{userId}
+                    SELECT *, tags tagsStr FROM p_user WHERE uid = #{userId}
                     """)
-    UserInfoDo getUserById(Long userId);
+    CacheUserDo getUserById(Long userId);
 
     @Select(value = """
                     SELECT Distinct uri FROM 

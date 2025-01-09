@@ -175,8 +175,8 @@
             </foreach>
             AND c.status = 'A'
             AND c.is_public = 1
-        ORDER BY c.update_time DESC
         GROUP BY c.uid
+        ORDER BY c.update_time DESC
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">

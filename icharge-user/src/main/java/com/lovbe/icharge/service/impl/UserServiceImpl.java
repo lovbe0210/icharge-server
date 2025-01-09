@@ -170,10 +170,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserInfoDo getUserInfo(Long userId) {
         UserInfoDo userInfoDo = commonService.getCacheUser(userId);
-        if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
+        if (CommonStatusEnum.DISABLE.getStatus().equals(userInfoDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
         }
-        if (userInfoDo.getUid() == null) {
+        if (CommonStatusEnum.DELETE.getStatus().equals(userInfoDo.getStatus()) || userInfoDo.getUid() == null) {
             throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
         }
         return userInfoDo;
