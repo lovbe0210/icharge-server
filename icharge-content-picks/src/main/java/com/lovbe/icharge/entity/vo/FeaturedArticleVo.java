@@ -73,4 +73,8 @@ public class FeaturedArticleVo extends BaseEntity {
      * 是否点赞
      */
     private boolean ifLike;
+    /**
+     * 是否收藏
+     */
+    private boolean ifCollect;
 }

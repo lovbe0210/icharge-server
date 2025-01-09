@@ -72,7 +72,7 @@
         </foreach>
     </select>
 
-    <!-- 获取推荐列表 -->
+    <!-- 获取精选文章列表 -->
     <select id="selectPublicArticleList" resultMap="publicArticleVoMap">
         SELECT a.*,
                c.uri column_uri, c.title column_name,
@@ -159,6 +159,26 @@
         LIMIT #{offset}, #{batchSize}
     </select>
 
+    <!-- 获取推荐专栏信息 -->
+    <select id="selectPublicColumnList" resultMap="recommendColumnVoMap">
+        SELECT c.*,
+               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
+               s.like_count, s.comment_count, s.collect_count, s.view_count,
+               COUNT(a.uid) article_count
+        FROM c_column c
+        LEFT JOIN p_user u ON c.user_id = u.uid
+        LEFT JOIN s_interaction_statistic s ON c.uid = s.uid
+        LEFT JOIN c_article a ON c.uid = a.column_id AND a.published_content_id IS NOT NULL
+        WHERE c.uid IN
+            <foreach collection="columnIds" item="columnId" separator="," open="(" close=")">
+                #{columnId}
+            </foreach>
+            AND c.status = 'A'
+            AND c.is_public = 1
+        ORDER BY c.update_time DESC
+        GROUP BY c.uid
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>
@@ -192,6 +212,26 @@
         <result property="columnName" column="column_name"/>
         <result property="summary" column="summary"/>
         <result property="coverUrl" column="cover_url"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="commentCount" column="comment_count"/>
+        <result property="collectCount" column="collect_count"/>
+    </resultMap>
+
+    <resultMap id="recommendColumnVoMap" type="com.lovbe.icharge.entity.vo.RecommendColumnVo">
+        <id property="uid" column="uid"/>
+        <result property="title" column="title"/>
+        <result property="uri" column="uri"/>
+        <result property="userInfo.uid" column="user_id"/>
+        <result property="userInfo.username" column="username"/>
+        <result property="userInfo.domain" column="domain"/>
+        <result property="userInfo.level" column="level"/>
+        <result property="userInfo.avatarUrl" column="avatar_url"/>
+        <result property="userInfo.location" column="location"/>
+        <result property="userInfo.industry" column="industry"/>
+        <result property="synopsis" column="synopsis"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="articleCount" column="article_count"/>
         <result property="likeCount" column="like_count"/>
         <result property="viewCount" column="view_count"/>
         <result property="commentCount" column="comment_count"/>

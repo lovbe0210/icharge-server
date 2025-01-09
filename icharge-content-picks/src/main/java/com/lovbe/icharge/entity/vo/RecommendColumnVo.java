@@ -2,6 +2,7 @@ package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
 
 import java.util.List;
@@ -26,9 +27,9 @@ public class RecommendColumnVo extends BaseEntity {
      */
     private String synopsis;
     /**
-     * 所属用户id
+     * 所属用户信息
      */
-    private Long userId;
+    private UserInfoDo userInfo;
     /**
      * 封面地址
      */
@@ -38,11 +39,23 @@ public class RecommendColumnVo extends BaseEntity {
      */
     private int articleCount;
     /**
-     * 订阅数
+     * 点赞数
      */
-    private int subCount;
+    private int likeCount;
     /**
-     * 浏览数
+     * 浏览量
      */
     private int viewCount;
+    /**
+     * 评论数
+     */
+    private int commentCount;
+    /**
+     * 收藏数
+     */
+    private int collectCount;
+    /**
+     * 是否收藏
+     */
+    private boolean ifCollect;
 }

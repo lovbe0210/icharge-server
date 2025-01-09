@@ -2,6 +2,7 @@ package com.lovbe.icharge.dao;
 
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
+import com.lovbe.icharge.entity.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -170,4 +171,13 @@ public interface PublicContentDao{
      * @date: 2025/1/8 14:36
      */
     void updateColumnStatistic(@Param("statisticList") List<TargetStatisticDo> statisticList);
+
+    /**
+     * @description: 获取公开专栏信息
+     * @param: List<Long>
+     * @return: List<RecommendColumnVo>
+     * @author: lovbe0210
+     * @date: 2025/1/9 16:57
+     */
+    List<RecommendColumnVo> selectPublicColumnList(@Param("columnIds") List<Long> columnIds);
 }

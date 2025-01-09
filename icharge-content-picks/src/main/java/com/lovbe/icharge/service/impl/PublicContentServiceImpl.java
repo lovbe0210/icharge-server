@@ -5,6 +5,7 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
@@ -15,18 +16,18 @@ import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.dao.BrowseHistoryDao;
+import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
+import com.lovbe.icharge.entity.dto.CollectDo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
-import com.lovbe.icharge.entity.vo.PublicArticleVo;
-import com.lovbe.icharge.entity.vo.PublicColumnVo;
-import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
-import com.lovbe.icharge.entity.vo.RouterInfoVo;
+import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
 import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
@@ -41,6 +42,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -68,7 +70,9 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Resource
     private UserService userService;
     @Resource
-    private KafkaTemplate kafkaTemplate;
+    private CommonService commonService;
+    @Resource
+    private CollectDao collectDao;
     @Resource
     private RestHighLevelClient highLevelClient;
     // 文档，专栏，随笔，阅读
@@ -356,7 +360,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             int update = browseHistoryDao.atomicInsertOrUpdate(historyDo);
             if (update == 1) {
                 // 新增时统计阅读量
-                sendBrowseMessage(historyDo);
+                commonService.sendMessage(appName, browseActionTopic, historyDo);
             }
             return;
         }
@@ -373,7 +377,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         RedisUtil.set(reportLimitKey, null, SysConstant.DAY_1);
         historyDo.setTargetId(targetId)
                 .setTargetType(1);
-        sendBrowseMessage(historyDo);
+        commonService.sendMessage(appName, browseActionTopic, historyDo);
     }
 
     @Override
@@ -383,8 +387,92 @@ public class PublicContentServiceImpl implements PublicContentService {
     }
 
     @Override
-    public List<FeaturedArticleVo> getFeaturedColumn() {
-        return List.of();
+    public List<RecommendColumnVo> getFeaturedColumn() {
+        PageBean<RecommendColumnVo> rankArticleList = getRankColumn(new RecommendRequestDTO(3, 0), null);
+        return rankArticleList.getList();
+    }
+
+    @Override
+    public PageBean<RecommendColumnVo> getRankColumn(RecommendRequestDTO data, Long userId) {
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_COLUMN);
+        Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
+                rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
+        if (CollectionUtils.isEmpty(typedTuples)) {
+            return new PageBean<>(false, List.of());
+        }
+        boolean hasMore = typedTuples.size() == data.getLimit();
+        List<Long> columnIds = typedTuples.stream()
+                .map(tuple -> (Long) tuple.getValue())
+                .collect(Collectors.toList());
+        List<RecommendColumnVo> columnList = publicContentDao.selectPublicColumnList(columnIds);
+        if (CollectionUtils.isEmpty(columnList)) {
+            return new PageBean<>(hasMore, List.of());
+        }
+        Set<Object> collectSet = new HashSet<>();
+        if (userId != null) {
+            List<CollectDo> collectList = collectDao.selectList(new LambdaQueryWrapper<CollectDo>()
+                    .eq(CollectDo::getUserId, userId)
+                    .eq(CollectDo::getTargetType, SysConstant.TARGET_TYPE_COLUMN)
+                    .eq(CollectDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+            if (!CollectionUtils.isEmpty(collectList)) {
+                collectSet.addAll(collectList.stream().map(CollectDo::getTargetId).collect(Collectors.toSet()));
+            }
+        }
+        Map<Long, RecommendColumnVo> columnMap = columnList.stream()
+                .peek(column -> {
+                    // 如果是登录用户获取点赞状态和收藏状态
+                    if (userId != null) {
+                        column.setIfCollect(collectSet.contains(column.getUid()));
+                    }
+                })
+                .collect(Collectors.toMap(RecommendColumnVo::getUid, Function.identity(), (a, b) -> b));
+        columnList = columnIds.stream()
+                .map(uid -> columnMap.get(uid))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageBean<>(hasMore, columnList);
+    }
+
+    /**
+     * @description: 获取排行榜文章
+     * @param: RecommendRequestDTO
+     * @return: PageBean<RecommendArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/6 23:45
+     */
+    public PageBean<FeaturedArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
+        Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
+                rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
+        if (CollectionUtils.isEmpty(typedTuples)) {
+            return new PageBean<>(false, List.of());
+        }
+        boolean hasMore = typedTuples.size() == data.getLimit();
+        List<Long> articleIds = typedTuples.stream()
+                .map(tuple -> (Long) tuple.getValue())
+                .collect(Collectors.toList());
+        List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
+        if (CollectionUtils.isEmpty(articleList)) {
+            return new PageBean<>(hasMore, List.of());
+        }
+        Set<Object> likeSet = new HashSet<>();
+        if (userId != null) {
+            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
+        }
+        Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
+                .peek(article -> {
+                    // 如果是登录用户获取点赞状态和收藏状态
+                    if (userId != null) {
+                        article.setIfLike(likeSet.contains(article.getUid()));
+                    }
+                })
+                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
+        articleList = articleIds.stream()
+                .map(uid -> articleMap.get(uid))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageBean<>(hasMore, articleList);
     }
 
     /**
@@ -494,68 +582,5 @@ public class PublicContentServiceImpl implements PublicContentService {
                 checkNodeInfo(authorId, userId, (JSONObject) child, childrenIterator, articleMap);
             }
         }
-    }
-
-    /**
-     * @description 发送浏览记录消息
-     * @param[1] historyDo
-     * @author lovbe0210
-     * @date 2024/11/24 0:10
-     */
-    public void sendBrowseMessage(BrowseHistoryDo historyDo) {
-        KafkaMessage message = new KafkaMessage<>(appName, browseActionTopic, historyDo);
-        try {
-            CompletableFuture send = kafkaTemplate.send(browseActionTopic, JSONUtil.toJsonStr(message));
-            send.thenAccept(result -> {
-                log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());
-            }).exceptionally(ex -> {
-                log.error("[send-message]--消息发送失败，cause: {}, sendData: {}", ex.toString(), JSONUtil.toJsonStr(message));
-                return null;
-            });
-        } catch (Exception e) {
-            log.error("[send-message]--消息发送失败，kafka服务不可用, sendData: {}", JSONUtil.toJsonStr(message));
-        }
-    }
-
-    /**
-     * @description: 获取排行榜文章
-     * @param: RecommendRequestDTO
-     * @return: PageBean<RecommendArticleVo>
-     * @author: lovbe0210
-     * @date: 2025/1/6 23:45
-     */
-    public PageBean<FeaturedArticleVo> getRankArticleList(RecommendRequestDTO data, Long userId) {
-        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_ARTICLE);
-        Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
-                rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
-        if (CollectionUtils.isEmpty(typedTuples)) {
-            return new PageBean<>(false, List.of());
-        }
-        boolean hasMore = typedTuples.size() == data.getLimit();
-        List<Long> articleIds = typedTuples.stream()
-                .map(tuple -> (Long) tuple.getValue())
-                .collect(Collectors.toList());
-        List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
-        if (CollectionUtils.isEmpty(articleList)) {
-            return new PageBean<>(hasMore, List.of());
-        }
-        Set<Object> likeSet = new HashSet<>();
-        if (userId != null) {
-            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
-            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
-        }
-        Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
-                .peek(article -> {
-                    // 如果是登录用户获取点赞状态
-                    if (userId != null) {
-                        article.setIfLike(likeSet.contains(article.getUid()));
-                    }
-                })
-                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
-        articleList = articleIds.stream()
-                .map(uid -> articleMap.get(uid))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        return new PageBean<>(hasMore, articleList);
     }
 }

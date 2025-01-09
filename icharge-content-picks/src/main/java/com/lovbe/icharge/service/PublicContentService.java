@@ -4,10 +4,7 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
-import com.lovbe.icharge.entity.vo.PublicArticleVo;
-import com.lovbe.icharge.entity.vo.PublicColumnVo;
-import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
-import com.lovbe.icharge.entity.vo.RouterInfoVo;
+import com.lovbe.icharge.entity.vo.*;
 
 import java.util.List;
 
@@ -99,6 +96,14 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/7 14:04
      */
-    List<FeaturedArticleVo> getFeaturedColumn();
+    List<RecommendColumnVo> getFeaturedColumn();
 
+    /**
+     * @description: 获取专栏排行榜
+     * @param: RecommendRequestDTO
+     * @return: PageBean<RecommendColumnVo>
+     * @author: lovbe0210
+     * @date: 2025/1/9 16:50
+     */
+    PageBean<RecommendColumnVo> getRankColumn(RecommendRequestDTO requestDTO, Long userId);
 }

@@ -6,6 +6,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
+import com.lovbe.icharge.entity.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
@@ -135,8 +136,9 @@ public class PublicContentController {
      * @date: 2024/9/16 11:56
      */
     @PostMapping("/article/rank")
-    public ResponseBean getRankArticle(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest) {
-        PageBean<FeaturedArticleVo> rankPageBean = contentService.getRankArticleList(baseRequest.getData(), null);
+    public ResponseBean getRankArticle(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
+                                       @RequestHeader(value = "userId", required = false) Long userId) {
+        PageBean<FeaturedArticleVo> rankPageBean = contentService.getRankArticleList(baseRequest.getData(), userId);
         return ResponseBean.ok(rankPageBean);
     }
 
@@ -149,20 +151,21 @@ public class PublicContentController {
      */
     @GetMapping("/column/featured")
     public ResponseBean getFeaturedColumn() {
-        List<FeaturedArticleVo> featuredArticle = contentService.getFeaturedColumn();
+        List<RecommendColumnVo> featuredArticle = contentService.getFeaturedColumn();
         return ResponseBean.ok(featuredArticle);
     }
 
     /**
-     * description: 获取首页精选文章(排行榜前3）
+     * description: 获取首页精选文章
      *
      * @return ResponseBean<ArticleVO>
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      */
     @GetMapping("/column/rank")
-    public ResponseBean getRankColumn() {
-        List<FeaturedArticleVo> featuredArticle = contentService.getFeaturedColumn();
+    public ResponseBean getRankColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
+                                      @RequestHeader(value = "userId", required = false) Long userId) {
+        PageBean<RecommendColumnVo> featuredArticle = contentService.getRankColumn(baseRequest.getData(), userId);
         return ResponseBean.ok(featuredArticle);
     }
 
