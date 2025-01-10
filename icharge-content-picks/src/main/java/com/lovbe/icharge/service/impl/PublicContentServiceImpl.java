@@ -433,6 +433,12 @@ public class PublicContentServiceImpl implements PublicContentService {
         return new PageBean<>(hasMore, columnList);
     }
 
+    @Override
+    public PageBean<RecommendColumnVo> getPublicColumn(RecommendRequestDTO data, Long userId) {
+        List<RecommendColumnVo> publicColumn = publicContentDao.selectPagePublicColumnList(data);
+        return new PageBean<>(publicColumn != null && publicColumn.size() == data.getLimit(), publicColumn);
+    }
+
     /**
      * @description: 获取排行榜文章
      * @param: RecommendRequestDTO

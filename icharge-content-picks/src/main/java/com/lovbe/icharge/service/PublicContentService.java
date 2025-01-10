@@ -106,4 +106,13 @@ public interface PublicContentService {
      * @date: 2025/1/9 16:50
      */
     PageBean<RecommendColumnVo> getRankColumn(RecommendRequestDTO requestDTO, Long userId);
+
+    /**
+     * @description: 获取公开专栏
+     * @param: RecommendRequestDTO
+     * @return: PageBean<RecommendColumnVo>
+     * @author: lovbe0210
+     * @date: 2025/1/10 17:14
+     */
+    PageBean<RecommendColumnVo> getPublicColumn(RecommendRequestDTO data, Long userId);
 }

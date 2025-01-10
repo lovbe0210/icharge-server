@@ -109,6 +109,10 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
      * @date: 2025/1/8 16:14
      */
     private ZSetOperations.TypedTuple<Object> getRankTypedTuple(TargetStatisticDo statistic, Date now) {
+        if (statistic.getType() == SysConstant.TARGET_TYPE_COLUMN && statistic.getArticleCount() == 0) {
+            // 专栏文章数为0，直接为0
+            return ZSetOperations.TypedTuple.of(statistic.getUid(), 0.0);
+        }
         // 点赞 0.3 收藏 0.25 浏览 0.2 评论 0.25
         double viewWeight = properties.getViewWeight();
         int viewCount = statistic.getViewCount();

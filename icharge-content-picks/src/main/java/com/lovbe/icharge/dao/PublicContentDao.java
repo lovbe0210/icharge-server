@@ -1,6 +1,7 @@
 package com.lovbe.icharge.dao;
 
 import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
@@ -180,4 +181,13 @@ public interface PublicContentDao{
      * @date: 2025/1/9 16:57
      */
     List<RecommendColumnVo> selectPublicColumnList(@Param("columnIds") List columnIds);
+
+    /**
+     * @description: 获取公开专栏信息
+     * @param: RecommendRequestDTO
+     * @return: List<RecommendColumnVo>
+     * @author: lovbe0210
+     * @date: 2025/1/10 17:16
+     */
+    List<RecommendColumnVo> selectPagePublicColumnList(@Param("data") RecommendRequestDTO data);
 }

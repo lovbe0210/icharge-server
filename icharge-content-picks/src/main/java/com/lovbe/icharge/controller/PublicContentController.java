@@ -169,4 +169,18 @@ public class PublicContentController {
         return ResponseBean.ok(featuredArticle);
     }
 
+    /**
+     * description: 获取首页公开专栏
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/column/public")
+    public ResponseBean getPublicColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
+                                        @RequestHeader(value = "userId", required = false) Long userId) {
+        PageBean<RecommendColumnVo> featuredArticle = contentService.getPublicColumn(baseRequest.getData(), userId);
+        return ResponseBean.ok(featuredArticle);
+    }
+
 }

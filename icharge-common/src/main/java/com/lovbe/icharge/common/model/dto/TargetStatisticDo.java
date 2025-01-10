@@ -36,6 +36,10 @@ public class TargetStatisticDo extends BaseEntity {
      */
     private int viewCount;
     /**
+     * 专栏文章数
+     */
+    private int articleCount;
+    /**
      * 首次发布时间
      */
     private Date publishTime;

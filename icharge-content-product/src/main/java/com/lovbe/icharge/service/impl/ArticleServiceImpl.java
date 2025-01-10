@@ -86,6 +86,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .setUpdateTime(new Date());
         articleDo.setUserId(userId)
                 .setTitle("无标题文档")
+                .setPublishStatus(SysConstant.PUBLISH_WAIT)
                 .setColumnId(columnId)
                 .setUri(commonService.getBeautifulId());
         articleDao.insertOrUpdate(articleDo);

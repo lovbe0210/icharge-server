@@ -148,13 +148,19 @@
             IF (cc.uid IS NOT NULL, sis.comment_count, 0 ) comment_count,
             IF (cc.uid IS NOT NULL, sis.collect_count, 0 ) collect_count,
             IF (cc.uid IS NOT NULL, sis.view_count, 0 ) view_count,
+            COUNT(ca.uid) article_count,
             IF (cc.uid IS NOT NULL, cc.create_time, null) publish_time
         FROM s_interaction_statistic sis
         LEFT JOIN c_column cc ON sis.uid = cc.uid
             AND cc.is_public = 1
             AND cc.`status` = 'A'
+        LEFT JOIN c_article ca ON ca.column_id = sis.uid
+            AND ca.published_content_id IS NOT NULL
+            AND ca.is_public = 1
+            AND ca.status = 'A'
         WHERE sis.type = #{targetType}
           AND sis.STATUS = 'A'
+        GROUP BY sis.uid
         ORDER BY sis.uid
         LIMIT #{offset}, #{batchSize}
     </select>
@@ -177,6 +183,28 @@
             AND c.is_public = 1
         GROUP BY c.uid
         ORDER BY c.update_time DESC
+    </select>
+
+    <!-- 获取公开专栏 -->
+    <select id="selectPagePublicColumnList" resultMap="recommendColumnVoMap">
+        SELECT c.*,
+               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
+               s.like_count, s.comment_count, s.collect_count, s.view_count
+        FROM c_column c
+        LEFT JOIN p_user u ON c.user_id = u.uid
+        LEFT JOIN s_interaction_statistic s ON c.uid = s.uid
+        WHERE c.status = 'A'
+            AND c.is_public = 1
+        <if test='data.sortType == "0"'>
+            ORDER BY s.view_count DESC
+        </if>
+        <if test='data.sortType == "1"'>
+            ORDER BY s.collect_count DESC
+        </if>
+        <if test='data.sortType == "2"'>
+            ORDER BY c.update_time DESC
+        </if>
+        LIMIT #{data.offset}, #{data.limit}
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
