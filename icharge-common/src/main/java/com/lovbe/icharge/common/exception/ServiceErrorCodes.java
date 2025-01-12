@@ -54,6 +54,7 @@ public interface ServiceErrorCodes {
 
     //========== 内容推荐精选 ==========
     ErrorCode REPEAT_FAVORITE_TAG = new ErrorCode(400, "已存在相同名称的收藏分组");
+    ErrorCode CATE_MENU_NOT_NULL = new ErrorCode(400, "分类菜单不得为空");
 
     //========== 社交排行 ==========
     ErrorCode REPLY_PARENT_ID_NOT_NULL = new ErrorCode(400, "回复评论id不得为空");

@@ -94,13 +94,25 @@ public class CommonUtils {
         return userInfo;
     }
 
+    /**
+     * @description: 解析文章内容为纯文本
+     * @param: JSONObject
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2025/1/11 23:29
+     */
     public static String getContentTextValue(JSONObject parseObj) {
         StringBuilder builder = new StringBuilder();
         recursiveParseText(builder, parseObj);
         return builder.toString();
     }
 
-    static void recursiveParseText(StringBuilder builder, JSONObject child) {
+    /**
+     * 递归获取文本内容
+     * @param builder
+     * @param child
+     */
+    public static void recursiveParseText(StringBuilder builder, JSONObject child) {
         if (child == null) {
             return;
         }

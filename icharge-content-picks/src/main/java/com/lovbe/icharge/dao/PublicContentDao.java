@@ -190,4 +190,30 @@ public interface PublicContentDao{
      * @date: 2025/1/10 17:16
      */
     List<RecommendColumnVo> selectPagePublicColumnList(@Param("data") RecommendRequestDTO data);
+
+    /**
+     * @description: 获取用户总数
+     * @param:
+     * @return: Integer
+     * @author: lovbe0210
+     * @date: 2025/1/11 16:36
+     */
+    @Select(value = """
+                    SELECT COUNT(*) FROM p_user WHERE status = 'A';
+                    """)
+    Integer selectUserCount();
+
+    List<TargetStatisticDo> selectUserStatisticList(@Param("offset") int offset, @Param("limit") int limit);
+
+    /**
+     * @description: 获取菜单列表
+     * @param:
+     * @return: List<MenuDTO>
+     * @author: lovbe0210
+     * @date: 2025/1/12 17:23
+     */
+    @Select(value = """
+                    SELECT * FROM t_menu WHERE status = 'A'   
+                    """)
+    List<MenuDTO> selecctMenuList();
 }

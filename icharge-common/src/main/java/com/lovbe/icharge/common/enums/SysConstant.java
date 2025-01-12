@@ -76,7 +76,9 @@ public class SysConstant {
 
     /**
      * 内容对象类型 1文章 2专栏 3随笔 4评论
+     * 0 创作者，用户
      */
+    public static final Integer TARGET_TYPE_AUTHOR = 0;
     public static final Integer TARGET_TYPE_ARTICLE = 1;
     public static final Integer TARGET_TYPE_COLUMN = 2;
     public static final Integer TARGET_TYPE_ESSAY = 3;

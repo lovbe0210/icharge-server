@@ -18,9 +18,6 @@ import org.springframework.stereotype.Component;
 @EnableScheduling
 public class RecommendPicksSchedule {
     @Resource
-    private ContentPicksConfigProperties configProperties;
-
-    @Resource
     private RecommendPicksService recommendPicksService;
 
     /**
@@ -81,5 +78,20 @@ public class RecommendPicksSchedule {
         long start = System.currentTimeMillis();
         recommendPicksService.portraitTagExtraction();
         log.info("[人物画像标签提取] --- 请求结束，耗时：{}ms", System.currentTimeMillis() - start);
+    }
+
+    /**
+     * @description: 计算排行榜 系统启动运行一次，然后每12小时运行一次
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/29 11:27
+     */
+    @Scheduled(initialDelay = 120000, fixedRate = 12 * 60 * 60 * 1000)
+    public void runAuthorRankUpdate() {
+        log.info("[创作者排行榜] --- 计算开始");
+        long start = System.currentTimeMillis();
+        recommendPicksService.authorRankUpdate();
+        log.info("[创作者排行榜] --- 计算结束，耗时：{}ms", System.currentTimeMillis() - start);
     }
 }

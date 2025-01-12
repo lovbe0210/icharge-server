@@ -2,7 +2,6 @@ package com.lovbe.icharge.common.dao;
 
 import com.lovbe.icharge.common.model.dto.CacheUserDo;
 import com.lovbe.icharge.common.model.dto.MenuDTO;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 

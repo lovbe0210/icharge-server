@@ -206,6 +206,36 @@
         </if>
         LIMIT #{data.offset}, #{data.limit}
     </select>
+    <select id="selectUserStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT
+            pu.uid,
+            0 type,
+            pu.`level` user_level,
+            COUNT( ca.uid ) article_count,
+            COUNT( DISTINCT cc.uid ) column_count,
+            SUM(IFNULL( sis.like_count, 0 )) like_count,
+            SUM(IFNULL( sis.view_count, 0 )) view_count,
+            SUM(IFNULL( sis.collect_count, 0 )) collect_count,
+            SUM(IFNULL( sis.comment_count, 0 )) comment_count,
+            pu.create_time publish_time
+        FROM
+            (
+                SELECT uid, LEVEL, create_time
+                FROM `p_user`
+                WHERE `status` = 'A'
+                ORDER BY create_time
+                LIMIT #{offset}, #{limit}
+            ) pu
+        LEFT JOIN c_article ca ON pu.uid = ca.user_id
+            AND ca.`status` = 'A'
+            AND ca.published_content_id IS NOT NULL
+            AND ca.is_public = 1
+        LEFT JOIN c_column cc ON cc.uid = ca.column_id
+            AND cc.`status` = 'A'
+            AND cc.is_public = 1
+        LEFT JOIN s_interaction_statistic sis ON ca.uid = sis.uid
+        GROUP BY pu.uid
+    </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>

@@ -86,8 +86,4 @@ public class PublicArticleVo extends BaseEntity {
      * 点赞用户列表
      */
     private List<UserInfoDo> likeUserList;
-    /**
-     * 阅读记录埋点
-     */
-    private String readerSign;
 }

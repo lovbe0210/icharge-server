@@ -101,43 +101,6 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
         }
     }
 
-    /**
-     * @description: 获取计算分数
-     * @param: TargetStatisticDo
-     * @return: TypedTuple<Object>
-     * @author: lovbe0210
-     * @date: 2025/1/8 16:14
-     */
-    private ZSetOperations.TypedTuple<Object> getRankTypedTuple(TargetStatisticDo statistic, Date now) {
-        if (statistic.getType() == SysConstant.TARGET_TYPE_COLUMN && statistic.getArticleCount() == 0) {
-            // 专栏文章数为0，直接为0
-            return ZSetOperations.TypedTuple.of(statistic.getUid(), 0.0);
-        }
-        // 点赞 0.3 收藏 0.25 浏览 0.2 评论 0.25
-        double viewWeight = properties.getViewWeight();
-        int viewCount = statistic.getViewCount();
-        double likeWeight = properties.getLikeWeight();
-        int likeCount = statistic.getLikeCount();
-        double collectWeight = properties.getCollectWeight();
-        int collectCount = statistic.getCollectCount();
-        double commentWeight = properties.getCommentWeight();
-        int commentCount = statistic.getCommentCount();
-        Date publishTime = statistic.getPublishTime();
-        if (publishTime == null) {
-            publishTime = new Date(0L);
-        }
-        double G = properties.getG();
-
-        // 1. 计算权重分数
-        double score = likeWeight * Math.log(likeCount + 1) + collectWeight * Math.log(collectCount + 1) +
-                viewWeight * Math.log(viewCount + 1) + commentWeight * Math.log(commentCount + 1);
-        // 2. 根据权重分数和时间衰减因子得到最终分数
-        double sincePublishDay = DateUtil.betweenDay(publishTime, now, false);
-        double finalScore = score / Math.pow(sincePublishDay + 2, G);
-        ZSetOperations.TypedTuple<Object> longTypedTuple = ZSetOperations.TypedTuple.of(statistic.getUid(), finalScore);
-        return longTypedTuple;
-    }
-
     @Override
     public void portraitTagExtraction() {
         // 获取新增阅读记录的用户id
@@ -196,6 +159,29 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                         return statistic;
                     }).collect(Collectors.toList());
             contentDao.updateColumnStatistic(collect);
+        }
+    }
+
+    @Override
+    public void authorRankUpdate() {
+        // 只统计有公开文章和专栏的用户
+        Integer count = contentDao.selectUserCount();
+        if (count == 0) {
+            return;
+        }
+        int totalPage = PageUtil.totalPage(count, properties.getUserStatisticBatchSize());
+        Date now = new Date();
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_AUTHOR);
+        for (int i = 1; i <= totalPage; i++) {
+            int offset = (i - 1) * properties.getUserStatisticBatchSize();
+            List<TargetStatisticDo> statisticList = contentDao.selectUserStatisticList(offset, properties.getUserStatisticBatchSize());
+            if (CollectionUtils.isEmpty(statisticList)) {
+                continue;
+            }
+            Set<ZSetOperations.TypedTuple<Object>> tupleList = statisticList.stream()
+                    .map(statistic -> getRankTypedTuple(statistic, now))
+                    .collect(Collectors.toSet());
+            RedisUtil.zSetTuple(rankSetKey, tupleList);
         }
     }
 
@@ -261,5 +247,65 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
         } catch (Exception e) {
             log.error("[人物画像标签提取] --- 请求Es获取数据失败，userId: {}, errorInfo: {}", userInfo.getUid(), e.toString());
         }
+    }
+
+    /**
+     * @description: 获取计算分数
+     * @param: TargetStatisticDo
+     * @return: TypedTuple<Object>
+     * @author: lovbe0210
+     * @date: 2025/1/8 16:14
+     */
+    private ZSetOperations.TypedTuple<Object> getRankTypedTuple(TargetStatisticDo statistic, Date now) {
+        // 遂于创作者或专栏，公开文章数为0，直接分数为0
+        if ((statistic.getType() == SysConstant.TARGET_TYPE_COLUMN || statistic.getType() == SysConstant.TARGET_TYPE_AUTHOR)
+                && statistic.getArticleCount() == 0) {
+            return ZSetOperations.TypedTuple.of(statistic.getUid(), 0.0);
+        }
+
+        double score = 0.0;
+        double G = 0.0;
+        int viewCount = statistic.getViewCount();
+        int likeCount = statistic.getLikeCount();
+        int collectCount = statistic.getCollectCount();
+        int commentCount = statistic.getCommentCount();
+        // 1. 计算权重分数
+        if (statistic.getType() == SysConstant.TARGET_TYPE_AUTHOR) {
+            // 创作者
+            double viewWeight = properties.getUserViewWeight();
+            double likeWeight = properties.getUserLikeWeight();
+            double collectWeight = properties.getUserCollectWeight();
+            double commentWeight = properties.getUserCommentWeight();
+            double levelWeight = properties.getUserLevelWeight();
+            int level = statistic.getUserLevel();
+            double articlesWeight = properties.getUserArticlesWeight();
+            int articleCount = statistic.getArticleCount();
+            double columnsWeight = properties.getUserColumnsWeight();
+            int columnCount = statistic.getColumnCount();
+            G = properties.getUserG();
+            score = levelWeight * Math.log(level + 1) + articlesWeight * Math.log(articleCount + 1) +
+                    columnsWeight * Math.log(columnCount + 1) +
+                    likeWeight * Math.log(likeCount + 1) + collectWeight * Math.log(collectCount + 1) +
+                    viewWeight * Math.log(viewCount + 1) + commentWeight * Math.log(commentCount + 1);
+        } else {
+            // 文章、专栏
+            double viewWeight = properties.getContentViewWeight();
+            double likeWeight = properties.getContentLikeWeight();
+            double collectWeight = properties.getContentCollectWeight();
+            double commentWeight = properties.getContentCommentWeight();
+            G = properties.getContentG();
+            score = likeWeight * Math.log(likeCount + 1) + collectWeight * Math.log(collectCount + 1) +
+                    viewWeight * Math.log(viewCount + 1) + commentWeight * Math.log(commentCount + 1);
+        }
+
+        // 2. 根据权重分数和时间衰减因子得到最终分数
+        Date publishTime = statistic.getPublishTime();
+        if (publishTime == null) {
+            publishTime = new Date(0L);
+        }
+        double sincePublishDay = DateUtil.betweenDay(publishTime, now, false);
+        double finalScore = score / Math.pow(sincePublishDay + 2, G);
+        ZSetOperations.TypedTuple<Object> longTypedTuple = ZSetOperations.TypedTuple.of(statistic.getUid(), finalScore);
+        return longTypedTuple;
     }
 }

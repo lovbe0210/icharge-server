@@ -3,6 +3,7 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 
@@ -115,4 +116,31 @@ public interface PublicContentService {
      * @date: 2025/1/10 17:14
      */
     PageBean<RecommendColumnVo> getPublicColumn(RecommendRequestDTO data, Long userId);
+
+    /**
+     * @description: 获取首页优秀创作者(排行榜前3）
+     * @param:
+     * @return: List<UserInfoDo>
+     * @author: lovbe0210
+     * @date: 2025/1/11 19:01
+     */
+    List<UserInfoDo> getExcellentAuthor();
+
+    /**
+     * @description: 获取创作者排行榜
+     * @param: RecommendRequestDTO
+     * @return: PageBean<UserInfoDo>
+     * @author: lovbe0210
+     * @date: 2025/1/11 19:02
+     */
+    PageBean<UserInfoDo> getRankAuthor(RecommendRequestDTO data, Long userId);
+
+    /**
+     * @description: 获取文章分类列表
+     * @param: BaseRequest<RecommendRequestDTO>
+     * @return: PageBean<FeaturedArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/12 17:18
+     */
+    PageBean<FeaturedArticleVo> getCategoryArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
 }

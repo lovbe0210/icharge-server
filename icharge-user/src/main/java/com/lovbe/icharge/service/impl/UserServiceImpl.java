@@ -23,6 +23,7 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.validation.ValidationUtils;
+import com.lovbe.icharge.config.ServiceProperties;
 import com.lovbe.icharge.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.dto.UpdateUserDTO;
@@ -40,9 +41,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -64,9 +63,9 @@ public class UserServiceImpl implements UserService {
     private BCryptPasswordEncoder cryptPasswordEncoder;
     @Resource
     private CommonService commonService;
+    @Resource
+    private ServiceProperties properties;
 
-    @Value("${service.batch-request-size}")
-    private int batchSize;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -220,8 +219,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserInfoDo> getUserInfoList(BaseRequest<BatchUserRequestDTO> batchRequest) {
         List<Long> userIdList = batchRequest.getData().getUserIdList();
-        if (userIdList.size() > batchSize) {
-            userIdList = userIdList.subList(0, batchSize);
+        if (userIdList.size() > properties.getBatchSize()) {
+            userIdList = userIdList.subList(0, properties.getBatchSize());
         }
         List<UserInfoDo> userInfoList = userMapper.selectBatchIds(userIdList);
         return CollectionUtils.isEmpty(userInfoList) ? List.of() : userInfoList;
@@ -237,10 +236,10 @@ public class UserServiceImpl implements UserService {
     public String createDomain(Long userId) {
         String domainKey = RedisKeyConstant.getDomainKey();
         String domain = IdUtil.nanoId(6);
-        boolean hsetted = RedisUtil.hsetIfAbsent(domainKey, domain, userId);
+        boolean hsetted = !properties.getFilterDomain().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);
         while (!hsetted) {
             domain = IdUtil.nanoId(6);
-            hsetted = RedisUtil.hsetIfAbsent(domainKey, domain, userId);
+            hsetted = !properties.getFilterDomain().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);
         }
         return domain;
     }

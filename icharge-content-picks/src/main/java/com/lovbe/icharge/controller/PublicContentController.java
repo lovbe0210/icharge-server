@@ -1,8 +1,10 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
@@ -11,6 +13,7 @@ import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -101,6 +104,23 @@ public class PublicContentController {
     }
 
     /**
+     * description: 获取分类文章列表
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/article/category")
+    public ResponseBean<Map> getCategoryArticleList(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
+                                                    @RequestHeader(value = "userId", required = false) Long userId) {
+        RecommendRequestDTO data = baseRequest.getData();
+        Assert.notNull(data.getFirstCategory(), ServiceErrorCodes.CATE_MENU_NOT_NULL.getMsg());
+        PageBean<FeaturedArticleVo> recommendArticle = contentService.getCategoryArticleList(baseRequest, userId);
+        return ResponseBean.ok(recommendArticle);
+    }
+
+    /**
      * description: 获取推荐文章列表
      *
      * @param userId
@@ -167,6 +187,33 @@ public class PublicContentController {
                                       @RequestHeader(value = "userId", required = false) Long userId) {
         PageBean<RecommendColumnVo> featuredArticle = contentService.getRankColumn(baseRequest.getData(), userId);
         return ResponseBean.ok(featuredArticle);
+    }
+
+    /**
+     * description: 获取首页优秀创作者(排行榜前3）
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/author/excellent")
+    public ResponseBean getExcellentAuthor() {
+        List<UserInfoDo> excellentAuthor = contentService.getExcellentAuthor();
+        return ResponseBean.ok(excellentAuthor);
+    }
+
+    /**
+     * description: 获取创作者排行榜
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/author/rank")
+    public ResponseBean getRankAuthor(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
+                                      @RequestHeader(value = "userId", required = false) Long userId) {
+        PageBean<UserInfoDo> rankAuthor = contentService.getRankAuthor(baseRequest.getData(), userId);
+        return ResponseBean.ok(rankAuthor);
     }
 
     /**

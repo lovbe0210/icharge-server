@@ -40,4 +40,13 @@ public interface RecommendPicksService {
      * @date: 2024/12/30 20:09
      */
     void columnStatisticUpdate();
+
+    /**
+     * @description: 创作者排行榜更新
+     * @param:
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2024/12/29 11:33
+     */
+    void authorRankUpdate();
 }

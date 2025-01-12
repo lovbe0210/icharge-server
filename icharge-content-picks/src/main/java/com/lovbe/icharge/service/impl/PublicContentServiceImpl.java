@@ -18,6 +18,7 @@ import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
@@ -437,6 +438,62 @@ public class PublicContentServiceImpl implements PublicContentService {
     public PageBean<RecommendColumnVo> getPublicColumn(RecommendRequestDTO data, Long userId) {
         List<RecommendColumnVo> publicColumn = publicContentDao.selectPagePublicColumnList(data);
         return new PageBean<>(publicColumn != null && publicColumn.size() == data.getLimit(), publicColumn);
+    }
+
+    @Override
+    public List<UserInfoDo> getExcellentAuthor() {
+        PageBean<UserInfoDo> pageBean = getRankAuthor(new RecommendRequestDTO(3, 0), null);
+        return pageBean.getList();
+    }
+
+    @Override
+    public PageBean<UserInfoDo> getRankAuthor(RecommendRequestDTO data, Long userId) {
+        String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_AUTHOR);
+        Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
+                rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
+        if (CollectionUtils.isEmpty(typedTuples)) {
+            return new PageBean<>(false, List.of());
+        }
+        boolean hasMore = typedTuples.size() == data.getLimit();
+        Set<Object> followSet = new HashSet<>();
+        if (userId != null) {
+            // TODO
+//            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+//            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
+        }
+        List<UserInfoDo> collect = typedTuples.stream()
+                .map(tuple -> {
+                    Long uid = (Long) tuple.getValue();
+                    UserInfoDo userInfo = commonService.getCacheUser(uid);
+                    if (userId != null) {
+                        userInfo.setIsFollow(followSet.contains(uid) ? 1 : 0);
+                    }
+                    return userInfo;
+                })
+                .collect(Collectors.toList());
+        return new PageBean<>(hasMore, collect);
+    }
+
+    @Override
+    public PageBean<FeaturedArticleVo> getCategoryArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
+        RecommendRequestDTO requestData = baseRequest.getData();
+        String firstCateMenu = null;
+        String secondCateMenu = null;
+        List<MenuDTO> menuList = publicContentDao.selecctMenuList();
+        if (!CollectionUtils.isEmpty(menuList)) {
+            for (MenuDTO menu : menuList) {
+                if (Objects.equals(menu.getMenuCode(), requestData.getFirstCategory())) {
+                    firstCateMenu = menu.getMenuName();
+                }
+                if (Objects.equals(menu.getMenuCode(), requestData.getSecondCategory())) {
+                    secondCateMenu = menu.getMenuName();
+                }
+            }
+        }
+        // 通过elasticsearch进行搜索文章id
+
+
+        return null;
     }
 
     /**
