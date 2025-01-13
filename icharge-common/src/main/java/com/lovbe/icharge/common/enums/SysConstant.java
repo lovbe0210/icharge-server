@@ -108,12 +108,14 @@ public class SysConstant {
      * es索引名称
      */
     public static final String ES_INDEX_ARTICLE = "c_article";
+    public static final String ES_INDEX_COLUMN = "c_column";
     public static final String ES_INDEX_USER = "p_user";
     /**
      * es索引字段名
      */
     // AI总结的文章标签
-    public static final String ES_FILED_TAG = "tags";
+    public static final String ES_FILED_TAG_AI = "tags";
+    public static final String ES_FILED_TAG_USER = "userTags";
     // AI总结的文章分类
     public static final String ES_FILED_CATEGORY = "category";
     // 用户设置的一级分类

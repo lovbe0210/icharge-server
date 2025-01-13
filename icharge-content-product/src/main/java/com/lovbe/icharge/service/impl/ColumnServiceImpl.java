@@ -14,10 +14,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.ArticleDo;
-import com.lovbe.icharge.common.model.dto.ColumnDo;
-import com.lovbe.icharge.common.model.dto.ContentDo;
-import com.lovbe.icharge.common.model.dto.FileUploadDTO;
+import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.ArticleDao;
@@ -38,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -75,6 +73,18 @@ public class ColumnServiceImpl implements ColumnService {
         columnDao.insert(columnDo);
         ColumnVo columnVo = new ColumnVo();
         BeanUtil.copyProperties(columnDo, columnVo);
+        // 如果是公开专栏，将专栏同步到es中
+        if (data.getIsPublic() == 1) {
+            ColumnEsEntity esEntity = new ColumnEsEntity()
+                    .setUid(columnDo.getUid())
+                    .setTitle(columnDo.getTitle())
+                    .setSynopsis(columnDo.getSynopsis());
+            try {
+                commonService.updateElasticsearchColumn(esEntity);
+            } catch (IOException e) {
+                log.error("[更新专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
+            }
+        }
         return columnVo;
     }
 
@@ -115,10 +125,31 @@ public class ColumnServiceImpl implements ColumnService {
             columnDo.setCoverUrl(upload.getData());
         }
         columnDao.updateById(columnDo);
-        ArticleDo articleDo = new ArticleDo().setIsPublic(isPublic);
-        articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
-                .eq(ArticleDo::getColumnId, columnDTO.getUid())
-                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        // 如果权限变动，更新所有文章的权限
+        if (isPublic != null) {
+            ArticleDo articleDo = new ArticleDo().setIsPublic(isPublic);
+            articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
+                    .eq(ArticleDo::getColumnId, columnDTO.getUid())
+                    .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        }
+
+        // 如果权限为public, 更新elasticsearch，如果为private则直接删除
+        if (columnDTO.getIsPublic() == null) {
+            return;
+        }
+        ColumnEsEntity columnEsEntity = new ColumnEsEntity()
+                .setUid(columnDo.getUid())
+                .setTitle(columnDo.getTitle())
+                .setSynopsis(columnDo.getSynopsis());
+        try {
+            if (columnDTO.getIsPublic() == 1) {
+                commonService.updateElasticsearchColumn(columnEsEntity);
+            } else if (columnDTO.getIsPublic() == 0) {
+                commonService.deleteElasticsearchColumn(columnEsEntity);
+            }
+        } catch (IOException e) {
+            log.error("[更新/删除专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
+        }
     }
 
     @Override
@@ -196,7 +227,8 @@ public class ColumnServiceImpl implements ColumnService {
                                         .setType(1)
                                         .setTitle(article.getTitle())
                                         .setCreateTime(article.getCreateTime())
-                                        .setUpdateTime(article.getUpdateTime());;
+                                        .setUpdateTime(article.getUpdateTime());
+                                ;
                                 finalParseArray.add(0, dirNode);
                             })
                             .collect(Collectors.toList());

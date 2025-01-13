@@ -18,6 +18,8 @@ import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -205,45 +207,55 @@ public class CommonServiceImpl implements CommonService {
 
     public void updateElasticsearchArticle(ArticleEsEntity articleEsEntity) throws IOException {
         // 判断是否存在索引
-        String indexName = ElasticSearchUtils.getIndexName(articleEsEntity.getClass());
-        GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
-        RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
-        boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
-        if (!exists) {
-            CreateIndexRequest request = new CreateIndexRequest(indexName);
-            Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(articleEsEntity.getClass());
-            String json = JsonUtils.toJsonString(indexSource);
-            request.source(json, XContentType.JSON);
-            CreateIndexResponse response = highLevelClient.indices().create(request, RequestOptions.DEFAULT);
-            String index = response.index();
-            if (log.isDebugEnabled()) {
-                log.debug("[更新elasticsearch数据] --- created index: {}", index);
-            }
-        }
-        // 插入或更新数据
-        String jsonValue = JsonUtils.toJsonString(articleEsEntity);
-        UpdateRequest request = new UpdateRequest(indexName, String.valueOf(articleEsEntity.getUid()))
-                // 如果不存在需要插入的内容
-                .doc(jsonValue, XContentType.JSON)
-                // 如果存在需要更新的内容
-                .upsert(jsonValue, XContentType.JSON);
-        UpdateResponse updateResponse = highLevelClient.update(request, RequestOptions.DEFAULT);
-        int status = updateResponse.status().getStatus();
+        int status = executeElasticsearchUpdate(String.valueOf(articleEsEntity.getUid()), articleEsEntity);
         if (log.isDebugEnabled()) {
             log.debug("[更新elasticsearch数据] --- update article to elasticsearch, articleId: {}, resultStatus: {}",
                     articleEsEntity.getUid(), status);
         }
     }
 
+    @Override
+    public void updateElasticsearchColumn(ColumnEsEntity columnEsEntity) throws IOException {
+        int status = executeElasticsearchUpdate(String.valueOf(columnEsEntity.getUid()), columnEsEntity);
+        if (log.isDebugEnabled()) {
+            log.debug("[更新elasticsearch数据] --- update column to elasticsearch, columnId: {}, resultStatus: {}",
+                    columnEsEntity.getUid(), status);
+        }
+    }
+
+    @Override
+    public void deleteElasticsearchColumn(ColumnEsEntity columnEsEntity) throws IOException {
+        int status = executeElasticsearchDelete(String.valueOf(columnEsEntity.getUid()), columnEsEntity);
+        if (log.isDebugEnabled()) {
+            log.debug("[删除elasticsearch数据] --- delete elasticsearch column, columnId: {}, resultStatus: {}",
+                    columnEsEntity.getUid(), status);
+        }
+    }
+
+    @Override
     public void updateElasticsearchUser(UserEsEntity userEsEntity) throws IOException {
-        // 判断是否存在索引
-        String indexName = ElasticSearchUtils.getIndexName(userEsEntity.getClass());
+        int status = executeElasticsearchUpdate(String.valueOf(userEsEntity.getUid()), userEsEntity);
+        if (log.isDebugEnabled()) {
+            log.debug("[更新elasticsearch数据] --- update user to elasticsearch, userId: {}, resultStatus: {}",
+                    userEsEntity.getUid(), status);
+        }
+    }
+
+    /**
+     * @description: elasticsearch数据更新操作
+     * @param: String
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2025/1/14 0:50
+     */
+    public <T> int executeElasticsearchUpdate(String uid, T t) throws IOException {
+        String indexName = ElasticSearchUtils.getIndexName(t.getClass());
         GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
         RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
         boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
         if (!exists) {
             CreateIndexRequest request = new CreateIndexRequest(indexName);
-            Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(userEsEntity.getClass());
+            Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(t.getClass());
             String json = JsonUtils.toJsonString(indexSource);
             request.source(json, XContentType.JSON);
             CreateIndexResponse response = highLevelClient.indices().create(request, RequestOptions.DEFAULT);
@@ -253,17 +265,34 @@ public class CommonServiceImpl implements CommonService {
             }
         }
         // 插入或更新数据
-        String jsonValue = JsonUtils.toJsonString(userEsEntity);
-        UpdateRequest request = new UpdateRequest(indexName, String.valueOf(userEsEntity.getUid()))
+        String jsonValue = JsonUtils.toJsonString(t);
+        UpdateRequest request = new UpdateRequest(indexName, String.valueOf(uid))
                 // 如果不存在需要插入的内容
                 .doc(jsonValue, XContentType.JSON)
                 // 如果存在需要更新的内容
                 .upsert(jsonValue, XContentType.JSON);
         UpdateResponse updateResponse = highLevelClient.update(request, RequestOptions.DEFAULT);
-        int status = updateResponse.status().getStatus();
-        if (log.isDebugEnabled()) {
-            log.debug("[更新elasticsearch数据] --- update user to elasticsearch, userId: {}, resultStatus: {}",
-                    userEsEntity.getUid(), status);
+        return updateResponse.status().getStatus();
+    }
+
+    /**
+     * @description: 执行elasticsearch数据删除操作
+     * @param: String
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2025/1/14 0:51
+     */
+    public <T> int executeElasticsearchDelete(String uid, T t) throws IOException {
+        String indexName = ElasticSearchUtils.getIndexName(t.getClass());
+        GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
+        RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
+        boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
+        if (!exists) {
+            return 0;
         }
+        // 删除数据
+        DeleteRequest request = new DeleteRequest(indexName, String.valueOf(uid));
+        DeleteResponse deleteResponse = highLevelClient.delete(request, RequestOptions.DEFAULT);
+        return deleteResponse.status().getStatus();
     }
 }

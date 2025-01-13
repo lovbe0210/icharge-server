@@ -234,10 +234,9 @@ public class PublicContentServiceImpl implements PublicContentService {
         /**
          * 获取思路：1. 未登录用户直接获取排行榜数据，每次取20条，然后打乱顺序，并且保证第一二三不在前面
          *         2. 登录用户先从elasticsearch获取用户画像
-         *              如果用户画像为空，则直接获取推荐系统
-         *              如果推荐系统为空，则获取最新公开发布的文章
+         *              如果用户画像为空，则直接获取排行榜系统
          *         3. 获取到用户画像，拿到category和tags，搜索elasticsearch中的文章列表
-         *              如果没有搜索到文章，则直接获取推荐系统
+         *              如果没有搜索到文章，则直接获取排行榜系统
          */
         if (userId == null) {
             return getRankPage(null, data);
@@ -256,7 +255,8 @@ public class PublicContentServiceImpl implements PublicContentService {
                     boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY, esUser.getCategory()).boost(0.8F));
                 }
                 if (StringUtils.hasLength(esUser.getTags())) {
-                    boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TAG, esUser.getTags()).boost(1.0F));
+                    boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TAG_AI, esUser.getTags()).boost(1.0F));
+                    boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TAG_USER, esUser.getTags()).boost(1.0F));
                 }
                 searchSourceBuilder.query(boolQuery);
                 // 设置分页参数

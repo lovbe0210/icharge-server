@@ -13,10 +13,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.AccountDo;
-import com.lovbe.icharge.common.model.dto.AuthUserDTO;
-import com.lovbe.icharge.common.model.dto.FileUploadDTO;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
@@ -41,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -214,6 +212,15 @@ public class UserServiceImpl implements UserService {
         userMapper.updateById(userInfo);
         String cacheUserKey = RedisKeyConstant.getCacheUserKey(userId);
         RedisUtil.del(cacheUserKey);
+        // 更新elasticsearch数据
+        UserEsEntity userEsEntity = new UserEsEntity()
+                .setUid(userId)
+                .setUsername(userDTO.getUsername());
+        try {
+            commonService.updateElasticsearchUser(userEsEntity);
+        } catch (IOException e) {
+            log.error("[更新用户信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
+        }
     }
 
     @Override

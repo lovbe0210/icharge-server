@@ -29,7 +29,6 @@ import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -150,6 +149,7 @@ public class ArticleServiceImpl implements ArticleService {
             ArticleEsEntity esEntity = new ArticleEsEntity()
                     .setUid(articleDo.getUid())
                     .setTitle(articleDo.getTitle())
+                    .setSummary(articleDo.getSummary())
                     .setFirstCategory(articleDo.getFirstCategory())
                     .setSecondCategory(articleDo.getSecondCategory());
             List<Map> userTags = articleDo.getTags();
@@ -456,6 +456,7 @@ public class ArticleServiceImpl implements ArticleService {
                         ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
                         if (articleDo != null) {
                             articleEsEntity.setTitle(articleDo.getTitle())
+                                    .setSummary(articleDo.getSummary())
                                     .setFirstCategory(articleDo.getFirstCategory())
                                     .setSecondCategory(articleDo.getSecondCategory());
                             List<Map> tags = articleDo.getTags();

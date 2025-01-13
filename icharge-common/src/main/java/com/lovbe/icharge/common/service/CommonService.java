@@ -82,4 +82,22 @@ public interface CommonService {
      * @date: 2025/1/5 11:04
      */
     void updateElasticsearchUser(UserEsEntity userEsEntity) throws IOException;
+
+    /**
+     * @description: 更新专栏信息到elasticsearch
+     * @param: ArticleEsEntity
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2025/1/5 11:04
+     */
+    void updateElasticsearchColumn(ColumnEsEntity esEntity) throws IOException;
+
+    /**
+     * @description: 删除专栏信息到elasticsearch
+     * @param: ArticleEsEntity
+     * @return: void
+     * @author: lovbe0210
+     * @date: 2025/1/5 11:04
+     */
+    void deleteElasticsearchColumn(ColumnEsEntity columnEsEntity) throws IOException;
 }

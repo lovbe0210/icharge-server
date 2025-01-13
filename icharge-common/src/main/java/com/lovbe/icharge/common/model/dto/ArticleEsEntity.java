@@ -21,6 +21,11 @@ public class ArticleEsEntity {
     @EsFieldType("text")
     private String title;
     /**
+     * 文章摘要
+     */
+    @EsFieldType("text")
+    private String summary;
+    /**
      * 文章内容
      */
     @EsFieldType("text")

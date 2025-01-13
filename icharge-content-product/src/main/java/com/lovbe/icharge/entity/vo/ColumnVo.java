@@ -40,15 +40,15 @@ public class ColumnVo extends BaseEntity {
     /**
      * 是否公开访问 0否1是
      */
-    private int isPublic;
+    private Integer isPublic;
     /**
      * 是否开启评论功能 0否1是
      */
-    private int enableComment;
+    private Integer enableComment;
     /**
      * 是否自动发布 0否1是 需要在公开访问时才能发布
      */
-    private int autoPublish;
+    private Integer autoPublish;
     /**
      * 文章列表
      */
