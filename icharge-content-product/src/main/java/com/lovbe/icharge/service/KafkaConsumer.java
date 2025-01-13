@@ -36,7 +36,7 @@ public class KafkaConsumer {
      */
     @KafkaListener(topics = "${spring.kafka.topics.action-content-publish}",
             containerFactory = "kafkaListenerContainerFactory", groupId = "action-publish")
-    public void listenActionBrowse(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
+    public void listenActionPublish(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
         if (consumerRecords.isEmpty()) {
             return;
         }
@@ -73,7 +73,7 @@ public class KafkaConsumer {
             }
             articleService.handlerPublishAction(collect);
         } catch (Exception e) {
-            log.error("[浏览记录消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+            log.error("[文章发布消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

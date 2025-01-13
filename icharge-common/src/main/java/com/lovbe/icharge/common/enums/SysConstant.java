@@ -112,8 +112,14 @@ public class SysConstant {
     /**
      * es索引字段名
      */
+    // AI总结的文章标签
     public static final String ES_FILED_TAG = "tags";
+    // AI总结的文章分类
     public static final String ES_FILED_CATEGORY = "category";
+    // 用户设置的一级分类
+    public static final String ES_FILED_CATEGORY1 = "firstCategory";
+    // 用户设置的二级分类
+    public static final String ES_FILED_CATEGORY2 = "secondCategory";
 
     /**
      * 标签json字段-内容

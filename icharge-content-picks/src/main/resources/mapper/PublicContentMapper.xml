@@ -74,7 +74,7 @@
 
     <!-- 获取精选文章列表 -->
     <select id="selectPublicArticleList" resultMap="publicArticleVoMap">
-        SELECT a.*,
+        SELECT a.*, a.tags tags_str,
                c.uri column_uri, c.title column_name,
                u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
                sis.like_count, sis.comment_count, sis.collect_count, sis.view_count
@@ -270,6 +270,7 @@
         <result property="columnName" column="column_name"/>
         <result property="summary" column="summary"/>
         <result property="coverUrl" column="cover_url"/>
+        <result property="tagsStr" column="tags_str"/>
         <result property="likeCount" column="like_count"/>
         <result property="viewCount" column="view_count"/>
         <result property="commentCount" column="comment_count"/>

@@ -1,5 +1,6 @@
 package com.lovbe.icharge.entity.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
@@ -53,6 +54,8 @@ public class FeaturedArticleVo extends BaseEntity {
      * 文章标签
      */
     private List<Map> tags = new ArrayList<>();
+    @JsonIgnore
+    private String tagsStr;
     /**
      * 点赞数
      */

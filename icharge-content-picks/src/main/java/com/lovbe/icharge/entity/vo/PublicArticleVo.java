@@ -59,6 +59,14 @@ public class PublicArticleVo extends BaseEntity {
      */
     private List<Map> tags = new ArrayList<>();
     /**
+     * 一级分类
+     */
+    private String firstCategory;
+    /**
+     * 二级分类
+     */
+    private String secondCategory;
+    /**
      * 是否公开访问 0否1是
      */
     private Integer isPublic;

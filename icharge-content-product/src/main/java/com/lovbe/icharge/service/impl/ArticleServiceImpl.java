@@ -141,6 +141,9 @@ public class ArticleServiceImpl implements ArticleService {
             }
             articleDo.setCoverUrl(upload.getData());
         }
+        if (StringUtils.hasLength(articleDTO.getFirstCategory()) && !StringUtils.hasLength(articleDTO.getSecondCategory())) {
+            articleDo.setSecondCategory("");
+        }
         articleDao.updateById(articleDo);
         // 如果文章已发布则需要更新文章的title、category等搜索字段
         if (articleDo.getPublishedContentId() != null) {
@@ -469,9 +472,9 @@ public class ArticleServiceImpl implements ArticleService {
                         }
                         List<String> tags = resultDto.getTags();
                         if (!CollectionUtils.isEmpty(tags)) {
-                            articleEsEntity.setCategory(tags.get(0));
-                            if (tags.size() > 1) {
-                                List<String> subList = tags.subList(1, tags.size());
+                            articleEsEntity.setCategory(tags.get(0) + (tags.size() > 1 ? ("," + tags.get(1)) : ""));
+                            if (tags.size() > 2) {
+                                List<String> subList = tags.subList(2, tags.size());
                                 articleEsEntity.setTags(StringUtils.collectionToDelimitedString(subList, ","));
                             }
                         }

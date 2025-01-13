@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -265,31 +266,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                 searchSourceBuilder.fetchSource(new String[]{"uid"}, null);
                 searchRequest.source(searchSourceBuilder);
                 // 发送请求并处理响应
-                SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-                SearchHits searchHits = response.getHits();
-                if (searchHits != null && searchHits.getTotalHits().value == 0) {
-                    // 搜索结果为空
-                    return new PageBean<>(false, List.of());
-                }
-                boolean hasMore = searchHits.getTotalHits().value == data.getLimit();
-                List<Long> articleIds = Arrays.stream(searchHits.getHits())
-                        .map(hit -> Long.parseLong(hit.getId()))
-                        .collect(Collectors.toList());
-                List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
-                if (CollectionUtils.isEmpty(articleList)) {
-                    return new PageBean<>(hasMore, List.of());
-                }
-                // 查询点赞记录
-                String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
-                Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
-                Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
-                        .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity()));
-                List<FeaturedArticleVo> recommendArticles = articleIds.stream()
-                        .map(articleId -> articleMap.get(articleId))
-                        .peek(articleVo -> articleVo.setIfLike(likeSet.contains(articleVo.getUid())))
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                return new PageBean<>(hasMore, recommendArticles);
+                return searchEsArticleList(userId, searchRequest, data);
             }
             return getRankPage(userId, data);
         } catch (Exception e) {
@@ -477,23 +454,61 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Override
     public PageBean<FeaturedArticleVo> getCategoryArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId) {
         RecommendRequestDTO requestData = baseRequest.getData();
-        String firstCateMenu = null;
-        String secondCateMenu = null;
+        // 通过elasticsearch进行搜索文章id
+        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_ARTICLE);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 设置字段分词匹配
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        // 先按照一二级分类进行获取，然后再使用AI总结的分类进行获取
+        String firstCategory = requestData.getFirstCategory();
+        String secondCategory = requestData.getSecondCategory();
+        if (secondCategory != null) {
+            boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY2, secondCategory).boost(1.0F));
+        } else {
+            boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY1, firstCategory).boost(1.0F));
+        }
+        String firstCateMenu = "";
+        String category = "";
         List<MenuDTO> menuList = publicContentDao.selecctMenuList();
         if (!CollectionUtils.isEmpty(menuList)) {
             for (MenuDTO menu : menuList) {
-                if (Objects.equals(menu.getMenuCode(), requestData.getFirstCategory())) {
+                if (Objects.equals(firstCategory, menu.getMenuCode())) {
                     firstCateMenu = menu.getMenuName();
                 }
-                if (Objects.equals(menu.getMenuCode(), requestData.getSecondCategory())) {
-                    secondCateMenu = menu.getMenuName();
+                // 查询全部时，使用一级分类和所有二级分类
+                if (Objects.equals(menu.getMenuCode(), secondCategory) && secondCategory != null) {
+                    category += menu.getMenuName();
+                    break;
+                }else if (Objects.equals(menu.getParentCode(), firstCategory) && secondCategory == null) {
+                    if (category.length() != 0) {
+                        category += ",";
+                    }
+                    category += menu.getMenuName();
                 }
+
             }
         }
-        // 通过elasticsearch进行搜索文章id
-
-
-        return null;
+        if (secondCategory == null) {
+            category = firstCateMenu + "," + category;
+        }
+        if (StringUtils.hasLength(category)) {
+            boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY, category).boost(0.5F));
+        }
+        log.info("[es搜索] --- 查询语句：{}", boolQuery.toString());
+        searchSourceBuilder.query(boolQuery);
+        // 设置分页参数
+        searchSourceBuilder.from(requestData.getOffset());
+        searchSourceBuilder.size(requestData.getLimit());
+        // 只获取id字段
+        searchSourceBuilder.fetchSource(new String[]{"uid"}, null);
+        searchRequest.source(searchSourceBuilder);
+        // 发送请求并处理响应
+        try {
+            return searchEsArticleList(userId, searchRequest, requestData);
+        } catch (IOException e) {
+            log.error("[获取分类文章] --- 查询异常，errorInfo: {}", e.toString());
+            return new PageBean<>(true, List.of());
+        }
     }
 
     /**
@@ -645,5 +660,48 @@ public class PublicContentServiceImpl implements PublicContentService {
                 checkNodeInfo(authorId, userId, (JSONObject) child, childrenIterator, articleMap);
             }
         }
+    }
+
+    /**
+     * @description 查询es中文档id，然后通过数据库获取文章列表
+     * @param[2] userId
+     * @param[3] searchRequest
+     * @param[4] requestData
+     * @author lovbe0210
+     * @date 2024/11/24 0:10
+     */
+    private PageBean<FeaturedArticleVo> searchEsArticleList(Long userId, SearchRequest searchRequest, RecommendRequestDTO requestData) throws IOException {
+        SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+        SearchHits searchHits = response.getHits();
+        if (searchHits != null && searchHits.getTotalHits().value == 0) {
+            // 搜索结果为空
+            return new PageBean<>(false, List.of());
+        }
+        boolean hasMore = searchHits.getTotalHits().value == requestData.getLimit();
+        List<Long> articleIds = Arrays.stream(searchHits.getHits())
+                .map(hit -> Long.parseLong(hit.getId()))
+                .collect(Collectors.toList());
+        List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(articleIds);
+        if (CollectionUtils.isEmpty(articleList)) {
+            return new PageBean<>(hasMore, List.of());
+        }
+        // 查询点赞记录
+        String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+        Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
+        Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
+                .peek(article -> {
+                    String tagsStr = article.getTagsStr();
+                    if (StringUtils.hasLength(tagsStr)) {
+                        List<Map> tagList = JsonUtils.parseArray(tagsStr, Map.class);
+                        article.setTags(tagList);
+                    }
+                })
+                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity()));
+        List<FeaturedArticleVo> recommendArticles = articleIds.stream()
+                .map(articleId -> articleMap.get(articleId))
+                .filter(Objects::nonNull)
+                .peek(articleVo -> articleVo.setIfLike(likeSet.contains(articleVo.getUid())))
+                .collect(Collectors.toList());
+        return new PageBean<>(hasMore, recommendArticles);
     }
 }
