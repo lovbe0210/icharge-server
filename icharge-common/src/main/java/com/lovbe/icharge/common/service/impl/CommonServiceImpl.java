@@ -288,8 +288,8 @@ public class CommonServiceImpl implements CommonService {
         if (CollectionUtils.isEmpty(esEntityMap)) {
             return 0;
         }
-        GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
         RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
+        GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
         boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
         if (!exists) {
             CreateIndexRequest request = new CreateIndexRequest(indexName);

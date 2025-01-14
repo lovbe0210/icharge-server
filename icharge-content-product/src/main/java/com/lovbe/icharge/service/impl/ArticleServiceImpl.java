@@ -347,7 +347,7 @@ public class ArticleServiceImpl implements ArticleService {
                         article.getLatestContentId() != null &&
                         article.getIsPublic() == 1 &&
                         article.getPublishStatus() != null &&
-                        article.getPublishStatus() != 0)
+                        article.getPublishStatus() == 0)
                 .peek(article -> contentIs.add(article.getLatestContentId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(collect) || contentIs.size() == 0) {
@@ -509,6 +509,7 @@ public class ArticleServiceImpl implements ArticleService {
                         if (articleDo != null) {
                             articleEsEntity.setTitle(articleDo.getTitle())
                                     .setSummary(articleDo.getSummary())
+                                    .setIsPublic(articleDo.getIsPublic())
                                     .setFirstCategory(articleDo.getFirstCategory())
                                     .setSecondCategory(articleDo.getSecondCategory());
                             List<Map> tags = articleDo.getTags();

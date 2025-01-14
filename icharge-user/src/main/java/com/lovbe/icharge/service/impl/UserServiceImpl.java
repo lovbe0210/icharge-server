@@ -216,7 +216,7 @@ public class UserServiceImpl implements UserService {
         UserEsEntity userEsEntity = new UserEsEntity()
                 .setUid(userId)
                 .setUsername(userDTO.getUsername());
-        commonService.updateElasticsearchUser(userEsEntity);
+        commonService.updateElasticsearchUser(Arrays.asList(userEsEntity));
     }
 
     @Override

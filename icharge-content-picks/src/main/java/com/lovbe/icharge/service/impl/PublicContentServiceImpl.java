@@ -256,6 +256,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                     boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TAG_AI, esUser.getTags()).boost(1.0F));
                     boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TAG_USER, esUser.getTags()).boost(1.0F));
                 }
+                boolQuery.minimumShouldMatch(1);
                 searchSourceBuilder.query(boolQuery);
                 // 设置分页参数
                 searchSourceBuilder.from(data.getOffset());
@@ -493,7 +494,8 @@ public class PublicContentServiceImpl implements PublicContentService {
         if (StringUtils.hasLength(category)) {
             boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY, category).boost(0.5F));
         }
-        log.info("[es搜索] --- 查询语句：{}", boolQuery.toString());
+        boolQuery.minimumShouldMatch(1);
+        log.info("[es搜索] --- 查询语句：{}", boolQuery);
         searchSourceBuilder.query(boolQuery);
         // 设置分页参数
         searchSourceBuilder.from(requestData.getOffset());

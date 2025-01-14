@@ -122,19 +122,19 @@ public class ColumnServiceImpl implements ColumnService {
             columnDo.setCoverUrl(upload.getData());
         }
         columnDao.updateById(columnDo);
+        // 更新专栏信息到es中
+        ColumnEsEntity columnEsEntity = new ColumnEsEntity()
+                .setUid(columnDo.getUid())
+                .setIsPublic(columnDo.getIsPublic())
+                .setTitle(columnDo.getTitle())
+                .setSynopsis(columnDo.getSynopsis());
+        commonService.updateElasticsearchColumn(Arrays.asList(columnEsEntity));
         // 如果权限变动，更新所有文章的权限
         if (isPublic != null) {
-            // 更新专栏权限信息
-            ColumnEsEntity columnEsEntity = new ColumnEsEntity()
-                    .setUid(columnDo.getUid())
-                    .setTitle(columnDo.getTitle())
-                    .setSynopsis(columnDo.getSynopsis());
-            commonService.updateElasticsearchColumn(Arrays.asList(columnEsEntity));
             // 获取专栏下的文章列表
             List<ArticleDo> selectList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
                     .eq(ArticleDo::getColumnId, columnDTO.getUid())
-                    .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
-            );
+                    .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
             if (CollectionUtils.isEmpty(selectList)) {
                 return;
             }
@@ -143,10 +143,11 @@ public class ColumnServiceImpl implements ColumnService {
                     .eq(ArticleDo::getColumnId, columnDTO.getUid())
                     .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
             // 同步更新ES中文章数据
+            Integer finalIsPublic = isPublic;
             List<ArticleEsEntity> articleEsEntityList = selectList.stream()
                     .map(article -> new ArticleEsEntity()
                             .setUid(article.getUid())
-                            .setIsPublic(article.getIsPublic()))
+                            .setIsPublic(finalIsPublic))
                     .collect(Collectors.toList());
             commonService.updateElasticsearchArticle(articleEsEntityList);
         }
