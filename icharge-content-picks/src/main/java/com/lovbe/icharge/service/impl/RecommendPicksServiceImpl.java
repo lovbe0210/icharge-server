@@ -243,7 +243,7 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
             if (!CollectionUtils.isEmpty(portraitTagResult.getTags())) {
                 userEsEntity.setTags(StringUtils.collectionToDelimitedString(portraitTagResult.getTags(), ","));
             }
-            commonService.updateElasticsearchUser(userEsEntity);
+            commonService.updateElasticsearchUser(Arrays.asList(userEsEntity));
         } catch (Exception e) {
             log.error("[人物画像标签提取] --- 请求Es获取数据失败，userId: {}, errorInfo: {}", userInfo.getUid(), e.toString());
         }

@@ -38,11 +38,15 @@ public interface ArticleDao extends BaseMapper<ArticleDo> {
     /**
      * @description 批量操作
      * @param[1] collect
+     * @param[2] columnId
+     * @param[3] isPublic
+     * @param[4] operateType
      * @author lovbe0210
      * @date 2024/11/9 16:28
      */
     void batchUpdate(@Param("articleList") List<ArticleDo> collect,
                      @Param("columnId") Long columnId,
+                     @Param("isPublic") Integer isPublic,
                      @Param("operateType") String operateType);
 
     /**

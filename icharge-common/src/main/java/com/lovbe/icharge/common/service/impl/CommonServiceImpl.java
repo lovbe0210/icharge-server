@@ -2,7 +2,6 @@ package com.lovbe.icharge.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.config.AIPromptProperties;
 import com.lovbe.icharge.common.dao.CommonDao;
@@ -18,10 +17,10 @@ import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -205,39 +204,76 @@ public class CommonServiceImpl implements CommonService {
         return resultDTO;
     }
 
-    public void updateElasticsearchArticle(ArticleEsEntity articleEsEntity) throws IOException {
-        // 判断是否存在索引
-        int status = executeElasticsearchUpdate(String.valueOf(articleEsEntity.getUid()), articleEsEntity);
-        if (log.isDebugEnabled()) {
-            log.debug("[更新elasticsearch数据] --- update article to elasticsearch, articleId: {}, resultStatus: {}",
-                    articleEsEntity.getUid(), status);
+    public void updateElasticsearchArticle(List<ArticleEsEntity> esArticleList) {
+        try {
+            Map<String, ArticleEsEntity> esEntityMap = esArticleList.stream()
+                    .collect(Collectors.toMap(a -> String.valueOf(a.getUid()), Function.identity(), (a, b) -> b));
+            int status = executeElasticsearchUpdate(SysConstant.ES_INDEX_ARTICLE, ArticleEsEntity.class, esEntityMap);
+            if (log.isDebugEnabled()) {
+                log.debug("[更新elasticsearch数据] --- update article to elasticsearch, articleId: {}, resultStatus: {}",
+                        esArticleList, status);
+            }
+        } catch (IOException e) {
+            log.error("[更新文章信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
         }
     }
 
     @Override
-    public void updateElasticsearchColumn(ColumnEsEntity columnEsEntity) throws IOException {
-        int status = executeElasticsearchUpdate(String.valueOf(columnEsEntity.getUid()), columnEsEntity);
-        if (log.isDebugEnabled()) {
-            log.debug("[更新elasticsearch数据] --- update column to elasticsearch, columnId: {}, resultStatus: {}",
-                    columnEsEntity.getUid(), status);
+    public void deleteElasticsearchArticle(List<String> articleIdList) {
+        try {
+            if (CollectionUtils.isEmpty(articleIdList)) {
+                return;
+            }
+            int status = executeElasticsearchDelete(articleIdList, SysConstant.ES_INDEX_ARTICLE);
+            if (log.isDebugEnabled()) {
+                log.debug("[删除elasticsearch数据] --- delete elasticsearch article, columnId: {}, resultStatus: {}",
+                        articleIdList, status);
+            }
+        } catch (IOException e) {
+            log.error("[删除文章信息] --- 删除elasticsearch数据失败，errorInfo: {}", e.toString());
         }
     }
 
     @Override
-    public void deleteElasticsearchColumn(ColumnEsEntity columnEsEntity) throws IOException {
-        int status = executeElasticsearchDelete(String.valueOf(columnEsEntity.getUid()), columnEsEntity);
-        if (log.isDebugEnabled()) {
-            log.debug("[删除elasticsearch数据] --- delete elasticsearch column, columnId: {}, resultStatus: {}",
-                    columnEsEntity.getUid(), status);
+    public void updateElasticsearchColumn(List<ColumnEsEntity> esColumnList) {
+        try {
+            Map<String, ColumnEsEntity> esEntityMap = esColumnList.stream()
+                    .collect(Collectors.toMap(c -> String.valueOf(c.getUid()), Function.identity(), (a, b) -> b));
+            int status = executeElasticsearchUpdate(SysConstant.ES_INDEX_COLUMN, ColumnEsEntity.class, esEntityMap);
+            if (log.isDebugEnabled()) {
+                log.debug("[更新elasticsearch数据] --- update column to elasticsearch, columnId: {}, resultStatus: {}",
+                        esColumnList, status);
+            }
+        } catch (IOException e) {
+            log.error("[更新专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
         }
     }
 
     @Override
-    public void updateElasticsearchUser(UserEsEntity userEsEntity) throws IOException {
-        int status = executeElasticsearchUpdate(String.valueOf(userEsEntity.getUid()), userEsEntity);
-        if (log.isDebugEnabled()) {
-            log.debug("[更新elasticsearch数据] --- update user to elasticsearch, userId: {}, resultStatus: {}",
-                    userEsEntity.getUid(), status);
+    public void deleteElasticsearchColumn(List<String> columnidList) {
+        try {
+            int status = executeElasticsearchDelete(columnidList, SysConstant.ES_INDEX_COLUMN);
+            if (log.isDebugEnabled()) {
+                log.debug("[删除elasticsearch数据] --- delete elasticsearch column, columnId: {}, resultStatus: {}",
+                        columnidList, status);
+            }
+        } catch (IOException e) {
+            log.error("[删除专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
+        }
+    }
+
+    @Override
+    public void updateElasticsearchUser(List<UserEsEntity> esUserList) {
+        try {
+            Map<String, UserEsEntity> esEntityMap = esUserList.stream()
+                    .collect(Collectors.toMap(c -> String.valueOf(c.getUid()), Function.identity(), (a, b) -> b));
+            int status = executeElasticsearchUpdate(SysConstant.ES_INDEX_USER, UserEsEntity.class, esEntityMap);
+            if (log.isDebugEnabled()) {
+                log.debug("[更新elasticsearch数据] --- update user to elasticsearch, userId: {}, resultStatus: {}",
+                        esUserList, status);
+            }
+        } catch (IOException e) {
+            log.error("[更新用户信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
         }
     }
 
@@ -248,14 +284,16 @@ public class CommonServiceImpl implements CommonService {
      * @author: lovbe0210
      * @date: 2025/1/14 0:50
      */
-    public <T> int executeElasticsearchUpdate(String uid, T t) throws IOException {
-        String indexName = ElasticSearchUtils.getIndexName(t.getClass());
+    public <T> int executeElasticsearchUpdate(String indexName, Class esIndexClass, Map<String, T> esEntityMap) throws IOException {
+        if (CollectionUtils.isEmpty(esEntityMap)) {
+            return 0;
+        }
         GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
         RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
         boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
         if (!exists) {
             CreateIndexRequest request = new CreateIndexRequest(indexName);
-            Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(t.getClass());
+            Map<String, Object> indexSource = ElasticSearchUtils.getIndexSource(esIndexClass);
             String json = JsonUtils.toJsonString(indexSource);
             request.source(json, XContentType.JSON);
             CreateIndexResponse response = highLevelClient.indices().create(request, RequestOptions.DEFAULT);
@@ -265,14 +303,18 @@ public class CommonServiceImpl implements CommonService {
             }
         }
         // 插入或更新数据
-        String jsonValue = JsonUtils.toJsonString(t);
-        UpdateRequest request = new UpdateRequest(indexName, String.valueOf(uid))
-                // 如果不存在需要插入的内容
-                .doc(jsonValue, XContentType.JSON)
-                // 如果存在需要更新的内容
-                .upsert(jsonValue, XContentType.JSON);
-        UpdateResponse updateResponse = highLevelClient.update(request, RequestOptions.DEFAULT);
-        return updateResponse.status().getStatus();
+        BulkRequest bulkRequest = new BulkRequest();
+        esEntityMap.forEach((uid, esEntity) -> {
+            String jsonValue = JsonUtils.toJsonString(esEntity);
+            UpdateRequest request = new UpdateRequest(indexName, uid)
+                    // 如果不存在需要插入的内容
+                    .doc(jsonValue, XContentType.JSON)
+                    // 如果存在需要更新的内容
+                    .upsert(jsonValue, XContentType.JSON);
+            bulkRequest.add(request);
+        });
+        BulkResponse response = highLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+        return response.status().getStatus();
     }
 
     /**
@@ -282,8 +324,7 @@ public class CommonServiceImpl implements CommonService {
      * @author: lovbe0210
      * @date: 2025/1/14 0:51
      */
-    public <T> int executeElasticsearchDelete(String uid, T t) throws IOException {
-        String indexName = ElasticSearchUtils.getIndexName(t.getClass());
+    public <T> int executeElasticsearchDelete(List<String> uids, String indexName) throws IOException {
         GetIndexRequest getIndexReq = new GetIndexRequest(indexName);
         RestHighLevelClient highLevelClient = SpringContextUtils.getBean(RestHighLevelClient.class);
         boolean exists = highLevelClient.indices().exists(getIndexReq, RequestOptions.DEFAULT);
@@ -291,8 +332,12 @@ public class CommonServiceImpl implements CommonService {
             return 0;
         }
         // 删除数据
-        DeleteRequest request = new DeleteRequest(indexName, String.valueOf(uid));
-        DeleteResponse deleteResponse = highLevelClient.delete(request, RequestOptions.DEFAULT);
-        return deleteResponse.status().getStatus();
+        BulkRequest bulkRequest = new BulkRequest();
+        for (String uid : uids) {
+            DeleteRequest request = new DeleteRequest(indexName, String.valueOf(uid));
+            bulkRequest.add(request);
+        }
+        BulkResponse bulk = highLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+        return bulk.status().getStatus();
     }
 }

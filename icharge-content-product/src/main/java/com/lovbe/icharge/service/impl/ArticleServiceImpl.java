@@ -37,7 +37,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -144,31 +143,26 @@ public class ArticleServiceImpl implements ArticleService {
             articleDo.setSecondCategory("");
         }
         articleDao.updateById(articleDo);
-        // 如果文章已发布则需要更新文章的title、category等搜索字段
-        if (articleDo.getPublishedContentId() != null) {
-            ArticleEsEntity esEntity = new ArticleEsEntity()
-                    .setUid(articleDo.getUid())
-                    .setTitle(articleDo.getTitle())
-                    .setSummary(articleDo.getSummary())
-                    .setFirstCategory(articleDo.getFirstCategory())
-                    .setSecondCategory(articleDo.getSecondCategory());
-            List<Map> userTags = articleDo.getTags();
-            if (!CollectionUtils.isEmpty(userTags)) {
-                StringBuilder tagStr = new StringBuilder();
-                for (Map tag : userTags) {
-                    if (tagStr.length() > 0) {
-                        tagStr.append(",");
-                    }
-                    tagStr.append(tag.get(SysConstant.TAG_FIELD_CONTENT));
+        // 同步更新es数据
+        ArticleEsEntity esEntity = new ArticleEsEntity()
+                .setUid(articleDo.getUid())
+                .setTitle(articleDo.getTitle())
+                .setSummary(articleDo.getSummary())
+                .setIsPublic(articleDo.getIsPublic())
+                .setFirstCategory(articleDo.getFirstCategory())
+                .setSecondCategory(articleDo.getSecondCategory());
+        List<Map> userTags = articleDo.getTags();
+        if (!CollectionUtils.isEmpty(userTags)) {
+            StringBuilder tagStr = new StringBuilder();
+            for (Map tag : userTags) {
+                if (tagStr.length() > 0) {
+                    tagStr.append(",");
                 }
-                esEntity.setUserTags(tagStr.toString());
+                tagStr.append(tag.get(SysConstant.TAG_FIELD_CONTENT));
             }
-            try {
-                commonService.updateElasticsearchArticle(esEntity);
-            } catch (IOException e) {
-                log.error("[更新文章信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
-            }
+            esEntity.setUserTags(tagStr.toString());
         }
+        commonService.updateElasticsearchArticle(Arrays.asList(esEntity));
     }
 
     @Override
@@ -296,34 +290,93 @@ public class ArticleServiceImpl implements ArticleService {
         }
         articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
         articleDao.updateById(articleDo);
+        // 删除Elasticsearch中的数据
+        commonService.deleteElasticsearchArticle(Arrays.asList(String.valueOf(articleId)));
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void articleBatchOperate(BaseRequest<ArticleOperateDTO> requestDto, long userId) {
-        ArticleOperateDTO data = requestDto.getData();
-        if (SysConstant.ARTICLE_BATCH_MOVE.equals(data.getOperateType())) {
-            Assert.notNull(data.getColumnId(), "专栏id不得为空");
-        }
         // 获取文章信息判断用于状态判断
+        ArticleOperateDTO data = requestDto.getData();
         List<ArticleDo> articleList = articleDao.selectBatchIds(data.getArticleList());
+        List<String> articleIds = new ArrayList<>();
         articleList = articleList.stream()
+                .peek(articleDo -> articleIds.add(String.valueOf(articleDo.getUid())))
                 .filter(article -> CommonStatusEnum.isNormal(article.getStatus())
                         && Objects.equals(article.getUserId(), userId))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(articleList)) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
+
+        // 批量发布
         if (SysConstant.ARTICLE_BATCH_PUBLISH.equals(data.getOperateType())) {
-            List<ArticleDo> collect = articleList.stream()
-                    .filter(article -> article.getIsPublic() != null && article.getIsPublic() == 1)
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(collect)) {
-                throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED);
-            }
-            articleDao.batchUpdate(collect, data.getColumnId(), data.getOperateType());
+            batchPublish(articleList);
             return;
         }
-        articleDao.batchUpdate(articleList, data.getColumnId(), data.getOperateType());
+
+        // 批量移至专栏，需要继承专栏的权限
+        if (Objects.equals(SysConstant.ARTICLE_BATCH_MOVE, data.getOperateType())) {
+            ColumnDo columnDo = columnDao.selectById(data.getColumnId());
+            Assert.notNull(columnDo, ServiceErrorCodes.COLUMN_NOT_EXIST.getMsg());
+            articleDao.batchUpdate(articleList, data.getColumnId(), columnDo.getIsPublic(), data.getOperateType());
+            // 更新es状态数据
+            List<ArticleEsEntity> esEntityList = articleList.stream()
+                    .map(article -> new ArticleEsEntity()
+                            .setUid(article.getUid())
+                            .setIsPublic(columnDo.getIsPublic())
+                    )
+                    .collect(Collectors.toList());
+            commonService.updateElasticsearchArticle(esEntityList);
+            return;
+        }
+
+        // 批量删除，需要对应删除es数据
+        if (Objects.equals(SysConstant.ARTICLE_BATCH_DELETE, data.getOperateType())) {
+            articleDao.batchUpdate(articleList, data.getColumnId(), null, data.getOperateType());
+            commonService.deleteElasticsearchArticle(articleIds);
+        }
+    }
+
+   @Override
+    public void batchPublish(List<ArticleDo> articleList) {
+        List<Long> contentIs = new ArrayList<>();
+        List<ArticleDo> collect = articleList.stream()
+                .filter(article -> article.getIsPublic() != null &&
+                        article.getLatestContentId() != null &&
+                        article.getIsPublic() == 1 &&
+                        article.getPublishStatus() != null &&
+                        article.getPublishStatus() != 0)
+                .peek(article -> contentIs.add(article.getLatestContentId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect) || contentIs.size() == 0) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_PUBLISH_FAILED2);
+        }
+        // 获取文章内容信息
+        List<ContentDo> contentList = contentDao.selectBatchIds(contentIs);
+        if (CollectionUtils.isEmpty(contentList)) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_EMPTY_PUBLISH_FAILED);
+        }
+        Map<Long, ContentDo> contentMap = contentList.stream()
+                .collect(Collectors.toMap(ContentDo::getUid, Function.identity(), (a, b) -> b));
+        // 过滤没有内容的文章
+        collect = collect.stream()
+                .filter(articleDo -> contentMap.containsKey(articleDo.getLatestContentId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect)) {
+            throw new ServiceException(ServiceErrorCodes.ARTICLE_EMPTY_PUBLISH_FAILED);
+        }
+        articleDao.batchUpdate(collect, null, null, SysConstant.ARTICLE_BATCH_PUBLISH);
+        // 发送消息
+        for (ArticleDo articleDo : collect) {
+            ContentDo contentDo = contentMap.get(articleDo.getLatestContentId());
+            commonService.sendMessage(appName, publishActionTopic,
+                    new ContentPublishDTO(articleDo.getUid(),
+                            SysConstant.TARGET_TYPE_ARTICLE,
+                            articleDo.getLatestContentId(),
+                            contentDo.getUpdateTime()));
+        }
     }
 
     @Override
@@ -349,8 +402,7 @@ public class ArticleServiceImpl implements ArticleService {
                     .setUpdateTime(createTime);
             articleDo.setTitle(articleDo.getTitle() + " 副本")
                     .setUri(commonService.getBeautifulId())
-                    .setPublishStatus(0)
-                    .setPublishedContentId(null);
+                    .setPublishStatus(0);
             if (articleDo.getLatestContentId() != null) {
                 long newId = YitIdHelper.nextId();
                 newContent.put(articleDo.getLatestContentId(), newId);
@@ -479,7 +531,7 @@ public class ArticleServiceImpl implements ArticleService {
                                 articleEsEntity.setTags(StringUtils.collectionToDelimitedString(subList, ","));
                             }
                         }
-                        commonService.updateElasticsearchArticle(articleEsEntity);
+                        commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
                     }
                 } else if (resultDto != null && !resultDto.isResult()) {
                     log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());

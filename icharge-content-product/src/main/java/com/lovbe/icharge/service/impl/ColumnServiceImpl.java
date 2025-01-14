@@ -78,12 +78,9 @@ public class ColumnServiceImpl implements ColumnService {
             ColumnEsEntity esEntity = new ColumnEsEntity()
                     .setUid(columnDo.getUid())
                     .setTitle(columnDo.getTitle())
+                    .setIsPublic(columnDo.getIsPublic())
                     .setSynopsis(columnDo.getSynopsis());
-            try {
-                commonService.updateElasticsearchColumn(esEntity);
-            } catch (IOException e) {
-                log.error("[更新专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
-            }
+            commonService.updateElasticsearchColumn(Arrays.asList(esEntity));
         }
         return columnVo;
     }
@@ -127,28 +124,31 @@ public class ColumnServiceImpl implements ColumnService {
         columnDao.updateById(columnDo);
         // 如果权限变动，更新所有文章的权限
         if (isPublic != null) {
+            // 更新专栏权限信息
+            ColumnEsEntity columnEsEntity = new ColumnEsEntity()
+                    .setUid(columnDo.getUid())
+                    .setTitle(columnDo.getTitle())
+                    .setSynopsis(columnDo.getSynopsis());
+            commonService.updateElasticsearchColumn(Arrays.asList(columnEsEntity));
+            // 获取专栏下的文章列表
+            List<ArticleDo> selectList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                    .eq(ArticleDo::getColumnId, columnDTO.getUid())
+                    .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+            );
+            if (CollectionUtils.isEmpty(selectList)) {
+                return;
+            }
             ArticleDo articleDo = new ArticleDo().setIsPublic(isPublic);
             articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
                     .eq(ArticleDo::getColumnId, columnDTO.getUid())
                     .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
-        }
-
-        // 如果权限为public, 更新elasticsearch，如果为private则直接删除
-        if (columnDTO.getIsPublic() == null) {
-            return;
-        }
-        ColumnEsEntity columnEsEntity = new ColumnEsEntity()
-                .setUid(columnDo.getUid())
-                .setTitle(columnDo.getTitle())
-                .setSynopsis(columnDo.getSynopsis());
-        try {
-            if (columnDTO.getIsPublic() == 1) {
-                commonService.updateElasticsearchColumn(columnEsEntity);
-            } else if (columnDTO.getIsPublic() == 0) {
-                commonService.deleteElasticsearchColumn(columnEsEntity);
-            }
-        } catch (IOException e) {
-            log.error("[更新/删除专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
+            // 同步更新ES中文章数据
+            List<ArticleEsEntity> articleEsEntityList = selectList.stream()
+                    .map(article -> new ArticleEsEntity()
+                            .setUid(article.getUid())
+                            .setIsPublic(article.getIsPublic()))
+                    .collect(Collectors.toList());
+            commonService.updateElasticsearchArticle(articleEsEntityList);
         }
     }
 
@@ -176,10 +176,24 @@ public class ColumnServiceImpl implements ColumnService {
         checkColumnStatus(userId, columnDo);
         columnDo.setStatus(CommonStatusEnum.DELETE.getStatus());
         columnDao.updateById(columnDo);
+        // 删除es中的专栏数据
+        commonService.deleteElasticsearchColumn(Arrays.asList(String.valueOf(columnDTO.getUid())));
+        // 获取专栏内的文章
+        List<ArticleDo> selectList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                .eq(ArticleDo::getColumnId, columnDTO.getUid())
+                .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        if (CollectionUtils.isEmpty(selectList)) {
+            return;
+        }
         ArticleDo articleDo = new ArticleDo();
         articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
         articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
                 .eq(ArticleDo::getColumnId, columnDo.getUid()));
+        // 同步删除es中的文章数据
+        List<String> ids = selectList.stream()
+                .map(article -> String.valueOf(article.getUid()))
+                .collect(Collectors.toList());
+        commonService.deleteElasticsearchArticle(ids);
     }
 
     @Override
@@ -298,34 +312,39 @@ public class ColumnServiceImpl implements ColumnService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchOperate(BaseRequest<ColumnOperateDTO> columnRequest, long userId) {
+        // 文章状态校验
         ColumnOperateDTO data = columnRequest.getData();
         List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
                 .in(ArticleDo::getUid, data.getArticleList()));
-        // 文章状态校验
+        List<String> articleIds = new ArrayList<>();
         selectedList = selectedList.stream()
+                .peek(articleDo -> articleIds.add(String.valueOf(articleDo.getUid())))
                 .filter(articleDo -> Objects.equals(articleDo.getUserId(), userId)
                         && CommonStatusEnum.isNormal(articleDo.getStatus()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(selectedList)) {
             throw new ServiceException(ServiceErrorCodes.ARTICLE_NOT_EXIST);
         }
+
         // 批量发布
         if (SysConstant.ARTICLE_BATCH_PUBLISH.equals(data.getOperateType())) {
-            ColumnDo columnDo = columnDao.selectById(data.getColumnId());
-            if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
-                throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_EXIST);
-            }
-            selectedList.forEach(articleDo -> {
-                articleService.publishArticle(articleDo.getUid(), userId);
-            });
+            articleService.batchPublish(selectedList);
             return;
         }
-        // 批量移出专栏/删除文章
-        if (SysConstant.ARTICLE_BATCH_REMOVE.equals(data.getOperateType()) ||
-                SysConstant.ARTICLE_BATCH_DELETE.equals(data.getOperateType())) {
-            articleDao.batchUpdate(selectedList, data.getColumnId(), data.getOperateType());
+
+        // 批量移出专栏
+        if (SysConstant.ARTICLE_BATCH_REMOVE.equals(data.getOperateType())) {
+            articleDao.batchUpdate(selectedList, data.getColumnId(), null, data.getOperateType());
             return;
         }
+
+        // 批量删除文章
+        if (SysConstant.ARTICLE_BATCH_DELETE.equals(data.getOperateType())) {
+            articleDao.batchUpdate(selectedList, data.getColumnId(), null, data.getOperateType());
+            commonService.deleteElasticsearchArticle(articleIds);
+            return;
+        }
+
         // 批量导出文章
         if (SysConstant.ARTICLE_BATCH_EXPORT.equals(data.getOperateType())) {
             //TODO 导出

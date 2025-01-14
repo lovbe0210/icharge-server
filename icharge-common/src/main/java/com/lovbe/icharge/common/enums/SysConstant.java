@@ -110,6 +110,14 @@ public class SysConstant {
     public static final String ES_INDEX_ARTICLE = "c_article";
     public static final String ES_INDEX_COLUMN = "c_column";
     public static final String ES_INDEX_USER = "p_user";
+
+    /**
+     * es字段类型
+     */
+    public static final String ES_FIELD_TYPE_LONG = "long";
+    public static final String ES_FIELD_TYPE_INTEGER = "integer";
+    public static final String ES_FIELD_TYPE_TEXT = "text";
+
     /**
      * es索引字段名
      */
@@ -122,6 +130,8 @@ public class SysConstant {
     public static final String ES_FILED_CATEGORY1 = "firstCategory";
     // 用户设置的二级分类
     public static final String ES_FILED_CATEGORY2 = "secondCategory";
+    // 是否公开
+    public static final String ES_FILED_PUBLIC = "isPublic";
 
     /**
      * 标签json字段-内容

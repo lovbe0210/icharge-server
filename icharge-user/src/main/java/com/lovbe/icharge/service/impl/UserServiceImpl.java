@@ -216,11 +216,7 @@ public class UserServiceImpl implements UserService {
         UserEsEntity userEsEntity = new UserEsEntity()
                 .setUid(userId)
                 .setUsername(userDTO.getUsername());
-        try {
-            commonService.updateElasticsearchUser(userEsEntity);
-        } catch (IOException e) {
-            log.error("[更新用户信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
-        }
+        commonService.updateElasticsearchUser(userEsEntity);
     }
 
     @Override

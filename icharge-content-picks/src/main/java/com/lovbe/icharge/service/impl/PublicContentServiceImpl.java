@@ -11,7 +11,6 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
@@ -43,17 +42,14 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -251,6 +247,8 @@ public class PublicContentServiceImpl implements PublicContentService {
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
                 // 设置字段分词匹配
                 BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                // 添加isPublic=1的过滤条件
+                boolQuery.filter(QueryBuilders.termQuery(SysConstant.ES_FILED_PUBLIC, 1));
                 if (StringUtils.hasLength(esUser.getCategory())) {
                     boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CATEGORY, esUser.getCategory()).boost(0.8F));
                 }
@@ -434,7 +432,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         boolean hasMore = typedTuples.size() == data.getLimit();
         Set<Object> followSet = new HashSet<>();
         if (userId != null) {
-            // TODO
+            // TODO 获取关注状态
 //            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
 //            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
         }
@@ -459,6 +457,8 @@ public class PublicContentServiceImpl implements PublicContentService {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         // 设置字段分词匹配
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        // 添加isPublic=1的过滤条件
+        boolQuery.filter(QueryBuilders.termQuery(SysConstant.ES_FILED_PUBLIC, 1));
         // 先按照一二级分类进行获取，然后再使用AI总结的分类进行获取
         String firstCategory = requestData.getFirstCategory();
         String secondCategory = requestData.getSecondCategory();
@@ -485,7 +485,6 @@ public class PublicContentServiceImpl implements PublicContentService {
                     }
                     category += menu.getMenuName();
                 }
-
             }
         }
         if (secondCategory == null) {

@@ -1,6 +1,5 @@
 package com.lovbe.icharge.common.util;
 
-import cn.hutool.core.map.MapUtil;
 import com.lovbe.icharge.common.annotation.EsFieldType;
 import com.lovbe.icharge.common.annotation.EsIndex;
 import org.springframework.util.StringUtils;
@@ -19,6 +18,8 @@ public class ElasticSearchUtils {
     public static final Map<String, Object> settings = Map.of("number_of_shards", 1, "number_of_replicas", 0);
     // id类型
     public static final Map<String, String> typeLong = Map.of("type", "long");
+    // int数据类型
+    public static final Map<String, String> typeInteger = Map.of("type", "integer");
     // 文本类型，在做索引时使用ik_max_word进行最细粒度的拆分，在搜索时对搜索词进行最粗粒度的拆分得到比较准确的结果
     public static final Map<String, String> typeText = Map.of("type", "text", "analyzer", "ik_max_word", "search_analyzer", "ik_smart");
 
@@ -41,6 +42,9 @@ public class ElasticSearchUtils {
                 switch (value) {
                     case "long":
                         fieldTypeMap = typeLong;
+                        break;
+                    case "integer":
+                        fieldTypeMap = typeInteger;
                         break;
                     case "text":
                         fieldTypeMap = new HashMap<>(typeText);

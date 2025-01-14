@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
@@ -104,6 +105,15 @@ public interface ArticleService {
     void deleteArticle(Long articleId, long userId);
 
     void articleBatchOperate(BaseRequest<ArticleOperateDTO> requestDto, long userId);
+
+    /**
+     * @description 批量发布文章
+     * @param[1] articleId
+     * @param[2] userId
+     * @author lovbe0210
+     * @date 2024/10/29 0:27
+     */
+    void batchPublish(List<ArticleDo> articleList);
 
     /**
      * @description 专栏文章复制

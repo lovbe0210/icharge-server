@@ -1,6 +1,5 @@
 package com.lovbe.icharge.common.config;
 
-import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import jakarta.annotation.Resource;
 import org.apache.http.HttpHost;

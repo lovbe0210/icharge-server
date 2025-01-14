@@ -13,21 +13,21 @@ public class UserEsEntity {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
-    @EsFieldType("long")
+    @EsFieldType(SysConstant.ES_FIELD_TYPE_LONG)
     private Long uid;
     /**
      * 文章标题
      */
-    @EsFieldType("text")
+    @EsFieldType(SysConstant.ES_FIELD_TYPE_TEXT)
     private String username;
     /**
      * 兴趣爱好
      */
-    @EsFieldType(value = "text", analyzer = "ik_smart")
+    @EsFieldType(value = SysConstant.ES_FIELD_TYPE_TEXT, analyzer = "ik_smart")
     private String category;
     /**
      * 推荐系统标签
      */
-    @EsFieldType(value = "text", analyzer = "ik_smart")
+    @EsFieldType(value = SysConstant.ES_FIELD_TYPE_TEXT, analyzer = "ik_smart")
     private String tags;
 }

@@ -66,13 +66,14 @@ public interface CommonService {
     AIPortraitTagResultDTO sendPortraitTagChat(String tags);
 
     /**
-     * @description: 更新文章到elasticsearch
+     * @description: 更新/删除文章到elasticsearch
      * @param: ArticleEsEntity
      * @return: void
      * @author: lovbe0210
      * @date: 2025/1/5 11:04
      */
-    void updateElasticsearchArticle(ArticleEsEntity articleEsEntity) throws IOException;
+    void updateElasticsearchArticle(List<ArticleEsEntity> esArticleList);
+    void deleteElasticsearchArticle(List<String> articleIdList);
 
     /**
      * @description: 更新用户信息到elasticsearch
@@ -81,23 +82,15 @@ public interface CommonService {
      * @author: lovbe0210
      * @date: 2025/1/5 11:04
      */
-    void updateElasticsearchUser(UserEsEntity userEsEntity) throws IOException;
+    void updateElasticsearchUser(List<UserEsEntity> esUserList);
 
     /**
-     * @description: 更新专栏信息到elasticsearch
+     * @description: 更新/删除专栏信息到elasticsearch
      * @param: ArticleEsEntity
      * @return: void
      * @author: lovbe0210
      * @date: 2025/1/5 11:04
      */
-    void updateElasticsearchColumn(ColumnEsEntity esEntity) throws IOException;
-
-    /**
-     * @description: 删除专栏信息到elasticsearch
-     * @param: ArticleEsEntity
-     * @return: void
-     * @author: lovbe0210
-     * @date: 2025/1/5 11:04
-     */
-    void deleteElasticsearchColumn(ColumnEsEntity columnEsEntity) throws IOException;
+    void updateElasticsearchColumn(List<ColumnEsEntity> esColumnList);
+    void deleteElasticsearchColumn(List<String> columnidList);
 }

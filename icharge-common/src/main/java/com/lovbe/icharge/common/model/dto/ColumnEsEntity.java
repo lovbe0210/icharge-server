@@ -13,16 +13,21 @@ public class ColumnEsEntity {
     /**
      * 主键 避免超出长度 前端丢失精度
      */
-    @EsFieldType("long")
+    @EsFieldType(SysConstant.ES_FIELD_TYPE_LONG)
     private Long uid;
     /**
      * 专栏标题
      */
-    @EsFieldType("text")
+    @EsFieldType(SysConstant.ES_FIELD_TYPE_TEXT)
     private String title;
     /**
      * 专栏简介
      */
-    @EsFieldType("text")
+    @EsFieldType(SysConstant.ES_FIELD_TYPE_TEXT)
     private String synopsis;
+    /**
+     * 是否公开
+     */
+    @EsFieldType(SysConstant.ES_FIELD_TYPE_INTEGER)
+    private Integer isPublic;
 }
