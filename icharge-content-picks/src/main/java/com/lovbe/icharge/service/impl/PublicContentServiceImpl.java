@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -26,6 +27,7 @@ import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
 import com.lovbe.icharge.entity.dto.CollectDo;
+import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
@@ -39,9 +41,12 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -480,7 +485,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                 if (Objects.equals(menu.getMenuCode(), secondCategory) && secondCategory != null) {
                     category += menu.getMenuName();
                     break;
-                }else if (Objects.equals(menu.getParentCode(), firstCategory) && secondCategory == null) {
+                } else if (Objects.equals(menu.getParentCode(), firstCategory) && secondCategory == null) {
                     if (category.length() != 0) {
                         category += ",";
                     }
@@ -509,6 +514,170 @@ public class PublicContentServiceImpl implements PublicContentService {
         } catch (IOException e) {
             log.error("[获取分类文章] --- 查询异常，errorInfo: {}", e.toString());
             return new PageBean<>(true, List.of());
+        }
+    }
+
+    @Override
+    public ResponseBean<SearchResultVo> getGlobalSearchResult(GlobalSearchDTO data, Long userId) {
+        SearchResultVo searchResult = new SearchResultVo();
+        // 通过elasticsearch进行搜索id然后去数据库查询明细
+        getSearchArticleResult(data, searchResult);
+        // 通过elasticsearch搜索专栏信息
+        // 通过elasticsearch搜索用户信息
+        return null;
+    }
+
+    private void getSearchArticleResult(GlobalSearchDTO data, SearchResultVo searchResult) {
+        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_ARTICLE);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 设置字段分词匹配
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        // 添加isPublic过滤公开内容,content不为null过滤已发布内容
+        boolQuery.filter(QueryBuilders.termQuery(SysConstant.ES_FILED_PUBLIC, 1))
+                .filter(QueryBuilders.existsQuery(SysConstant.ES_FILED_CONTENT));
+        // 添加关键词匹配 标题、文章摘要、文章内容
+        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TITLE, data.getKeywords()).boost(1.0F));
+        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_SUMMARY, data.getKeywords()).boost(0.8F));
+        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CONTENT, data.getKeywords()).boost(0.6F));
+        boolQuery.minimumShouldMatch(1);
+        log.info("[es搜索] --- 查询语句：{}", boolQuery);
+        searchSourceBuilder.query(boolQuery);
+        // 只获取id字段
+        searchSourceBuilder.fetchSource(new String[]{"uid", "title", "summary"}, null);
+        // 设置高亮显示
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field("title").fragmentSize(0).numOfFragments(0);
+        highlightBuilder.field("summary").fragmentSize(0).numOfFragments(0);
+        highlightBuilder.requireFieldMatch(true);
+        highlightBuilder.preTags("<span style=\"color: red\">");
+        highlightBuilder.postTags("</span>");
+        searchSourceBuilder.highlighter(highlightBuilder);
+        // 添加分页参数
+        searchSourceBuilder.from(data.getOffset());
+        searchSourceBuilder.size(data.getLimit());
+        searchRequest.source(searchSourceBuilder);
+        // 发送请求并处理响应
+        try {
+            SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            SearchHits searchHits = response.getHits();
+            if (searchHits != null && searchHits.getTotalHits().value == 0) {
+                searchResult.setSearchArticleCount(0)
+                        .setSearchArticleList(List.of());
+            } else if (searchHits != null && searchHits.getHits().length == 0){
+                searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
+                        .setSearchArticleList(List.of());
+            } else if (searchHits != null && searchHits.getHits().length != 0) {
+                // 构造搜索数据
+                List<Long> articleIds = new ArrayList<>();
+                Map<Long, FeaturedArticleVo> articleMap = Arrays.stream(searchHits.getHits())
+                        .map(hit -> {
+                            FeaturedArticleVo articleVo = new FeaturedArticleVo();
+                            articleVo.setUid(Long.valueOf(hit.getId()));
+                            articleIds.add(Long.valueOf(hit.getId()));
+                            if (articleVo != null && !CollectionUtils.isEmpty(hit.getHighlightFields())) {
+                                // 替换高亮红
+                                hit.getHighlightFields().values().forEach(highlightField -> {
+                                    String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
+                                    if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
+                                        articleVo.setTitle(highLightValue);
+                                    }
+                                    if (SysConstant.ES_FILED_SUMMARY.equals(highlightField.getName())) {
+                                        articleVo.setSummary(highLightValue);
+                                    }
+                                });
+                            }
+                            return articleVo;
+                        })
+                        .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
+                // 获取文章详细信息
+                List<FeaturedArticleVo> articleVoList = publicContentDao.selectPublicArticleList(articleIds);
+                if (CollectionUtils.isEmpty(articleVoList)) {
+                    searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
+                            .setSearchArticleList(List.of());
+                    return;
+                }
+                // 替换高亮字段
+                articleVoList.stream().forEach(article -> {
+                    FeaturedArticleVo highLightArticle = articleMap.get(article.getUid());
+                    if (highLightArticle != null && highLightArticle.getTitle() != null) {
+                        article.setTitle(highLightArticle.getTitle());
+                    }
+                    if (highLightArticle != null && highLightArticle.getSummary() != null) {
+                        article.setSummary(highLightArticle.getSummary());
+                    }
+                });
+                searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
+                        .setSearchArticleList(articleVoList);
+            }
+        } catch (IOException e) {
+            log.error("[获取搜索文章] --- 查询异常，errorInfo: {}", e.toString());
+        }
+    }
+
+    @Override
+    public List<FeaturedArticleVo> getScopeSearchResult(GlobalSearchDTO data, Long userId) {
+        List<FeaturedArticleVo> articleList = publicContentDao.selectArticleListByTarget(data, userId);
+        if (CollectionUtils.isEmpty(articleList)) {
+            return List.of();
+        }
+        Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
+                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
+        // 通过elasticsearch进行搜索文章然后获取查询详情
+        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_ARTICLE);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 设置字段分词匹配
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        // 添加uid直接过滤
+        boolQuery.filter(QueryBuilders.termsQuery(SysConstant.ES_FILED_UID, articleMap.keySet()));
+        // 添加关键词匹配 标题、用户标签、文章摘要、文章内容
+        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TITLE, data.getKeywords()).boost(1.0F));
+        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_SUMMARY, data.getKeywords()).boost(0.8F));
+        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CONTENT, data.getKeywords()).boost(0.6F));
+        boolQuery.minimumShouldMatch(1);
+        log.info("[es搜索] --- 查询语句：{}", boolQuery);
+        searchSourceBuilder.query(boolQuery);
+        // 只获取id字段
+        searchSourceBuilder.fetchSource(new String[]{"uid", "title", "summary"}, null);
+        // 设置高亮显示
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field("title").fragmentSize(0).numOfFragments(0);
+        highlightBuilder.field("summary").fragmentSize(0).numOfFragments(0);
+        highlightBuilder.requireFieldMatch(true);
+        highlightBuilder.preTags("<span style=\"color: red\">");
+        highlightBuilder.postTags("</span>");
+        searchSourceBuilder.highlighter(highlightBuilder);
+        searchRequest.source(searchSourceBuilder);
+        // 发送请求并处理响应
+        try {
+            SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            SearchHits searchHits = response.getHits();
+            if (searchHits != null && searchHits.getHits().length == 0) {
+                // 搜索结果为空
+                return List.of();
+            }
+            return Arrays.stream(searchHits.getHits())
+                    .map(hit -> {
+                        Long uid = Long.valueOf(hit.getId());
+                        FeaturedArticleVo articleVo = articleMap.get(uid);
+                        if (articleVo != null && !CollectionUtils.isEmpty(hit.getHighlightFields())) {
+                            // 替换高亮红
+                            hit.getHighlightFields().values().forEach(highlightField -> {
+                                String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
+                                if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
+                                    articleVo.setTitle(highLightValue);
+                                }
+                                if (SysConstant.ES_FILED_SUMMARY.equals(highlightField.getName())) {
+                                    articleVo.setSummary(highLightValue);
+                                }
+                            });
+                        }
+                        return articleVo;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            log.error("[获取搜索文章] --- 查询异常，errorInfo: {}", e.toString());
+            return List.of();
         }
     }
 
@@ -674,11 +843,11 @@ public class PublicContentServiceImpl implements PublicContentService {
     private PageBean<FeaturedArticleVo> searchEsArticleList(Long userId, SearchRequest searchRequest, RecommendRequestDTO requestData) throws IOException {
         SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
         SearchHits searchHits = response.getHits();
-        if (searchHits != null && searchHits.getTotalHits().value == 0) {
+        if (searchHits != null && searchHits.getHits().length == 0) {
             // 搜索结果为空
             return new PageBean<>(false, List.of());
         }
-        boolean hasMore = searchHits.getTotalHits().value == requestData.getLimit();
+        boolean hasMore = searchHits.getHits().length == requestData.getLimit();
         List<Long> articleIds = Arrays.stream(searchHits.getHits())
                 .map(hit -> Long.parseLong(hit.getId()))
                 .collect(Collectors.toList());

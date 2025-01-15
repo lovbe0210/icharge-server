@@ -5,11 +5,9 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
-import com.lovbe.icharge.entity.vo.PublicArticleVo;
-import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
-import com.lovbe.icharge.entity.vo.RecommendColumnVo;
-import com.lovbe.icharge.entity.vo.RouterInfoVo;
+import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -230,4 +228,33 @@ public class PublicContentController {
         return ResponseBean.ok(featuredArticle);
     }
 
+    /**
+     * description: 全局搜索
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/search/global")
+    public ResponseBean getGlobalSearchResult(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
+                                              @RequestHeader(value = "userId", required = false) Long userId) {
+        ResponseBean<SearchResultVo> SearchResultVo = contentService.getGlobalSearchResult(baseRequest.getData(), userId);
+        return ResponseBean.ok(SearchResultVo);
+    }
+
+    /**
+     * description: 范围搜索
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/search/scope")
+    public ResponseBean getScopeSearchResult(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
+                                              @RequestHeader(value = "userId", required = false) Long userId) {
+        GlobalSearchDTO data = baseRequest.getData();
+        Assert.isTrue(data.getColumnId() != null || data.getUserId() != null, "搜索范围不得为空");
+        List<FeaturedArticleVo> searchArticleList = contentService.getScopeSearchResult(data, userId);
+        return ResponseBean.ok(searchArticleList);
+    }
 }

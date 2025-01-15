@@ -237,6 +237,34 @@
         GROUP BY pu.uid
     </select>
 
+    <!-- 通过userId或者columnId获取公开文章列表 -->
+    <select id="selectArticleListByTarget" resultMap="publicArticleVoMap">
+        SELECT a.*, a.tags tags_str,
+               c.uri column_uri, c.title column_name,
+               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
+               sis.like_count, sis.comment_count, sis.collect_count, sis.view_count
+        FROM c_article a
+        LEFT JOIN p_user u ON a.user_id = u.uid
+        LEFT JOIN c_column c ON a.column_id = c.uid
+        LEFT JOIN s_interaction_statistic sis ON a.uid = sis.uid
+        WHERE a.status = 'A'
+            <if test="searchDTO.userId != null">
+                AND a.user_id = #{searchDTO.userId}
+            </if>
+            <if test="searchDTO.columnId != null">
+                AND a.column_id = #{searchDTO.columnId}
+            </if>
+            <if test="userId != null">
+                AND CASE WHEN a.user_id = #{userId} THEN 1 = 1
+                ELSE a.is_public = 1 AND a.published_content_id IS NOT NULL
+                END
+            </if>
+            <if test="userId == null">
+                AND a.is_public = 1
+                AND a.published_content_id IS NOT NULL
+            </if>
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>

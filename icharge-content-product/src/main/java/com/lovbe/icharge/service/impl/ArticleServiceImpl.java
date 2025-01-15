@@ -127,6 +127,13 @@ public class ArticleServiceImpl implements ArticleService {
             articleDo.setTags(JSONUtil.toList(tags, Map.class));
         }
         articleDo.setUpdateTime(new Date());
+        ArticleEsEntity esEntity = new ArticleEsEntity()
+                .setUid(articleDo.getUid())
+                .setTitle(articleDo.getTitle())
+                .setSummary(articleDo.getSummary())
+                .setIsPublic(articleDo.getIsPublic())
+                .setFirstCategory(articleDo.getFirstCategory())
+                .setSecondCategory(articleDo.getSecondCategory());
         BeanUtil.copyProperties(articleDTO, articleDo);
         // 判断是否需要更新封面文件
         if (!simpleUpdate && articleDTO.getCoverFile() != null) {
@@ -144,13 +151,23 @@ public class ArticleServiceImpl implements ArticleService {
         }
         articleDao.updateById(articleDo);
         // 同步更新es数据
-        ArticleEsEntity esEntity = new ArticleEsEntity()
-                .setUid(articleDo.getUid())
-                .setTitle(articleDo.getTitle())
-                .setSummary(articleDo.getSummary())
-                .setIsPublic(articleDo.getIsPublic())
-                .setFirstCategory(articleDo.getFirstCategory())
-                .setSecondCategory(articleDo.getSecondCategory());
+        if (articleDTO.getTitle() != null) {
+            esEntity.setTitle(articleDTO.getTitle());
+        }
+        if (articleDTO.getSummary() != null) {
+            esEntity.setSummary(articleDTO.getSummary());
+        }
+        if (articleDTO.getIsPublic() != null) {
+            esEntity.setIsPublic(articleDTO.getIsPublic());
+        }
+        if (articleDTO.getFirstCategory() != null) {
+            esEntity.setFirstCategory(articleDTO.getFirstCategory());
+            if (articleDTO.getSecondCategory() != null) {
+                esEntity.setSecondCategory(articleDTO.getSecondCategory());
+            } else {
+              esEntity.setSecondCategory("");
+            }
+        }
         List<Map> userTags = articleDo.getTags();
         if (!CollectionUtils.isEmpty(userTags)) {
             StringBuilder tagStr = new StringBuilder();

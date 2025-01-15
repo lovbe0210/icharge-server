@@ -1,6 +1,7 @@
 package com.lovbe.icharge.dao;
 
 import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RecommendColumnVo;
@@ -216,4 +217,14 @@ public interface PublicContentDao{
                     SELECT * FROM t_menu WHERE status = 'A'   
                     """)
     List<MenuDTO> selecctMenuList();
+
+    /**
+     * @description: 通过userId或者columnId获取公开文章列表
+     * @param: columnId
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.FeaturedArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/1/15 19:56
+     */
+    List<FeaturedArticleVo> selectArticleListByTarget(@Param("searchDTO") GlobalSearchDTO searchDTO,
+                                                      @Param("userId") Long userId);
 }

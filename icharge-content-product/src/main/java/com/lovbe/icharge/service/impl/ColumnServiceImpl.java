@@ -109,6 +109,11 @@ public class ColumnServiceImpl implements ColumnService {
         if (columnDTO.getIsPublic() != null && !Objects.equals(columnDTO.getIsPublic(), columnDo.getIsPublic())) {
             isPublic = columnDTO.getIsPublic();
         }
+        ColumnEsEntity columnEsEntity = new ColumnEsEntity()
+                .setUid(columnDo.getUid())
+                .setIsPublic(columnDo.getIsPublic())
+                .setTitle(columnDo.getTitle())
+                .setSynopsis(columnDo.getSynopsis());
         BeanUtil.copyProperties(columnDTO, columnDo);
         // 判断是否需要更新封面文件
         if (columnDTO.getCoverFile() != null) {
@@ -123,11 +128,15 @@ public class ColumnServiceImpl implements ColumnService {
         }
         columnDao.updateById(columnDo);
         // 更新专栏信息到es中
-        ColumnEsEntity columnEsEntity = new ColumnEsEntity()
-                .setUid(columnDo.getUid())
-                .setIsPublic(columnDo.getIsPublic())
-                .setTitle(columnDo.getTitle())
-                .setSynopsis(columnDo.getSynopsis());
+        if (columnDTO.getIsPublic() != null) {
+            columnEsEntity.setIsPublic(columnDTO.getIsPublic());
+        }
+        if (columnDTO.getTitle() != null) {
+            columnEsEntity.setTitle(columnDo.getTitle());
+        }
+        if (columnDTO.getSynopsis() != null) {
+            columnEsEntity.setSynopsis(columnDTO.getSynopsis());
+        }
         commonService.updateElasticsearchColumn(Arrays.asList(columnEsEntity));
         // 如果权限变动，更新所有文章的权限
         if (isPublic != null) {

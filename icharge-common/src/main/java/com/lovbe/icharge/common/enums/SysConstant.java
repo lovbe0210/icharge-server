@@ -132,6 +132,16 @@ public class SysConstant {
     public static final String ES_FILED_CATEGORY2 = "secondCategory";
     // 是否公开
     public static final String ES_FILED_PUBLIC = "isPublic";
+    // 文章、专栏、用户的uid
+    public static final String ES_FILED_UID = "uid";
+    // 文章、专栏标题
+    public static final String ES_FILED_TITLE = "title";
+    // 文章摘要
+    public static final String ES_FILED_SUMMARY = "summary";
+    // 专栏简介
+    public static final String ES_FILED_SYNOPSIS = "synopsis";
+    // 文章内容
+    public static final String ES_FILED_CONTENT = "content";
 
     /**
      * 标签json字段-内容
