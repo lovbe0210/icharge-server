@@ -126,7 +126,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/11 19:01
      */
-    List<UserInfoDo> getExcellentAuthor();
+    List<ExcellentUserVo> getExcellentAuthor();
 
     /**
      * @description: 获取创作者排行榜
@@ -135,7 +135,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/11 19:02
      */
-    PageBean<UserInfoDo> getRankAuthor(RecommendRequestDTO data, Long userId);
+    PageBean<ExcellentUserVo> getRankAuthor(RecommendRequestDTO data, Long userId);
 
     /**
      * @description: 获取文章分类列表

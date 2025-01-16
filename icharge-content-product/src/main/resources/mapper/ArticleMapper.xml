@@ -25,10 +25,10 @@
     </update>
     <update id="updateByPublishContent">
         UPDATE c_article set
-            publish_status = #{publishStatus},
+            publish_status = #{publishStatus}
             <if test="publishStatus == 3">
-                published_content_id = #{publishDTO.contentId},
-                publish_time = CASE WHEN publish_time IS NULL THEN NOW() ELSE publish_time END
+                , published_content_id = #{publishDTO.contentId}
+                , publish_time = CASE WHEN publish_time IS NULL THEN NOW() ELSE publish_time END
             </if>
         WHERE uid = #{publishDTO.targetId}
             AND status = 'A'

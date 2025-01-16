@@ -33,10 +33,6 @@ public class GlobalSearchDTO {
      * 请求坐标
      */
     private int offset = 0;
-    /**
-     * 排序方式 value: 0 最多浏览 1 最多收藏 2 最近更新
-     */
-    private String sortType;
 
     public int getLimit() {
         return limit < 1 ? 20 : limit > 100 ? 20 : limit;

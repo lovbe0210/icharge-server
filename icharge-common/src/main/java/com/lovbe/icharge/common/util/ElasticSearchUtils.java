@@ -14,6 +14,9 @@ import java.util.Map;
  * @Description: MS
  */
 public class ElasticSearchUtils {
+    public static final String IK_MAX_WORD = "ik_max_word";
+    public static final String IK_SMART = "ik_smart";
+    public static final String STANDARD = "standard";
     // 包含主分片和副分片数量的设置，默认都为1，一般设置主分片数小于等于集群节点数即可，此处单机副分片设为0
     public static final Map<String, Object> settings = Map.of("number_of_shards", 1, "number_of_replicas", 0);
     // id类型

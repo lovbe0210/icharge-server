@@ -196,7 +196,7 @@ public class PublicContentController {
      */
     @GetMapping("/author/excellent")
     public ResponseBean getExcellentAuthor() {
-        List<UserInfoDo> excellentAuthor = contentService.getExcellentAuthor();
+        List<ExcellentUserVo> excellentAuthor = contentService.getExcellentAuthor();
         return ResponseBean.ok(excellentAuthor);
     }
 
@@ -210,7 +210,7 @@ public class PublicContentController {
     @PostMapping("/author/rank")
     public ResponseBean getRankAuthor(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
                                       @RequestHeader(value = "userId", required = false) Long userId) {
-        PageBean<UserInfoDo> rankAuthor = contentService.getRankAuthor(baseRequest.getData(), userId);
+        PageBean<ExcellentUserVo> rankAuthor = contentService.getRankAuthor(baseRequest.getData(), userId);
         return ResponseBean.ok(rankAuthor);
     }
 

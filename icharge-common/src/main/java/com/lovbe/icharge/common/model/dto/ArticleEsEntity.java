@@ -3,6 +3,7 @@ package com.lovbe.icharge.common.model.dto;
 import com.lovbe.icharge.common.annotation.EsFieldType;
 import com.lovbe.icharge.common.annotation.EsIndex;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.util.ElasticSearchUtils;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -18,7 +19,7 @@ public class ArticleEsEntity {
     /**
      * 文章标题
      */
-    @EsFieldType(SysConstant.ES_FIELD_TYPE_TEXT)
+    @EsFieldType(value = SysConstant.ES_FIELD_TYPE_TEXT, searchAnalyzer = ElasticSearchUtils.IK_MAX_WORD)
     private String title;
     /**
      * 是否公开
@@ -28,7 +29,7 @@ public class ArticleEsEntity {
     /**
      * 文章摘要
      */
-    @EsFieldType(SysConstant.ES_FIELD_TYPE_TEXT)
+    @EsFieldType(value = SysConstant.ES_FIELD_TYPE_TEXT, searchAnalyzer = ElasticSearchUtils.IK_MAX_WORD)
     private String summary;
     /**
      * 文章内容

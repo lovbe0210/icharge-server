@@ -61,9 +61,4 @@ public class UserInfoDo extends BaseEntity {
      * 成长值
      */
     private Integer growthValue;
-    /**
-     * 是否关注
-     */
-    @TableField(exist = false)
-    private int isFollow;
 }

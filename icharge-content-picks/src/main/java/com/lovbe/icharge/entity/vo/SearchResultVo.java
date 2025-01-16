@@ -17,7 +17,7 @@ public class SearchResultVo {
     /**
      * 搜索结果-用户
      */
-    private List<UserInfoDo> searchUserList;
+    private List<ExcellentUserVo> searchUserList;
     /**
      * 搜索用户相关数
      */

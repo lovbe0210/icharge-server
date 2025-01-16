@@ -142,6 +142,8 @@ public class SysConstant {
     public static final String ES_FILED_SYNOPSIS = "synopsis";
     // 文章内容
     public static final String ES_FILED_CONTENT = "content";
+    // 用户名
+    public static final String ES_FILED_USERNAME = "username";
 
     /**
      * 标签json字段-内容

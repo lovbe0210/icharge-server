@@ -181,7 +181,7 @@ public interface PublicContentDao{
      * @author: lovbe0210
      * @date: 2025/1/9 16:57
      */
-    List<RecommendColumnVo> selectPublicColumnList(@Param("columnIds") List columnIds);
+    List<RecommendColumnVo> selectPublicColumnList(@Param("columnIds") Collection columnIds);
 
     /**
      * @description: 获取公开专栏信息
