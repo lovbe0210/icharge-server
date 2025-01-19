@@ -18,6 +18,7 @@ public class RecommendColumnVo extends BaseEntity {
      * 专栏标题
      */
     private String title;
+    private String highLightTitle;
     /**
      * 展示路径
      */
@@ -26,6 +27,7 @@ public class RecommendColumnVo extends BaseEntity {
      * 专栏简介
      */
     private String synopsis;
+    private String highLightSynopsis;
     /**
      * 所属用户信息
      */

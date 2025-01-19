@@ -37,11 +37,11 @@ public class UpdateUserDTO {
     /**
      * 位置
      */
-    @Length(max = 50, message = "地址字数不得超过200")
+    @Length(max = 50, message = "地址字数不得超过50")
     private String location;
     /**
      * 行业，领域
      */
-    @Length(max = 50, message = "领域字数不得超过50")
+    @Length(max = 15, message = "领域字数不得超过15")
     private String industry;
 }

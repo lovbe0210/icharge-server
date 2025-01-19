@@ -28,7 +28,9 @@
             a.title articleTitle,
             a.summary articleSummary,
             a.uri articleUri,
-            a.published_content_id
+            a.published_content_id,
+            a.create_time,
+            a.update_time
         FROM c_column c
         INNER JOIN c_article a ON c.uid = a.column_id
             AND a.`status` = 'A'
@@ -279,6 +281,8 @@
             <result column="articleSummary" property="summary"/>
             <result column="articleUri" property="uri"/>
             <result column="published_content_id" property="publishedContentId"/>
+            <result column="create_time" property="createTime"/>
+            <result column="update_time" property="updateTime"/>
         </collection>
     </resultMap>
 

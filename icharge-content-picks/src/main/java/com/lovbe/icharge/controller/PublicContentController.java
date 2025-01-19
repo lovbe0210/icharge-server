@@ -238,8 +238,50 @@ public class PublicContentController {
     @PostMapping("/search/global")
     public ResponseBean getGlobalSearchResult(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
                                               @RequestHeader(value = "userId", required = false) Long userId) {
-        ResponseBean<SearchResultVo> SearchResultVo = contentService.getGlobalSearchResult(baseRequest.getData(), userId);
-        return ResponseBean.ok(SearchResultVo);
+        SearchResultVo searchResult = contentService.getGlobalSearchResult(baseRequest.getData(), userId);
+        return ResponseBean.ok(searchResult);
+    }
+
+    /**
+     * description: 全局搜索
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/search/global/user")
+    public ResponseBean getGlobalSearchUserList(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
+                                                @RequestHeader(value = "userId", required = false) Long userId) {
+        List<ExcellentUserVo> searchUserList = contentService.getGlobalSearchUserList(baseRequest.getData(), userId);
+        return ResponseBean.ok(searchUserList);
+    }
+
+    /**
+     * description: 全局搜索专栏
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/search/global/column")
+    public ResponseBean getGlobalSearchColumnList(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
+                                                @RequestHeader(value = "userId", required = false) Long userId) {
+        List<RecommendColumnVo> searchcolumnList = contentService.getGlobalSearchColumnList(baseRequest.getData(), userId);
+        return ResponseBean.ok(searchcolumnList);
+    }
+
+    /**
+     * description: 全局搜索文章
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/search/global/article")
+    public ResponseBean getGlobalSearchArticleList(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
+                                                  @RequestHeader(value = "userId", required = false) Long userId) {
+        List<FeaturedArticleVo> searchArticleList = contentService.getGlobalSearchArticleList(baseRequest.getData(), userId);
+        return ResponseBean.ok(searchArticleList);
     }
 
     /**

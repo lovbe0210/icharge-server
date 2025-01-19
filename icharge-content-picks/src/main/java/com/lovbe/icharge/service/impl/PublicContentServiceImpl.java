@@ -521,7 +521,7 @@ public class PublicContentServiceImpl implements PublicContentService {
     }
 
     @Override
-    public ResponseBean<SearchResultVo> getGlobalSearchResult(GlobalSearchDTO data, Long userId) {
+    public SearchResultVo getGlobalSearchResult(GlobalSearchDTO data, Long userId) {
         SearchResultVo searchResult = new SearchResultVo();
         // 通过elasticsearch进行搜索id然后去数据库查询明细
         getSearchArticleResult(data, searchResult);
@@ -529,7 +529,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         getSearchColumnResult(data, searchResult);
         // 通过elasticsearch搜索用户信息
         getSearchUserResult(data, searchResult);
-        return ResponseBean.ok(searchResult);
+        return searchResult;
     }
 
     /**
@@ -661,10 +661,10 @@ public class PublicContentServiceImpl implements PublicContentService {
                                 hit.getHighlightFields().values().forEach(highlightField -> {
                                     String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
                                     if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
-                                        columnVo.setTitle(highLightValue);
+                                        columnVo.setHighLightTitle(highLightValue);
                                     }
                                     if (SysConstant.ES_FILED_SYNOPSIS.equals(highlightField.getName())) {
-                                        columnVo.setSynopsis(highLightValue);
+                                        columnVo.setHighLightSynopsis(highLightValue);
                                     }
                                 });
                             }
@@ -681,11 +681,11 @@ public class PublicContentServiceImpl implements PublicContentService {
                     if (!CollectionUtils.isEmpty(columnList)) {
                         columnList.forEach(column -> {
                             RecommendColumnVo columnVo = columnMap.get(column.getUid());
-                            if (columnVo != null && columnVo.getTitle() != null) {
-                                column.setTitle(columnVo.getTitle());
+                            if (columnVo != null && columnVo.getHighLightTitle() != null) {
+                                column.setHighLightTitle(columnVo.getHighLightTitle());
                             }
-                            if (columnVo != null && columnVo.getSynopsis() != null) {
-                                column.setSynopsis(columnVo.getSynopsis());
+                            if (columnVo != null && columnVo.getHighLightSynopsis() != null) {
+                                column.setHighLightSynopsis(columnVo.getHighLightSynopsis());
                             }
                         });
                     }
@@ -841,10 +841,10 @@ public class PublicContentServiceImpl implements PublicContentService {
                             hit.getHighlightFields().values().forEach(highlightField -> {
                                 String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
                                 if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
-                                    articleVo.setTitle(highLightValue);
+                                    articleVo.setHighLightTitle(highLightValue);
                                 }
                                 if (SysConstant.ES_FILED_SUMMARY.equals(highlightField.getName())) {
-                                    articleVo.setSummary(highLightValue);
+                                    articleVo.setHighLightSummary(highLightValue);
                                 }
                             });
                         }
@@ -856,6 +856,27 @@ public class PublicContentServiceImpl implements PublicContentService {
             log.error("[获取搜索文章] --- 查询异常，errorInfo: {}", e.toString());
             return List.of();
         }
+    }
+
+    @Override
+    public List<ExcellentUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId) {
+        SearchResultVo searchResult = new SearchResultVo();
+        getSearchUserResult(data, searchResult);
+        return searchResult.getSearchUserList();
+    }
+
+    @Override
+    public List<RecommendColumnVo> getGlobalSearchColumnList(GlobalSearchDTO data, Long userId) {
+        SearchResultVo searchResult = new SearchResultVo();
+        getSearchColumnResult(data, searchResult);
+        return searchResult.getSearchColumnList();
+    }
+
+    @Override
+    public List<FeaturedArticleVo> getGlobalSearchArticleList(GlobalSearchDTO data, Long userId) {
+        SearchResultVo searchResult = new SearchResultVo();
+        getSearchArticleResult(data, searchResult);
+        return searchResult.getSearchArticleList();
     }
 
     /**
@@ -1036,13 +1057,6 @@ public class PublicContentServiceImpl implements PublicContentService {
         String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
         Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
         Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
-                .peek(article -> {
-                    String tagsStr = article.getTagsStr();
-                    if (StringUtils.hasLength(tagsStr)) {
-                        List<Map> tagList = JsonUtils.parseArray(tagsStr, Map.class);
-                        article.setTags(tagList);
-                    }
-                })
                 .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity()));
         List<FeaturedArticleVo> recommendArticles = articleIds.stream()
                 .map(articleId -> articleMap.get(articleId))

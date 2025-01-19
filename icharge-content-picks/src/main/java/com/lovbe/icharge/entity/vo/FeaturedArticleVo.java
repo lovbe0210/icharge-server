@@ -3,8 +3,10 @@ package com.lovbe.icharge.entity.vo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.util.JsonUtils;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ public class FeaturedArticleVo extends BaseEntity {
      * 文章标题
      */
     private String title;
+    private String highLightTitle;
     /**
      * 展示路径
      */
@@ -46,6 +49,7 @@ public class FeaturedArticleVo extends BaseEntity {
      * 文章摘要
      */
     private String summary;
+    private String highLightSummary;
     /**
      * 封面地址
      */
@@ -80,4 +84,16 @@ public class FeaturedArticleVo extends BaseEntity {
      * 是否收藏
      */
     private boolean ifCollect;
+
+    public List<Map> getTags() {
+        if (StringUtils.hasLength(tagsStr)) {
+            try {
+                List<Map> tagList = JsonUtils.parseArray(tagsStr, Map.class);
+                return tagList;
+            } catch (Exception e) {
+                return tags;
+            }
+        }
+        return tags;
+    }
 }
