@@ -31,7 +31,6 @@
         <module>icharge-storage</module>
         <module>icharge-user</module>
         <module>icharge-content-product</module>
-        <module>icharge-search</module>
         <module>icharge-content-picks</module>
         <module>icharge-social</module>
         <module>icharge-level-encourage</module>

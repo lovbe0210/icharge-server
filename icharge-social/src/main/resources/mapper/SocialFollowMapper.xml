@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.SocialFollowDao">
+    <!-- 获取人际关系 -->
+    <select id="updateRelationShip">
+        INSERT INTO s_relationship (uid, user_id_master, user_id_slave, master_watch_slave, slave_watch_master)
+        VALUES (#{relationship.uid}, #{relationship.userIdMaster},  #{relationship.userIdSlave},
+                #{relationship.masterWatchSlave},  #{relationship.slaveWatchMaster})
+        ON DUPLICATE KEY UPDATE
+            <if test="isMaster">
+                master_watch_slave = #{relationship.masterWatchSlave}
+            </if>
+            <if test="!isMaster">
+                slave_watch_master = #{relationship.slaveWatchMaster}
+            </if>
+    </select>
+</mapper>

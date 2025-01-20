@@ -10,7 +10,7 @@ import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 import java.util.List;
 
 /**
- * @description: Oss基础客户端
+ * @description: 内容相关社交交互
  * @author: Lvhl
  * @date: 2024/5/9 13:20
  */

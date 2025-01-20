@@ -78,7 +78,6 @@
     <select id="selectPublicArticleList" resultMap="publicArticleVoMap">
         SELECT a.*, a.tags tags_str,
                c.uri column_uri, c.title column_name,
-               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
                sis.like_count, sis.comment_count, sis.collect_count, sis.view_count
         FROM c_article a
         LEFT JOIN p_user u ON a.user_id = u.uid
@@ -291,12 +290,6 @@
         <result property="title" column="title"/>
         <result property="uri" column="uri"/>
         <result property="userInfo.uid" column="user_id"/>
-        <result property="userInfo.username" column="username"/>
-        <result property="userInfo.domain" column="domain"/>
-        <result property="userInfo.level" column="level"/>
-        <result property="userInfo.avatarUrl" column="avatar_url"/>
-        <result property="userInfo.location" column="location"/>
-        <result property="userInfo.industry" column="industry"/>
         <result property="columnId" column="column_id"/>
         <result property="columnUri" column="column_uri"/>
         <result property="columnName" column="column_name"/>

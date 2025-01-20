@@ -105,25 +105,16 @@ public class PublicContentServiceImpl implements PublicContentService {
         String likedSetKey = RedisKeyConstant.getTargetLikedSet(articleDo.getUid());
         Set<ZSetOperations.TypedTuple<Object>> tupleList = RedisUtil.zsGetSet(likedSetKey, 0, 13, true);
         if (!CollectionUtils.isEmpty(tupleList)) {
-            List<Object> userIdList = new ArrayList<>();
+            List<UserInfoDo> userIdList = new ArrayList<>();
             for (ZSetOperations.TypedTuple<Object> tuple : tupleList) {
-                userIdList.add(tuple.getValue());
+                UserInfoDo userInfoDo = commonService.getCacheUser((Long) tuple.getValue());
+                userIdList.add(userInfoDo);
             }
-            HashMap<Long, UserInfoDo> userMap = new HashMap<>();
-            ResponseBean<List<UserInfoDo>> userResp = userService.getUserInfoList(new BaseRequest<>(Map.of("userIdList", userIdList)));
-            if (userResp != null && !CollectionUtils.isEmpty(userResp.getData())) {
-                Map<Long, UserInfoDo> collect = userResp.getData().stream()
-                        .collect(Collectors.toMap(UserInfoDo::getUid, Function.identity()));
-                userMap.putAll(collect);
+            if (userId != null) {
+                // 查询关注状态
+
             }
-            List<UserInfoDo> collect = userIdList.stream()
-                    .map(uid -> {
-                        UserInfoDo userInfo = CommonUtils.checkUserStatus(userMap.get(uid));
-                        userInfo.setUid((Long) uid);
-                        return userInfo;
-                    })
-                    .collect(Collectors.toList());
-            articleVo.setLikeUserList(collect);
+            articleVo.setLikeUserList(userIdList);
         } else {
             articleVo.setLikeUserList(List.of());
         }
@@ -769,6 +760,12 @@ public class PublicContentServiceImpl implements PublicContentService {
                 // 获取文章详细信息
                 List<FeaturedArticleVo> articleVoList = publicContentDao.selectPublicArticleList(articleIds);
                 if (CollectionUtils.isEmpty(articleVoList)) {
+                    // 用户信息填充
+                    for (FeaturedArticleVo article : articleVoList) {
+                        article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
+                        // TODO 关注情况
+
+                    }
                     searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
                             .setSearchArticleList(List.of());
                     return;
@@ -907,16 +904,18 @@ public class PublicContentServiceImpl implements PublicContentService {
             likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
         }
         Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
+                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
+        articleList = articleIds.stream()
+                .map(uid -> articleMap.get(uid))
+                .filter(Objects::nonNull)
                 .peek(article -> {
+                    // 填充用户信息
+                    article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
                     // 如果是登录用户获取点赞状态和收藏状态
                     if (userId != null) {
                         article.setIfLike(likeSet.contains(article.getUid()));
                     }
                 })
-                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
-        articleList = articleIds.stream()
-                .map(uid -> articleMap.get(uid))
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return new PageBean<>(hasMore, articleList);
     }
@@ -1061,7 +1060,12 @@ public class PublicContentServiceImpl implements PublicContentService {
         List<FeaturedArticleVo> recommendArticles = articleIds.stream()
                 .map(articleId -> articleMap.get(articleId))
                 .filter(Objects::nonNull)
-                .peek(articleVo -> articleVo.setIfLike(likeSet.contains(articleVo.getUid())))
+                .peek(articleVo -> {
+                    // 填充用户信息
+                    articleVo.setUserInfo(commonService.getCacheUser(articleVo.getUserInfo().getUid()));
+                    // 点赞状态
+                    articleVo.setIfLike(likeSet.contains(articleVo.getUid()));
+                })
                 .collect(Collectors.toList());
         return new PageBean<>(hasMore, recommendArticles);
     }
