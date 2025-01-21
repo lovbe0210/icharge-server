@@ -2,7 +2,6 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -13,12 +12,10 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
-import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
-import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
@@ -31,7 +28,6 @@ import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
-import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.get.GetRequest;
@@ -41,12 +37,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -72,8 +66,6 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Resource
     private BrowseHistoryDao browseHistoryDao;
     @Resource
-    private UserService userService;
-    @Resource
     private CommonService commonService;
     @Resource
     private CollectDao collectDao;
@@ -95,8 +87,8 @@ public class PublicContentServiceImpl implements PublicContentService {
 
         PublicArticleVo articleVo = new PublicArticleVo();
         BeanUtil.copyProperties(articleDo, articleVo);
-        // 已登陆查询点赞记录
         if (userId != null) {
+            // 已登陆查询点赞记录
             String likesSetKey = RedisKeyConstant.getUserLikesSet(userId);
             boolean hasValue = RedisUtil.zsHasValue(likesSetKey, articleDo.getUid());
             articleVo.setIfLike(hasValue);
@@ -107,12 +99,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         if (!CollectionUtils.isEmpty(tupleList)) {
             List<UserInfoDo> userIdList = new ArrayList<>();
             for (ZSetOperations.TypedTuple<Object> tuple : tupleList) {
-                UserInfoDo userInfoDo = commonService.getCacheUser((Long) tuple.getValue());
-                userIdList.add(userInfoDo);
-            }
-            if (userId != null) {
-                // 查询关注状态
-
+                userIdList.add(commonService.getCacheUser((Long) tuple.getValue()));
             }
             articleVo.setLikeUserList(userIdList);
         } else {
@@ -393,16 +380,19 @@ public class PublicContentServiceImpl implements PublicContentService {
             }
         }
         Map<Long, RecommendColumnVo> columnMap = columnList.stream()
+                .collect(Collectors.toMap(RecommendColumnVo::getUid, Function.identity(), (a, b) -> b));
+        columnList = columnIds.stream()
+                .map(uid -> columnMap.get(uid))
+                .filter(Objects::nonNull)
                 .peek(column -> {
+                    if (column.getUserInfo() != null) {
+                        column.setUserInfo(commonService.getCacheUser(column.getUserInfo().getUid()));
+                    }
                     // 如果是登录用户获取点赞状态和收藏状态
                     if (userId != null) {
                         column.setIfCollect(collectSet.contains(column.getUid()));
                     }
                 })
-                .collect(Collectors.toMap(RecommendColumnVo::getUid, Function.identity(), (a, b) -> b));
-        columnList = columnIds.stream()
-                .map(uid -> columnMap.get(uid))
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return new PageBean<>(hasMore, columnList);
     }
@@ -410,17 +400,24 @@ public class PublicContentServiceImpl implements PublicContentService {
     @Override
     public PageBean<RecommendColumnVo> getPublicColumn(RecommendRequestDTO data, Long userId) {
         List<RecommendColumnVo> publicColumn = publicContentDao.selectPagePublicColumnList(data);
+        if (!CollectionUtils.isEmpty(publicColumn)) {
+            for (RecommendColumnVo column : publicColumn) {
+                if (column.getUserInfo() != null) {
+                    column.setUserInfo(commonService.getCacheUser(column.getUserInfo().getUid()));
+                }
+            }
+        }
         return new PageBean<>(publicColumn != null && publicColumn.size() == data.getLimit(), publicColumn);
     }
 
     @Override
-    public List<ExcellentUserVo> getExcellentAuthor() {
-        PageBean<ExcellentUserVo> pageBean = getRankAuthor(new RecommendRequestDTO(3, 0), null);
+    public List<ExcellentAuthorVo> getExcellentAuthor() {
+        PageBean<ExcellentAuthorVo> pageBean = getRankAuthor(new RecommendRequestDTO(3, 0), null);
         return pageBean.getList();
     }
 
     @Override
-    public PageBean<ExcellentUserVo> getRankAuthor(RecommendRequestDTO data, Long userId) {
+    public PageBean<ExcellentAuthorVo> getRankAuthor(RecommendRequestDTO data, Long userId) {
         String rankSetKey = RedisKeyConstant.getRankSetKey(SysConstant.TARGET_TYPE_AUTHOR);
         Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(
                 rankSetKey, data.getOffset(), data.getOffset() + data.getLimit() - 1, true);
@@ -428,25 +425,30 @@ public class PublicContentServiceImpl implements PublicContentService {
             return new PageBean<>(false, List.of());
         }
         boolean hasMore = typedTuples.size() == data.getLimit();
-        Set<Object> followSet = new HashSet<>();
-        if (userId != null) {
-            // TODO 获取关注状态
-//            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
-//            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
-        }
-        List<ExcellentUserVo> collect = typedTuples.stream()
-                .map(tuple -> {
-                    Long uid = (Long) tuple.getValue();
-                    UserInfoDo userInfo = commonService.getCacheUser(uid);
-                    ExcellentUserVo userVo = new ExcellentUserVo();
-                    BeanUtil.copyProperties(userInfo, userVo);
-                    if (userId != null) {
-                        userVo.setIsFollow(followSet.contains(uid) ? 1 : 0);
-                    }
-                    return userVo;
-                })
+        List<Long> userIds = typedTuples.stream()
+                .map(tuple -> (Long) tuple.getValue())
                 .collect(Collectors.toList());
-        return new PageBean<>(hasMore, collect);
+        List<TargetStatisticDo> statisticList = publicContentDao.selectUserStatisticListByIds(userIds);
+        if (CollectionUtils.isEmpty(statisticList)) {
+            return new PageBean<>(hasMore, List.of());
+        }
+        Map<Long, TargetStatisticDo> statisticMap = statisticList.stream()
+                .collect(Collectors.toMap(TargetStatisticDo::getUid, Function.identity(), (a, b) -> b));
+        List<ExcellentAuthorVo> authorList = userIds.stream().map(uid -> {
+            UserInfoDo userInfoDo = commonService.getCacheUser(uid);
+            ExcellentAuthorVo authorVo = new ExcellentAuthorVo();
+            BeanUtil.copyProperties(userInfoDo, authorVo);
+            TargetStatisticDo statisticDo = statisticMap.get(uid);
+            if (statisticDo != null) {
+                authorVo.setLikeCount(statisticDo.getLikeCount())
+                        .setCollectCount(statisticDo.getCollectCount())
+                        .setArticleCount(statisticDo.getArticleCount())
+                        .setViewCount(statisticDo.getViewCount())
+                        .setFansCount(statisticDo.getFansCount());
+            }
+            return authorVo;
+        }).collect(Collectors.toList());
+        return new PageBean<>(hasMore, authorList);
     }
 
     @Override
@@ -511,18 +513,6 @@ public class PublicContentServiceImpl implements PublicContentService {
         }
     }
 
-    @Override
-    public SearchResultVo getGlobalSearchResult(GlobalSearchDTO data, Long userId) {
-        SearchResultVo searchResult = new SearchResultVo();
-        // 通过elasticsearch进行搜索id然后去数据库查询明细
-        getSearchArticleResult(data, searchResult);
-        // 通过elasticsearch搜索专栏信息
-        getSearchColumnResult(data, searchResult);
-        // 通过elasticsearch搜索用户信息
-        getSearchUserResult(data, searchResult);
-        return searchResult;
-    }
-
     /**
      * @description: 获取搜索用户
      * @param: data
@@ -559,15 +549,15 @@ public class PublicContentServiceImpl implements PublicContentService {
             if (searchHits != null && searchHits.getTotalHits().value == 0) {
                 searchResult.setSearchUserCount(0)
                         .setSearchUserList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0){
+            } else if (searchHits != null && searchHits.getHits().length == 0) {
                 searchResult.setSearchUserCount(Math.toIntExact(searchHits.getTotalHits().value))
                         .setSearchUserList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
                 // 构造搜索数据
-                List<ExcellentUserVo> userList = Arrays.stream(searchHits.getHits())
+                List<SearchUserVo> userList = Arrays.stream(searchHits.getHits())
                         .map(hit -> {
                             UserInfoDo userInfo = commonService.getCacheUser(Long.valueOf(hit.getId()));
-                            ExcellentUserVo userVo = new ExcellentUserVo();
+                            SearchUserVo userVo = new SearchUserVo();
                             BeanUtils.copyProperties(userInfo, userVo);
                             if (userInfo.getUid() == null || !CommonStatusEnum.isNormal(userInfo.getStatus())) {
                                 return null;
@@ -638,7 +628,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             if (searchHits != null && searchHits.getTotalHits().value == 0) {
                 searchResult.setSearchColumnCount(0)
                         .setSearchColumnList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0){
+            } else if (searchHits != null && searchHits.getHits().length == 0) {
                 searchResult.setSearchColumnCount(Math.toIntExact(searchHits.getTotalHits().value))
                         .setSearchColumnList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
@@ -731,7 +721,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             if (searchHits != null && searchHits.getTotalHits().value == 0) {
                 searchResult.setSearchArticleCount(0)
                         .setSearchArticleList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0){
+            } else if (searchHits != null && searchHits.getHits().length == 0) {
                 searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
                         .setSearchArticleList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
@@ -788,94 +778,6 @@ public class PublicContentServiceImpl implements PublicContentService {
         }
     }
 
-    @Override
-    public List<FeaturedArticleVo> getScopeSearchResult(GlobalSearchDTO data, Long userId) {
-        List<FeaturedArticleVo> articleList = publicContentDao.selectArticleListByTarget(data, userId);
-        if (CollectionUtils.isEmpty(articleList)) {
-            return List.of();
-        }
-        Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
-                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
-        // 通过elasticsearch进行搜索文章然后获取查询详情
-        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_ARTICLE);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 设置字段分词匹配
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        // 添加uid直接过滤
-        boolQuery.filter(QueryBuilders.termsQuery(SysConstant.ES_FILED_UID, articleMap.keySet()));
-        // 添加关键词匹配 标题、用户标签、文章摘要、文章内容
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TITLE, data.getKeywords()).boost(1.0F));
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_SUMMARY, data.getKeywords()).boost(0.8F));
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CONTENT, data.getKeywords()).boost(0.6F));
-        boolQuery.minimumShouldMatch(1);
-        log.info("[es搜索] --- 查询语句：{}", boolQuery);
-        searchSourceBuilder.query(boolQuery);
-        // 只获取id字段
-        searchSourceBuilder.fetchSource(new String[]{"uid", "title", "summary"}, null);
-        // 设置高亮显示
-        HighlightBuilder highlightBuilder = new HighlightBuilder();
-        highlightBuilder.field("title").fragmentSize(0).numOfFragments(0);
-        highlightBuilder.field("summary").fragmentSize(0).numOfFragments(0);
-        highlightBuilder.requireFieldMatch(true);
-        highlightBuilder.preTags("<span style=\"color: red\">");
-        highlightBuilder.postTags("</span>");
-        searchSourceBuilder.highlighter(highlightBuilder);
-        searchRequest.source(searchSourceBuilder);
-        // 发送请求并处理响应
-        try {
-            SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            SearchHits searchHits = response.getHits();
-            if (searchHits != null && searchHits.getHits().length == 0) {
-                // 搜索结果为空
-                return List.of();
-            }
-            return Arrays.stream(searchHits.getHits())
-                    .map(hit -> {
-                        Long uid = Long.valueOf(hit.getId());
-                        FeaturedArticleVo articleVo = articleMap.get(uid);
-                        if (articleVo != null && !CollectionUtils.isEmpty(hit.getHighlightFields())) {
-                            // 替换高亮红
-                            hit.getHighlightFields().values().forEach(highlightField -> {
-                                String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
-                                if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
-                                    articleVo.setHighLightTitle(highLightValue);
-                                }
-                                if (SysConstant.ES_FILED_SUMMARY.equals(highlightField.getName())) {
-                                    articleVo.setHighLightSummary(highLightValue);
-                                }
-                            });
-                        }
-                        return articleVo;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            log.error("[获取搜索文章] --- 查询异常，errorInfo: {}", e.toString());
-            return List.of();
-        }
-    }
-
-    @Override
-    public List<ExcellentUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId) {
-        SearchResultVo searchResult = new SearchResultVo();
-        getSearchUserResult(data, searchResult);
-        return searchResult.getSearchUserList();
-    }
-
-    @Override
-    public List<RecommendColumnVo> getGlobalSearchColumnList(GlobalSearchDTO data, Long userId) {
-        SearchResultVo searchResult = new SearchResultVo();
-        getSearchColumnResult(data, searchResult);
-        return searchResult.getSearchColumnList();
-    }
-
-    @Override
-    public List<FeaturedArticleVo> getGlobalSearchArticleList(GlobalSearchDTO data, Long userId) {
-        SearchResultVo searchResult = new SearchResultVo();
-        getSearchArticleResult(data, searchResult);
-        return searchResult.getSearchArticleList();
-    }
-
     /**
      * @description: 获取排行榜文章
      * @param: RecommendRequestDTO
@@ -910,7 +812,9 @@ public class PublicContentServiceImpl implements PublicContentService {
                 .filter(Objects::nonNull)
                 .peek(article -> {
                     // 填充用户信息
-                    article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
+                    if (article.getUserInfo() != null) {
+                        article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
+                    }
                     // 如果是登录用户获取点赞状态和收藏状态
                     if (userId != null) {
                         article.setIfLike(likeSet.contains(article.getUid()));
@@ -1062,7 +966,9 @@ public class PublicContentServiceImpl implements PublicContentService {
                 .filter(Objects::nonNull)
                 .peek(articleVo -> {
                     // 填充用户信息
-                    articleVo.setUserInfo(commonService.getCacheUser(articleVo.getUserInfo().getUid()));
+                    if (articleVo.getUserInfo() != null) {
+                        articleVo.setUserInfo(commonService.getCacheUser(articleVo.getUserInfo().getUid()));
+                    }
                     // 点赞状态
                     articleVo.setIfLike(likeSet.contains(articleVo.getUid()));
                 })

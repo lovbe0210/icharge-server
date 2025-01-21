@@ -39,13 +39,6 @@
             dc.is_top,
             dc.is_feature,
             dc.user_id,
-            pu.username,
-            pu.avatar_url,
-            pu.domain,
-            pu.location,
-            pu.industry,
-            pu.level,
-            pu.`status`,
             dc.content,
             dc.content_img_url,
             dc.create_time,
@@ -66,7 +59,6 @@
              ORDER BY is_top DESC, is_feature DESC, create_time ASC
              LIMIT #{commentDTO.offset}, #{commentDTO.limit}
              ) dc
-        LEFT JOIN p_user pu ON dc.user_id = pu.uid
         LEFT JOIN s_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         LEFT JOIN (
             SELECT
@@ -75,25 +67,10 @@
                 rc.parent_id AS reply_parent_id,
                 cis.like_count AS reply_like_count,
                 rc.user_id AS reply_user_id,
-                pu.username AS reply_username,
-                pu.avatar_url AS reply_avatar_url,
-                pu.domain AS reply_domain,
-                pu.location AS reply_location,
-                pu.industry AS reply_industry,
-                pu.level AS reply_level,
-                pu.`status` AS reply_status,
                 rc.content AS reply_content,
                 rc.content_img_url AS reply_content_img_url,
-                rc.create_time AS reply_create_time,
-                rpu.uid AS reply_reply_uid,
-                rpu.domain AS reply_reply_domain,
-                rpu.username AS reply_reply_username,
-                rpu.location AS reply_reply_location,
-                rpu.industry AS reply_reply_industry,
-                rpu.`status` AS reply_reply_status
+                rc.create_time AS reply_create_time
             FROM s_comment rc
-            LEFT JOIN p_user pu ON rc.user_id = pu.uid
-            LEFT JOIN p_user rpu ON rc.reply_user_id = rpu.uid
             LEFT JOIN s_interaction_statistic cis ON rc.uid = cis.uid AND cis.status = 'A'
             WHERE rc.`status` = 'A'
               AND rc.target_id = #{commentDTO.targetId}
@@ -116,30 +93,14 @@
                rc.parent_id,
                cis.like_count,
                rc.user_id,
-               pu.username,
-               pu.avatar_url,
-               pu.domain,
-               pu.location,
-               pu.industry,
-               pu.level,
-               pu.`status`,
                rc.content,
                rc.content_img_url,
                rc.create_time,
-               rpu.uid AS reply_user_id,
-               rpu.username AS reply_username,
-               rpu.avatar_url AS reply_avatar_url,
-               rpu.domain AS reply_domain,
-               rpu.location AS reply_location,
-               rpu.industry AS reply_industry,
-               rpu.level AS reply_level,
-               rpu.`status` AS reply_status,
+               rc.reply_user_id,
                NULL AS reply_uid
         FROM s_comment dc
         INNER JOIN s_comment rc ON dc.uid = rc.parent_id
             AND rc.status = 'A'
-        LEFT JOIN p_user pu ON rc.user_id = pu.uid
-        LEFT JOIN p_user rpu ON rc.reply_user_id = rpu.uid
         LEFT JOIN s_interaction_statistic cis ON dc.uid = cis.uid AND cis.status = 'A'
         WHERE dc.status = 'A'
         AND dc.uid = #{commentDTO.commentId}
@@ -155,13 +116,6 @@
         <result column="is_top" property="isTop"/>
         <result column="is_feature" property="isFeature"/>
         <result column="user_id" property="userInfo.uid"/>
-        <result column="username" property="userInfo.username"/>
-        <result column="avatar_url" property="userInfo.avatarUrl"/>
-        <result column="domain" property="userInfo.domain"/>
-        <result column="location" property="userInfo.location"/>
-        <result column="industry" property="userInfo.industry"/>
-        <result column="level" property="userInfo.level"/>
-        <result column="status" property="userInfo.status"/>
         <result column="content" property="content"/>
         <result column="content_img_url" property="contentImgUrl"/>
         <result column="create_time" property="createTime"/>
@@ -170,24 +124,10 @@
             <result column="reply_target_id" property="targetId"/>
             <result column="reply_like_count" property="likeCount"/>
             <result column="reply_user_id" property="userInfo.uid"/>
-            <result column="reply_username" property="userInfo.username"/>
-            <result column="reply_avatar_url" property="userInfo.avatarUrl"/>
-            <result column="reply_domain" property="userInfo.domain"/>
-            <result column="reply_status" property="userInfo.status"/>
-            <result column="reply_location" property="userInfo.location"/>
-            <result column="reply_industry" property="userInfo.industry"/>
-            <result column="reply_level" property="userInfo.level"/>
-            <result column="reply_status" property="userInfo.status"/>
             <result column="reply_content" property="content"/>
             <result column="reply_content_img_url" property="contentImgUrl"/>
             <result column="reply_create_time" property="createTime"/>
             <result column="reply_reply_uid" property="replyUserInfo.uid"/>
-            <result column="reply_reply_domain" property="replyUserInfo.domain"/>
-            <result column="reply_reply_username" property="replyUserInfo.username"/>
-            <result column="reply_reply_level" property="replyUserInfo.level"/>
-            <result column="reply_reply_location" property="replyUserInfo.location"/>
-            <result column="reply_reply_industry" property="replyUserInfo.industry"/>
-            <result column="reply_reply_status" property="replyUserInfo.status"/>
         </collection>
     </resultMap>
 
@@ -199,21 +139,7 @@
         <result column="is_top" property="isTop"/>
         <result column="is_feature" property="isFeature"/>
         <result column="user_id" property="userInfo.uid"/>
-        <result column="username" property="userInfo.username"/>
-        <result column="avatar_url" property="userInfo.avatarUrl"/>
-        <result column="domain" property="userInfo.domain"/>
-        <result column="location" property="userInfo.location"/>
-        <result column="industry" property="userInfo.industry"/>
-        <result column="level" property="userInfo.level"/>
-        <result column="status" property="userInfo.status"/>
         <result column="reply_user_id" property="replyUserInfo.uid"/>
-        <result column="reply_username" property="replyUserInfo.username"/>
-        <result column="reply_avatar_url" property="replyUserInfo.avatarUrl"/>
-        <result column="reply_domain" property="replyUserInfo.domain"/>
-        <result column="reply_location" property="replyUserInfo.location"/>
-        <result column="reply_industry" property="replyUserInfo.industry"/>
-        <result column="reply_level" property="replyUserInfo.level"/>
-        <result column="reply_status" property="replyUserInfo.status"/>
         <result column="content" property="content"/>
         <result column="content_img_url" property="contentImgUrl"/>
         <result column="create_time" property="createTime"/>

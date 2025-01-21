@@ -1,10 +1,8 @@
 package com.lovbe.icharge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.github.yitter.idgen.YitIdHelper;
-import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.entity.vo.RelationshipVo;
 import com.lovbe.icharge.dao.SocialFollowDao;
 import com.lovbe.icharge.entity.dto.RelationshipDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
@@ -14,9 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe0210
@@ -46,6 +44,8 @@ public class UserSocialServiceImpl implements UserSocialService {
                     .setMasterWatchSlave(0);
         }
         followDao.updateRelationShip(relationship, Objects.equals(masterId, userId));
+        // 发送用户关注或取消关注的消息，及逆行异步统计关注和粉丝数
+        // TODO
     }
 
     @Override
@@ -55,5 +55,32 @@ public class UserSocialServiceImpl implements UserSocialService {
         String uid = masterId + SysConstant.SEPARATOR + slaveId;
         RelationshipDo relationship = followDao.selectById(uid);
         return relationship;
+    }
+
+    @Override
+    public List<RelationshipVo> getRelationshipList(Long userId, String targetShip) {
+        List<RelationshipDo> relationshipList = null;
+        if (SysConstant.RELATIONSHIP_FOLLOW.equals(targetShip)) {
+            relationshipList = followDao.selectFollowList(userId);
+        } else if (SysConstant.RELATIONSHIP_FANS.equals(targetShip)) {
+            relationshipList = followDao.selectFansList(userId);
+        }
+        if (CollectionUtils.isEmpty(relationshipList)) {
+            return List.of();
+        }
+        return relationshipList.stream()
+                .map(relationship -> {
+                    RelationshipVo relationshipVo = new RelationshipVo()
+                            .setUid(relationship.getUid())
+                            .setUpdateTime(relationship.getUpdateTime())
+                            .setIsEachFollow(relationship.getMasterWatchSlave() == 1 && relationship.getSlaveWatchMaster() == 1 ? 1 : 0);
+                    if (Objects.equals(relationship.getUserIdMaster(), userId)) {
+                        relationshipVo.setUserId(relationship.getUserIdSlave());
+                    } else {
+                        relationshipVo.setUserId(relationship.getUserIdMaster());
+                    }
+                    return relationshipVo;
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -3,7 +3,7 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
-import com.lovbe.icharge.entity.vo.ExcellentUserVo;
+import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.SearchResultVo;
@@ -52,7 +52,7 @@ public class PublicSearchController {
     @PostMapping("/search/global/user")
     public ResponseBean getGlobalSearchUserList(@RequestBody @Valid BaseRequest<GlobalSearchDTO> baseRequest,
                                                 @RequestHeader(value = "userId", required = false) Long userId) {
-        List<ExcellentUserVo> searchUserList = searchService.getGlobalSearchUserList(baseRequest.getData(), userId);
+        List<SearchUserVo> searchUserList = searchService.getGlobalSearchUserList(baseRequest.getData(), userId);
         return ResponseBean.ok(searchUserList);
     }
 

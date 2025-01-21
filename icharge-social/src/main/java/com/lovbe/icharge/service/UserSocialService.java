@@ -1,9 +1,8 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.entity.vo.RelationshipVo;
 import com.lovbe.icharge.entity.dto.*;
-import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 
 import java.util.List;
 
@@ -32,4 +31,13 @@ public interface UserSocialService {
      * @date: 2025/1/20 22:41
      */
     RelationshipDo getRelationship(Long targetUser, Long userId);
+
+    /**
+     * @description: 获取关注或粉丝列表
+     * @param: userId
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.RelationshipVo>
+     * @author: lovbe0210
+     * @date: 2025/1/21 17:47
+     */
+    List<RelationshipVo> getRelationshipList(Long userId, String targetShip);
 }

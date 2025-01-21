@@ -1,7 +1,9 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @Author: lovbe0210
@@ -9,11 +11,9 @@ import lombok.Data;
  * @Description: 优秀作者
  */
 @Data
-public class ExcellentUserVo extends UserInfoDo {
-    /**
-     * 是否关注
-     */
-    private int isFollow;
+@NoArgsConstructor
+@AllArgsConstructor
+public class SearchUserVo extends UserInfoDo {
     /**
      * 高亮展示用户名
      */

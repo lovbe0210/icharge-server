@@ -4,6 +4,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
@@ -172,7 +173,7 @@ public class PublicContentController {
     }
 
     /**
-     * description: 获取首页精选文章
+     * description: 获取首页精选专栏
      *
      * @return ResponseBean<ArticleVO>
      * @author: Lvhl
@@ -194,7 +195,7 @@ public class PublicContentController {
      */
     @GetMapping("/author/excellent")
     public ResponseBean getExcellentAuthor() {
-        List<ExcellentUserVo> excellentAuthor = contentService.getExcellentAuthor();
+        List<ExcellentAuthorVo> excellentAuthor = contentService.getExcellentAuthor();
         return ResponseBean.ok(excellentAuthor);
     }
 
@@ -208,7 +209,7 @@ public class PublicContentController {
     @PostMapping("/author/rank")
     public ResponseBean getRankAuthor(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
                                       @RequestHeader(value = "userId", required = false) Long userId) {
-        PageBean<ExcellentUserVo> rankAuthor = contentService.getRankAuthor(baseRequest.getData(), userId);
+        PageBean<ExcellentAuthorVo> rankAuthor = contentService.getRankAuthor(baseRequest.getData(), userId);
         return ResponseBean.ok(rankAuthor);
     }
 

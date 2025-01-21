@@ -3,9 +3,7 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
-import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
-import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 
@@ -126,7 +124,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/11 19:01
      */
-    List<ExcellentUserVo> getExcellentAuthor();
+    List<ExcellentAuthorVo> getExcellentAuthor();
 
     /**
      * @description: 获取创作者排行榜
@@ -135,7 +133,7 @@ public interface PublicContentService {
      * @author: lovbe0210
      * @date: 2025/1/11 19:02
      */
-    PageBean<ExcellentUserVo> getRankAuthor(RecommendRequestDTO data, Long userId);
+    PageBean<ExcellentAuthorVo> getRankAuthor(RecommendRequestDTO data, Long userId);
 
     /**
      * @description: 获取文章分类列表
@@ -145,54 +143,4 @@ public interface PublicContentService {
      * @date: 2025/1/12 17:18
      */
     PageBean<FeaturedArticleVo> getCategoryArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
-
-    /**
-     * @description: 全局搜索
-     * @param: data
-     * @param: userId
-     * @return: com.lovbe.icharge.common.model.base.PageBean<com.lovbe.icharge.entity.vo.SearchResultVo>
-     * @author: lovbe0210
-     * @date: 2025/1/15 17:27
-     */
-    SearchResultVo getGlobalSearchResult(GlobalSearchDTO data, Long userId);
-
-    /**
-     * @description:  范围搜索
-     * @param: data
-     * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.FeaturedArticleVo>
-     * @author: lovbe0210
-     * @date: 2025/1/15 19:48
-     */
-    List<FeaturedArticleVo> getScopeSearchResult(GlobalSearchDTO data, Long userId);
-
-    /**
-     * @description: 全局搜索用户
-     * @param: data
-     * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.ExcellentUserVo>
-     * @author: lovbe0210
-     * @date: 2025/1/19 16:17
-     */
-    List<ExcellentUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId);
-
-    /**
-     * @description: 全局搜索专栏
-     * @param: data
-     * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.RecommendColumnVo>
-     * @author: lovbe0210
-     * @date: 2025/1/19 21:48
-     */
-    List<RecommendColumnVo> getGlobalSearchColumnList(GlobalSearchDTO data, Long userId);
-
-    /**
-     * @description: 全局搜索文章
-     * @param: data
-     * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.FeaturedArticleVo>
-     * @author: lovbe0210
-     * @date: 2025/1/19 21:53
-     */
-    List<FeaturedArticleVo> getGlobalSearchArticleList(GlobalSearchDTO data, Long userId);
 }

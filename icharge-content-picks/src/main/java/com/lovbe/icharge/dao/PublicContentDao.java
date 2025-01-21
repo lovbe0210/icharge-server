@@ -203,8 +203,16 @@ public interface PublicContentDao{
                     SELECT COUNT(*) FROM p_user WHERE status = 'A';
                     """)
     Integer selectUserCount();
-
     List<TargetStatisticDo> selectUserStatisticList(@Param("offset") int offset, @Param("limit") int limit);
+
+    /**
+     * @description:  获取用户相关统计数据
+     * @param: collect
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.TargetStatisticDo>
+     * @author: lovbe0210
+     * @date: 2025/1/22 1:59
+     */
+    List<TargetStatisticDo> selectUserStatisticListByIds(@Param("userIds") List<Long> collect);
 
     /**
      * @description: 获取菜单列表

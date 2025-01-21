@@ -14,4 +14,22 @@
                 slave_watch_master = #{relationship.slaveWatchMaster}
             </if>
     </select>
+
+    <!-- 获取我的关注列表 -->
+    <select id="selectFollowList" resultType="com.lovbe.icharge.entity.dto.RelationshipDo">
+        SELECT * FROM (
+            SELECT * FROM s_relationship WHERE user_id_master = #{userId} AND master_watch_slave = 1
+            UNION ALL
+            SELECT * FROM s_relationship WHERE user_id_slave = #{userId} AND slave_watch_master = 1
+         ) res GROUP BY uid ORDER BY update_time
+    </select>
+
+    <!-- 获取我的粉丝列表 -->
+    <select id="selectFansList" resultType="com.lovbe.icharge.entity.dto.RelationshipDo">
+        SELECT * FROM (
+            SELECT * FROM s_relationship WHERE user_id_master = #{userId} AND slave_watch_master = 1
+            UNION ALL
+            SELECT * FROM s_relationship WHERE user_id_slave = #{userId} AND master_watch_slave = 1
+        ) res GROUP BY uid ORDER BY update_time
+    </select>
 </mapper>

@@ -45,6 +45,12 @@ public class SysConstant {
     public static final String LOGOFF_USER_NAME = "注销用户";
 
     /**
+     * 人际关系：
+     */
+    public static final String RELATIONSHIP_FOLLOW = "follow";
+    public static final String RELATIONSHIP_FANS = "fans";
+
+    /**
      * 文章批量发布
      */
     public static final String ARTICLE_BATCH_PUBLISH = "1";

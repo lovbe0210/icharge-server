@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service;
 
 
+import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.vo.*;
 
@@ -40,7 +41,7 @@ public interface PublicSearchService {
      * @author: lovbe0210
      * @date: 2025/1/19 16:17
      */
-    List<ExcellentUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId);
+    List<SearchUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId);
 
     /**
      * @description: 全局搜索专栏

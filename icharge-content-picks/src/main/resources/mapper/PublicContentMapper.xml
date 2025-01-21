@@ -80,7 +80,6 @@
                c.uri column_uri, c.title column_name,
                sis.like_count, sis.comment_count, sis.collect_count, sis.view_count
         FROM c_article a
-        LEFT JOIN p_user u ON a.user_id = u.uid
         LEFT JOIN c_column c ON a.column_id = c.uid
         LEFT JOIN s_interaction_statistic sis ON a.uid = sis.uid
         WHERE a.uid IN
@@ -169,11 +168,9 @@
     <!-- 获取推荐专栏信息 -->
     <select id="selectPublicColumnList" resultMap="recommendColumnVoMap">
         SELECT c.*,
-               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
                s.like_count, s.comment_count, s.collect_count, s.view_count,
                COUNT(a.uid) article_count
         FROM c_column c
-        LEFT JOIN p_user u ON c.user_id = u.uid
         LEFT JOIN s_interaction_statistic s ON c.uid = s.uid
         LEFT JOIN c_article a ON c.uid = a.column_id AND a.published_content_id IS NOT NULL
         WHERE c.uid IN
@@ -189,10 +186,8 @@
     <!-- 获取公开专栏 -->
     <select id="selectPagePublicColumnList" resultMap="recommendColumnVoMap">
         SELECT c.*,
-               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
                s.like_count, s.comment_count, s.collect_count, s.view_count
         FROM c_column c
-        LEFT JOIN p_user u ON c.user_id = u.uid
         LEFT JOIN s_interaction_statistic s ON c.uid = s.uid
         WHERE c.status = 'A'
             AND c.is_public = 1
@@ -207,6 +202,8 @@
         </if>
         LIMIT #{data.offset}, #{data.limit}
     </select>
+
+    <!-- 获取全部用户相关统计，按分页获取 -->
     <select id="selectUserStatisticList" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
         SELECT
             pu.uid,
@@ -242,10 +239,8 @@
     <select id="selectArticleListByTarget" resultMap="publicArticleVoMap">
         SELECT a.*, a.tags tags_str,
                c.uri column_uri, c.title column_name,
-               u.domain, u.username, u.level, u.avatar_url, u.location, u.industry,
                sis.like_count, sis.comment_count, sis.collect_count, sis.view_count
         FROM c_article a
-        LEFT JOIN p_user u ON a.user_id = u.uid
         LEFT JOIN c_column c ON a.column_id = c.uid
         LEFT JOIN s_interaction_statistic sis ON a.uid = sis.uid
         WHERE a.status = 'A'
@@ -264,6 +259,31 @@
                 AND a.is_public = 1
                 AND a.published_content_id IS NOT NULL
             </if>
+    </select>
+
+    <!-- 获取用户相关统计数据 -->
+    <select id="selectUserStatisticListByIds" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT
+            pu.uid,
+            psis.fans_count,
+            COUNT( ca.uid ) article_count,
+            SUM(IFNULL( sis.like_count, 0 )) like_count,
+            SUM(IFNULL( sis.view_count, 0 )) view_count,
+            SUM(IFNULL( sis.collect_count, 0 )) collect_count,
+            SUM(IFNULL( sis.comment_count, 0 )) comment_count,
+            pu.create_time publish_time
+        FROM `p_user` pu
+        LEFT JOIN s_interaction_statistic psis ON pu.uid = psis.uid
+        LEFT JOIN c_article ca ON pu.uid = ca.user_id
+            AND ca.`status` = 'A'
+            AND ca.published_content_id IS NOT NULL
+            AND ca.is_public = 1
+        LEFT JOIN s_interaction_statistic sis ON ca.uid = sis.uid
+        WHERE pu.uid IN
+        <foreach collection="userIds" item="uid" separator="," open="(" close=")">
+            #{uid}
+        </foreach>
+        GROUP BY pu.uid
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
@@ -307,12 +327,6 @@
         <result property="title" column="title"/>
         <result property="uri" column="uri"/>
         <result property="userInfo.uid" column="user_id"/>
-        <result property="userInfo.username" column="username"/>
-        <result property="userInfo.domain" column="domain"/>
-        <result property="userInfo.level" column="level"/>
-        <result property="userInfo.avatarUrl" column="avatar_url"/>
-        <result property="userInfo.location" column="location"/>
-        <result property="userInfo.industry" column="industry"/>
         <result property="synopsis" column="synopsis"/>
         <result property="coverUrl" column="cover_url"/>
         <result property="articleCount" column="article_count"/>

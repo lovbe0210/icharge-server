@@ -1,6 +1,5 @@
 package com.lovbe.icharge.entity.vo;
 
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -17,7 +16,7 @@ public class SearchResultVo {
     /**
      * 搜索结果-用户
      */
-    private List<ExcellentUserVo> searchUserList;
+    private List<SearchUserVo> searchUserList;
     /**
      * 搜索用户相关数
      */

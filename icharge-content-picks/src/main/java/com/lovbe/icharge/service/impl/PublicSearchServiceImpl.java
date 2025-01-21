@@ -1,40 +1,16 @@
 package com.lovbe.icharge.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.codec.Base64;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
-import com.lovbe.icharge.common.exception.ServiceErrorCodes;
-import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.common.model.base.PageBean;
-import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
-import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.common.service.CommonService;
-import com.lovbe.icharge.common.util.CommonUtils;
-import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
-import com.lovbe.icharge.common.util.redis.RedisUtil;
-import com.lovbe.icharge.common.util.servlet.ServletUtils;
-import com.lovbe.icharge.dao.BrowseHistoryDao;
-import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.PublicContentDao;
-import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
-import com.lovbe.icharge.entity.dto.CollectDo;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
-import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
-import com.lovbe.icharge.service.PublicContentService;
 import com.lovbe.icharge.service.PublicSearchService;
-import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -45,8 +21,6 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -124,10 +98,10 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                         .setSearchUserList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
                 // 构造搜索数据
-                List<ExcellentUserVo> userList = Arrays.stream(searchHits.getHits())
+                List<SearchUserVo> userList = Arrays.stream(searchHits.getHits())
                         .map(hit -> {
                             UserInfoDo userInfo = commonService.getCacheUser(Long.valueOf(hit.getId()));
-                            ExcellentUserVo userVo = new ExcellentUserVo();
+                            SearchUserVo userVo = new SearchUserVo();
                             BeanUtils.copyProperties(userInfo, userVo);
                             if (userInfo.getUid() == null || !CommonStatusEnum.isNormal(userInfo.getStatus())) {
                                 return null;
@@ -238,6 +212,9 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                             if (columnVo != null && columnVo.getHighLightSynopsis() != null) {
                                 column.setHighLightSynopsis(columnVo.getHighLightSynopsis());
                             }
+                            if (columnVo != null && columnVo.getUserInfo() != null) {
+                                columnVo.setUserInfo(commonService.getCacheUser(columnVo.getUserInfo().getUid()));
+                            }
                         });
                     }
                     searchResult.setSearchColumnCount(Math.toIntExact(searchHits.getTotalHits().value))
@@ -323,8 +300,6 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                     // 用户信息填充
                     for (FeaturedArticleVo article : articleVoList) {
                         article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
-                        // TODO 关注情况
-
                     }
                     searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
                             .setSearchArticleList(List.of());
@@ -393,8 +368,13 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                     .map(hit -> {
                         Long uid = Long.valueOf(hit.getId());
                         FeaturedArticleVo articleVo = articleMap.get(uid);
+                        // 作者信息补全
+                        if (articleVo != null && articleVo.getUserInfo() != null) {
+                            UserInfoDo userInfoDo = commonService.getCacheUser(articleVo.getUserInfo().getUid());
+                            articleVo.setUserInfo(userInfoDo);
+                        }
+                        // 替换高亮红
                         if (articleVo != null && !CollectionUtils.isEmpty(hit.getHighlightFields())) {
-                            // 替换高亮红
                             hit.getHighlightFields().values().forEach(highlightField -> {
                                 String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
                                 if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
@@ -416,7 +396,7 @@ public class PublicSearchServiceImpl implements PublicSearchService {
     }
 
     @Override
-    public List<ExcellentUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId) {
+    public List<SearchUserVo> getGlobalSearchUserList(GlobalSearchDTO data, Long userId) {
         SearchResultVo searchResult = new SearchResultVo();
         getSearchUserResult(data, searchResult);
         return searchResult.getSearchUserList();

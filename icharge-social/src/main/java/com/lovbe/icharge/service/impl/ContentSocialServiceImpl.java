@@ -1,7 +1,6 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
@@ -10,12 +9,10 @@ import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.service.CommonService;
-import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ReplyCommentDao;
@@ -28,7 +25,6 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -36,7 +32,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -47,8 +42,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ContentSocialServiceImpl implements ContentSocialService {
-    @Resource
-    private KafkaTemplate kafkaTemplate;
     @Resource
     private ReplyCommentDao replyCommentDao;
     @Resource
@@ -64,7 +57,6 @@ public class ContentSocialServiceImpl implements ContentSocialService {
 
     @Resource
     private SocialLikeDao socialLikeDao;
-
     @Resource
     private CommonService commonService;
 
@@ -128,7 +120,9 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                 .map(replyCommentDo -> {
                     ReplyCommentVo replyCommentVo = new ReplyCommentVo();
                     BeanUtil.copyProperties(replyCommentDo, replyCommentVo);
-                    replyCommentVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getUserInfo()));
+                    if (replyCommentVo.getUserInfo() != null) {
+                        replyCommentVo.setUserInfo(commonService.getCacheUser(replyCommentVo.getUserInfo().getUid()));
+                    }
                     replyCommentVo.setIfLike(likeTargets.contains(replyCommentDo.getUid()) ? 1 : 0);
                     if (CollectionUtils.isEmpty(replyCommentDo.getReplyCommentList())) {
                         replyCommentVo.setReplyList(List.of());
@@ -138,9 +132,11 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                             .map(deepReply -> {
                                 ReplyCommentVo deepReplyVo = new ReplyCommentVo();
                                 BeanUtil.copyProperties(deepReply, deepReplyVo);
-                                deepReplyVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getUserInfo()));
+                                if (deepReplyVo.getUserInfo() != null) {
+                                    deepReplyVo.setUserInfo(commonService.getCacheUser(deepReplyVo.getUserInfo().getUid()));
+                                }
                                 if (replyCommentVo.getReplyUserInfo() != null) {
-                                    deepReplyVo.setReplyUserInfo(CommonUtils.checkUserStatus(replyCommentVo.getReplyUserInfo()));
+                                    deepReplyVo.setReplyUserInfo(commonService.getCacheUser(replyCommentVo.getUserInfo().getUid()));
                                 }
                                 replyCommentVo.setIfLike(likeTargets.contains(deepReply.getUid()) ? 1 : 0);
                                 return deepReplyVo;
@@ -196,6 +192,7 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         if (CollectionUtils.isEmpty(replyCommentList)) {
             return List.of();
         }
+        // 如果为登录用户，则获取每条评论的点赞状态
         Set<Object> likeTargets = new HashSet<>();
         if (userId != null) {
             String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
@@ -208,9 +205,11 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                 .map(replyCommentDo -> {
                     ReplyCommentVo replyVo = new ReplyCommentVo();
                     BeanUtil.copyProperties(replyCommentDo, replyVo);
-                    replyVo.setUserInfo(CommonUtils.checkUserStatus(replyCommentDo.getUserInfo()));
+                    if (replyCommentDo.getUserInfo() != null) {
+                        replyVo.setUserInfo(commonService.getCacheUser(replyCommentDo.getUserInfo().getUid()));
+                    }
                     if (replyCommentDo.getReplyUserInfo() != null) {
-                        replyVo.setReplyUserInfo(CommonUtils.checkUserStatus(replyCommentDo.getReplyUserInfo()));
+                        replyVo.setReplyUserInfo(commonService.getCacheUser(replyCommentDo.getReplyUserInfo().getUid()));
                     }
                     if (userId != null) {
                         replyVo.setIfLike(likeTargets.contains(replyCommentDo.getUid()) ? 1 : 0);
