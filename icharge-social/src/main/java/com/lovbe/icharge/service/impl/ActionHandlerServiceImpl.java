@@ -2,13 +2,16 @@ package com.lovbe.icharge.service.impl;
 
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ReplyCommentDao;
+import com.lovbe.icharge.dao.SocialFollowDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
+import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.ActionHandlerService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,8 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private SocialLikeDao socialLikeDao;
     @Resource
     private ReplyCommentDao replyCommentDao;
+    @Resource
+    private SocialFollowDao socialFollowDao;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -122,6 +127,42 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         if (statisticMap.size() > 0) {
             replyCommentDao.updateCommentCount(statisticMap.values());
         }
+    }
+
+    @Override
+    public void handlerFollowAction(List<TargetFollowDTO> collect) {
+        // 按userId进行分组统计，作为关注数量的变化
+        Map<Long, TargetStatisticDo> statisticMap = collect.stream()
+                .peek(followDto -> followDto.setAction(followDto.getAction() == 1 ? 1 : -1))
+                .collect(Collectors.groupingBy(TargetFollowDTO::getUserId))
+                .values().stream()
+                .map(list -> {
+                    TargetStatisticDo statisticDo = new TargetStatisticDo();
+                    statisticDo.setUid(list.get(0).getUserId());
+                    statisticDo.setType(SysConstant.TARGET_TYPE_AUTHOR)
+                            .setFollowCount(list.stream().mapToInt(TargetFollowDTO::getAction).sum());
+                    return statisticDo;
+                })
+                .collect(Collectors.toMap(TargetStatisticDo::getUid, Function.identity(), (a, b) -> b));
+        // 按targetUser进行分组统计，作为粉丝数量的变化
+        collect.stream()
+                .collect(Collectors.groupingBy(TargetFollowDTO::getTargetUser))
+                .values().forEach(list -> {
+                    int fans = list.stream().mapToInt(TargetFollowDTO::getAction).sum();
+                    Long targetUser = list.get(0).getTargetUser();
+                    TargetStatisticDo statisticDo = statisticMap.get(targetUser);
+                    if (statisticDo != null) {
+                        statisticDo.setFansCount(fans);
+                    } else {
+                        statisticDo = new TargetStatisticDo();
+                        statisticDo.setUid(targetUser);
+                        statisticDo.setType(SysConstant.TARGET_TYPE_AUTHOR)
+                                .setFansCount(fans);
+                        statisticMap.put(targetUser, statisticDo);
+                    }
+                });
+        // 更新统计表
+        socialFollowDao.updateFollowCount(statisticMap.values());
     }
 
     /**

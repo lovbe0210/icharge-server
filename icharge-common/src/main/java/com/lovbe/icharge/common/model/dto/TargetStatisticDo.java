@@ -53,6 +53,10 @@ public class TargetStatisticDo extends BaseEntity {
      */
     private int fansCount;
     /**
+     * 用户关注数
+     */
+    private int followCount;
+    /**
      * 首次发布时间
      */
     private Date publishTime;

@@ -12,8 +12,10 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
+import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -28,6 +30,7 @@ import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
+import com.lovbe.icharge.service.feign.SocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.get.GetRequest;
@@ -67,6 +70,8 @@ public class PublicContentServiceImpl implements PublicContentService {
     private BrowseHistoryDao browseHistoryDao;
     @Resource
     private CommonService commonService;
+    @Resource
+    private SocialService socialService;
     @Resource
     private CollectDao collectDao;
     @Resource
@@ -434,6 +439,14 @@ public class PublicContentServiceImpl implements PublicContentService {
         }
         Map<Long, TargetStatisticDo> statisticMap = statisticList.stream()
                 .collect(Collectors.toMap(TargetStatisticDo::getUid, Function.identity(), (a, b) -> b));
+        // 获取关注状态
+        Set<Long> followIds = new HashSet<>();
+        if (userId != null) {
+            ResponseBean<List<RelationshipVo>> relationshipList = socialService.getRelationshipList(userId, SysConstant.RELATIONSHIP_FOLLOW);
+            if (relationshipList != null && !CollectionUtils.isEmpty(relationshipList.getData())) {
+                relationshipList.getData().forEach(ship -> followIds.add(ship.getUid()));
+            }
+        }
         List<ExcellentAuthorVo> authorList = userIds.stream().map(uid -> {
             UserInfoDo userInfoDo = commonService.getCacheUser(uid);
             ExcellentAuthorVo authorVo = new ExcellentAuthorVo();
@@ -445,6 +458,9 @@ public class PublicContentServiceImpl implements PublicContentService {
                         .setArticleCount(statisticDo.getArticleCount())
                         .setViewCount(statisticDo.getViewCount())
                         .setFansCount(statisticDo.getFansCount());
+            }
+            if (userId != null) {
+                authorVo.setIsFollow(followIds.contains(authorVo.getUid()) ? 1 : 0);
             }
             return authorVo;
         }).collect(Collectors.toList());

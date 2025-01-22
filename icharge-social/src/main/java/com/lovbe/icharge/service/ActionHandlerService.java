@@ -2,6 +2,7 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
+import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 
 import java.util.List;
 
@@ -28,4 +29,12 @@ public interface ActionHandlerService {
      * @date: 2024/12/21 10:09
      */
     void handlerCommentAction(List<ReplyCommentDo> actionList);
+
+    /**
+     * @description: 关注数据流逻辑处理
+     * @param: collect
+     * @author: lovbe0210
+     * @date: 2025/1/22 20:30
+     */
+    void handlerFollowAction(List<TargetFollowDTO> collect);
 }

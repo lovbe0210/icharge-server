@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
+import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -130,6 +131,57 @@ public class KafkaConsumer {
             actionHandler.handlerCommentAction(collect);
         } catch (Exception e) {
             log.error("[评论消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+        } finally {
+            ack.acknowledge();
+        }
+    }
+
+    /**
+     * 关注/取消关注消息消费
+     *
+     * @param consumerRecords
+     * @param ack
+     */
+    @KafkaListener(topics = "${spring.kafka.topics.user-action-follow}",
+            containerFactory = "kafkaListenerContainerFactory", groupId = "action-follow")
+    public void listenActionFollow(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
+        if (consumerRecords.isEmpty()) {
+            return;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("received msgSize: " + consumerRecords.size());
+        }
+        try {
+            List<TargetFollowDTO> collect = consumerRecords.parallelStream()
+                    .map(consumerRecord -> {
+                        String data = String.valueOf(consumerRecord.value());
+                        KafkaMessage kafkaMsg = JsonUtils.parseObject(data, KafkaMessage.class);
+                        if (log.isDebugEnabled()) {
+                            log.debug("received msg: " + data);
+                        }
+                        Object msgData = kafkaMsg.getData();
+                        if (msgData == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体内容为空", data);
+                            return null;
+                        }
+                        TargetFollowDTO actionDo = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), TargetFollowDTO.class);
+                        // 参数校验
+                        if (actionDo.getUserId() == null ||
+                                actionDo.getTargetUser() == null ||
+                                actionDo.getAction() == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);
+                            return null;
+                        }
+                        return actionDo;
+                    })
+                    .filter(actionDo -> actionDo != null)
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(collect)) {
+                return;
+            }
+            actionHandler.handlerFollowAction(collect);
+        } catch (Exception e) {
+            log.error("[关注消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

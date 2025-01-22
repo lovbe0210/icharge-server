@@ -1,14 +1,19 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.entity.vo.RelationshipVo;
+import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.vo.RelationshipVo;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.SocialFollowDao;
 import com.lovbe.icharge.entity.dto.RelationshipDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -26,6 +31,13 @@ import java.util.stream.Collectors;
 public class UserSocialServiceImpl implements UserSocialService {
     @Resource
     private SocialFollowDao followDao;
+    @Resource
+    private CommonService commonService;
+    // 用户操作：关注/取消关注
+    @Value("${spring.kafka.topics.user-action-follow}")
+    private String followTopic;
+    @Value("${spring.application.name}")
+    private String appName;
 
     @Override
     public void userActionFollow(BaseRequest<TargetFollowDTO> baseRequest, Long userId) {
@@ -45,7 +57,8 @@ public class UserSocialServiceImpl implements UserSocialService {
         }
         followDao.updateRelationShip(relationship, Objects.equals(masterId, userId));
         // 发送用户关注或取消关注的消息，及逆行异步统计关注和粉丝数
-        // TODO
+        data.setUserId(userId);
+        commonService.sendMessage(appName, followTopic, data);
     }
 
     @Override
@@ -71,16 +84,32 @@ public class UserSocialServiceImpl implements UserSocialService {
         return relationshipList.stream()
                 .map(relationship -> {
                     RelationshipVo relationshipVo = new RelationshipVo()
-                            .setUid(relationship.getUid())
+                            .setFollowActionId(relationship.getUid())
                             .setUpdateTime(relationship.getUpdateTime())
                             .setIsEachFollow(relationship.getMasterWatchSlave() == 1 && relationship.getSlaveWatchMaster() == 1 ? 1 : 0);
                     if (Objects.equals(relationship.getUserIdMaster(), userId)) {
-                        relationshipVo.setUserId(relationship.getUserIdSlave());
+                        relationshipVo.setUid(relationship.getUserIdSlave());
                     } else {
-                        relationshipVo.setUserId(relationship.getUserIdMaster());
+                        relationshipVo.setUid(relationship.getUserIdMaster());
                     }
+                    UserInfoDo userInfoDo = commonService.getCacheUser(relationshipVo.getUid());
+                    relationshipVo.setAvatarUrl(userInfoDo.getAvatarUrl())
+                            .setUsername(userInfoDo.getUsername())
+                            .setDomain(userInfoDo.getDomain())
+                            .setTags(userInfoDo.getTags())
+                            .setLevel(userInfoDo.getLevel())
+                            .setIndustry(userInfoDo.getIndustry())
+                            .setIntroduction(userInfoDo.getIntroduction())
+                            .setLocation(userInfoDo.getLocation())
+                            .setStatus(userInfoDo.getStatus());
                     return relationshipVo;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public TargetStatisticDo getRelationShipStatistic(Long userId) {
+        TargetStatisticDo statisticDo = followDao.selectShipStatistic(userId);
+        return statisticDo == null ? new TargetStatisticDo() : statisticDo;
     }
 }

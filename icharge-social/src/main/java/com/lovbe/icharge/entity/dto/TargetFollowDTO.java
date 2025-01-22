@@ -13,6 +13,10 @@ import lombok.Data;
 @Data
 public class TargetFollowDTO {
     /**
+     * 操作人id
+     */
+    private Long userId;
+    /**
      * 关注的用户id
      */
     @NotNull(message = "关注的用户不得为空")

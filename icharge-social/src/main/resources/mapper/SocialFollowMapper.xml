@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lovbe.icharge.dao.SocialFollowDao">
-    <!-- 获取人际关系 -->
-    <select id="updateRelationShip">
+    <!-- 更新人际关系统计 -->
+    <update id="updateFollowCount">
+        <foreach collection="statisticList" item="statistic">
+            INSERT INTO s_interaction_statistic (uid, type, follow_count, fans_count)
+            VALUES (#{statistic.uid}, #{statistic.type},
+                    IF(#{statistic.followCount} <![CDATA[ < ]]> 0, 0 , #{statistic.followCount}),
+                    IF(#{statistic.fansCount} <![CDATA[ < ]]> 0, 0 , #{statistic.fansCount}))
+            ON DUPLICATE KEY UPDATE
+            follow_count = IF(follow_count + #{statistic.followCount} <![CDATA[ < ]]> 0, 0, follow_count + #{statistic.followCount}),
+            fans_count = IF(fans_count + #{statistic.fansCount} <![CDATA[ < ]]> 0, 0, fans_count + #{statistic.fansCount});
+        </foreach>
+    </update>
+
+    <!-- 更新人际关系 -->
+    <insert id="updateRelationShip">
         INSERT INTO s_relationship (uid, user_id_master, user_id_slave, master_watch_slave, slave_watch_master)
         VALUES (#{relationship.uid}, #{relationship.userIdMaster},  #{relationship.userIdSlave},
                 #{relationship.masterWatchSlave},  #{relationship.slaveWatchMaster})
@@ -13,7 +26,7 @@
             <if test="!isMaster">
                 slave_watch_master = #{relationship.slaveWatchMaster}
             </if>
-    </select>
+    </insert>
 
     <!-- 获取我的关注列表 -->
     <select id="selectFollowList" resultType="com.lovbe.icharge.entity.dto.RelationshipDo">
@@ -21,7 +34,7 @@
             SELECT * FROM s_relationship WHERE user_id_master = #{userId} AND master_watch_slave = 1
             UNION ALL
             SELECT * FROM s_relationship WHERE user_id_slave = #{userId} AND slave_watch_master = 1
-         ) res GROUP BY uid ORDER BY update_time
+         ) res GROUP BY uid ORDER BY update_time DESC
     </select>
 
     <!-- 获取我的粉丝列表 -->
@@ -30,6 +43,11 @@
             SELECT * FROM s_relationship WHERE user_id_master = #{userId} AND slave_watch_master = 1
             UNION ALL
             SELECT * FROM s_relationship WHERE user_id_slave = #{userId} AND master_watch_slave = 1
-        ) res GROUP BY uid ORDER BY update_time
+        ) res GROUP BY uid ORDER BY update_time DESC
+    </select>
+
+    <!-- 获取统计数据 -->
+    <select id="selectShipStatistic" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT * FROM s_interaction_statistic where uid = #{userId}
     </select>
 </mapper>

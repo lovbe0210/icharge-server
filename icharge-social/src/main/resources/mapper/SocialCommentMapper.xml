@@ -4,13 +4,13 @@
 
     <!-- 更新评论的回复数 -->
     <insert id="updateCommentCount">
-        INSERT INTO s_interaction_statistic (uid, type, comment_count)
-        VALUES
-        <foreach collection="statisticList" item="statistic" separator=",">
-            (#{statistic.uid}, #{statistic.type}, #{statistic.commentCount})
+        <foreach collection="statisticList" item="statistic">
+            INSERT INTO s_interaction_statistic (uid, type, comment_count)
+            VALUES (#{statistic.uid}, #{statistic.type},
+                    IF(#{statistic.commentCount} <![CDATA[ < ]]> 0, 0, #{statistic.commentCount}))
+            ON DUPLICATE KEY UPDATE
+            comment_count = IF(comment_count + #{statistic.commentCount} <![CDATA[ < ]]> 0, 0, comment_count + #{statistic.commentCount});
         </foreach>
-        ON DUPLICATE KEY UPDATE
-        comment_count = IF(comment_count + VALUES(comment_count) <![CDATA[ < ]]> 0, 0, comment_count + VALUES(comment_count))
     </insert>
 
     <!-- 统计数减1 -->
