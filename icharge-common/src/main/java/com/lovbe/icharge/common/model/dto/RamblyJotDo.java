@@ -61,4 +61,3 @@ public class RamblyJotDo extends BaseEntity {
      */
     private Integer publishStatus;
 }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    q
