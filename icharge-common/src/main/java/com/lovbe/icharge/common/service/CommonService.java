@@ -1,8 +1,8 @@
 package com.lovbe.icharge.common.service;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.*;
 
-import java.io.IOException;
 import java.util.List;
 
 
@@ -49,12 +49,13 @@ public interface CommonService {
 
     /**
      * @description: 文章内容审核By-kimi
-     * @param: String
+     * @param: Integer targetType 类型
+     * @param: String  textValue
      * @return: AIAuditResultDTO
      * @author: lovbe0210
      * @date: 2025/1/5 17:07
      */
-    AIAuditResultDTO sendAuditChat(String textValue);
+    AIAuditResultDTO sendAuditChat(Integer targetTypeArticle, String textValue);
 
     /**
      * @description: 用户画像By-kimi

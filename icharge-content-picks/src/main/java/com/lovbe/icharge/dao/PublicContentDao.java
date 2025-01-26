@@ -27,22 +27,16 @@ public interface PublicContentDao{
      * @author lovbe0210
      * @date 2024/11/19 1:48
      */
-    @Select(value = """
-                    SELECT c.*, 
-                           ci.uid collect_id,
-                           cis.like_count likeCount,
-                           cis.comment_count commentCount,
-                           cis.collect_count collectCount,
-                           cis.view_count viewCount
-                    FROM c_article c
-                    LEFT JOIN s_interaction_statistic cis ON c.uid = cis.uid
-                    LEFT JOIN p_collect_item ci ON c.uid = ci.target_id 
-                        AND ci.user_id = #{userId}
-                        AND ci.status = 'A'
-                    WHERE c.uri = #{uri} 
-                        AND c.status = 'A';
-                    """)
     ArticleDo selectArticleInfo(@Param("uri") String articleUri, @Param("userId") Long userId);
+
+    /**
+     * @description: 获取随笔信息
+     * @param: ramblyJotId
+     * @return: com.lovbe.icharge.common.model.dto.RamblyJotDo
+     * @author: lovbe0210
+     * @date: 2025/1/23 23:11
+     */
+    RamblyJotDo getRamblyJotInfo(@Param("ramblyJotId") Long ramblyJotId);
 
     /**
      * @description 获取正文内容
@@ -235,4 +229,13 @@ public interface PublicContentDao{
      */
     List<FeaturedArticleVo> selectArticleListByTarget(@Param("searchDTO") GlobalSearchDTO searchDTO,
                                                       @Param("userId") Long userId);
+
+    /**
+     * @description: 获取公开随笔信息
+     * @param: requestData
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.RamblyJotDo>
+     * @author: lovbe0210
+     * @date: 2025/1/26 23:43
+     */
+    List<RamblyJotDo> selectPublicEssayList(@Param("requestData") RequestListDTO requestData);
 }

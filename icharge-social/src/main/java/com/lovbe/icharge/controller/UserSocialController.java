@@ -2,14 +2,17 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
-import com.lovbe.icharge.entity.dto.RelationshipDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,7 +39,7 @@ public class UserSocialController {
      * @description: 获取关注记录
      * @param: targetUser
      * @param: userId
-     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.entity.dto.RelationshipDo>
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.dto.RelationshipDo>
      * @author: lovbe0210
      * @date: 2025/1/22 1:05
      */
@@ -47,6 +50,20 @@ public class UserSocialController {
     }
 
     /**
+     * @description: 获取关注记录
+     * @param: targetUser
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.dto.RelationshipDo>
+     * @author: lovbe0210
+     * @date: 2025/1/22 1:05
+     */
+    @PostMapping("/user/follows/query")
+    public ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody @NotEmpty(message = "查询用户id不得为空") List<Long> userIdList,
+                                                                  @RequestHeader("userId") Long userId) {
+        return ResponseBean.ok(socialService.getRelationshipList(userIdList, userId));
+    }
+
+    /**
      * @description: 获取关注或粉丝列表
      * @param: userId
      * @param: targetShip
@@ -54,10 +71,11 @@ public class UserSocialController {
      * @author: lovbe0210
      * @date: 2025/1/22 1:06
      */
-    @GetMapping("/user/relationship/{ship}")
-    public ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestHeader("userId") Long userId,
-                                                                  @PathVariable("ship") String targetShip) {
-        return ResponseBean.ok(socialService.getRelationshipList(userId, targetShip));
+    @PostMapping("/user/relationship/{ship}")
+    public ResponseBean<PageBean> getFollowFansList(@RequestBody @Valid BaseRequest<RequestListDTO> baseRequest,
+                                                      @PathVariable("ship") String targetShip,
+                                                      @RequestHeader("userId") Long userId) {
+        return ResponseBean.ok(socialService.getFollowFansList(userId, baseRequest.getData(), targetShip));
     }
 
     @GetMapping("/user/relationship/count/{userId}")

@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * @Author: lovbe0210
  * @Date: 2024/10/21 21:54
- * @Description: MS
+ * @Description: 获取分页、搜索、排序的列表参数
  */
 @Data
 public class RequestListDTO {
@@ -21,13 +21,13 @@ public class RequestListDTO {
      * 分页查询
      */
     private int offset = 0;
-    private int limit = 100;
+    private int limit = 20;
 
     public int getOffset() {
         return offset < 0 ? 0 : offset;
     }
 
     public int getLimit() {
-        return limit <= 0 ? 100 : limit > 1000 ? 1000 : limit;
+        return limit <= 0 ? 20 : limit > 200 ? 200 : limit;
     }
 }

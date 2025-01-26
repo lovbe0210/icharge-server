@@ -28,4 +28,18 @@ public class TargetFollowDTO {
     @Max(value = 1, message = "操作类型错误")
     @Min(value = 0, message = "操作类型错误")
     private Integer action;
+
+    /**
+     * 分页参数
+     */
+    private int offset = 0;
+    private int limit = 10;
+
+    public int getOffset() {
+        return offset < 0 ? 0 : offset;
+    }
+
+    public int getLimit() {
+        return limit <= 0 ? 10 : Math.min(limit, 100);
+    }
 }

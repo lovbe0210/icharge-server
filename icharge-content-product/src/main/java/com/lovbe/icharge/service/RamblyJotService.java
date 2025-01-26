@@ -1,7 +1,8 @@
 package com.lovbe.icharge.service;
 
+import com.lovbe.icharge.entity.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
-import com.lovbe.icharge.entity.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 
 import java.util.List;
 
@@ -11,15 +12,6 @@ import java.util.List;
  * @Description: 随笔相关service
  */
 public interface RamblyJotService {
-    /**
-     * @description 获取随笔信息
-     * @param[1] userId
-     * @param[2] ramblyJotId
-     * @return RamblyJotVo
-     * @author lovbe0210
-     * @date 2024/11/15 13:13
-     */
-    RamblyJotVo getRamblyJotInfo(long userId, Long ramblyJotId);
 
     /**
      * 创建随笔
@@ -55,4 +47,12 @@ public interface RamblyJotService {
      * @date 2024/11/16 15:39
      */
     void updateRamblyJot(RamblyJotDTO data, long userId);
+
+    /**
+     * @description: 随笔发布消息处理
+     * @param: collect
+     * @author: lovbe0210
+     * @date: 2025/1/27 2:30
+     */
+    void handlerPublishAction(List<ContentPublishDTO> collect);
 }

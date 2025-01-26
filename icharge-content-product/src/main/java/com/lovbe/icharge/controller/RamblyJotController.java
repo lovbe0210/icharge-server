@@ -3,7 +3,7 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
-import com.lovbe.icharge.entity.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.service.RamblyJotService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -21,21 +21,6 @@ import java.util.List;
 public class RamblyJotController {
     @Resource
     private RamblyJotService ramblyJotService;
-
-    /**
-     * description: 获取随笔详情
-     * @author: Lvhl
-     * @date: 2024/9/16 11:56
-     * @param ramblyJotId
-     * @param userId
-     * @return ResponseBean<RamblyJotVo>
-     */
-    @PostMapping("/ramblyjot/{ramblyJotId}")
-    public ResponseBean<RamblyJotVo> getRamblyJotInfo(@PathVariable("ramblyJotId") Long ramblyJotId,
-                                                      @RequestHeader("userId") long userId) {
-        return ResponseBean.ok(ramblyJotService.getRamblyJotInfo(userId, ramblyJotId));
-    }
-
 
     /**
      * description: 新建随笔
@@ -72,7 +57,7 @@ public class RamblyJotController {
 
 
     /**
-     * description: 更新文档信息
+     * description: 获取随笔列表
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      * @param userId

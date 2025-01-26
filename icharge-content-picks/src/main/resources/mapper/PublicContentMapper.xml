@@ -286,6 +286,54 @@
         GROUP BY pu.uid
     </select>
 
+    <!-- 根据uri获取文档信息 -->
+    <select id="selectArticleInfo" resultType="com.lovbe.icharge.common.model.dto.ArticleDo">
+        SELECT c.*,
+               ci.uid collect_id,
+               IFNULL(cis.like_count, 0) likeCount,
+               IFNULL(cis.comment_count, 0) commentCount,
+               IFNULL(cis.collect_count, 0) collectCount,
+               IFNULL(cis.view_count, 0) viewCount
+        FROM c_article c
+        LEFT JOIN s_interaction_statistic cis ON c.uid = cis.uid
+        LEFT JOIN p_collect_item ci ON c.uid = ci.target_id
+            AND ci.user_id = #{userId}
+            AND ci.status = 'A'
+        WHERE c.uri = #{uri}
+          AND c.status = 'A';
+    </select>
+
+    <!-- 获取随笔信息  -->
+    <select id="getRamblyJotInfo" resultType="com.lovbe.icharge.common.model.dto.RamblyJotDo">
+        SELECT ce.*,
+               IFNULL(sis.like_count, 0) like_count,
+               IFNULL(sis.comment_count, 0) comment_count
+        FROM c_essay ce
+        LEFT JOIN s_interaction_statistic sis ON ce.uid = sis.uid
+        WHERE ce.uid = #{ramblyJotId}
+          AND ce.status = 'A'
+    </select>
+
+    <!-- 获取公开随笔信息 -->
+    <select id="selectPublicEssayList" resultType="com.lovbe.icharge.common.model.dto.RamblyJotDo">
+        SELECT
+            ce.*,
+            ce.preview_img preview_img_str,
+            sis.like_count,
+            sis.comment_count
+        FROM
+            (
+                SELECT uid
+                FROM c_essay WHERE is_public = 1
+                    AND publish_status = 3
+                    AND `status` = 'A'
+                ORDER BY create_time DESC
+                LIMIT 0, 20
+            ) tid
+        INNER JOIN c_essay ce ON tid.uid = ce.uid
+        LEFT JOIN s_interaction_statistic sis ON tid.uid = sis.uid
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>

@@ -1,14 +1,15 @@
 package com.lovbe.icharge.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.SocialFollowDao;
-import com.lovbe.icharge.entity.dto.RelationshipDo;
+import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
@@ -71,17 +72,24 @@ public class UserSocialServiceImpl implements UserSocialService {
     }
 
     @Override
-    public List<RelationshipVo> getRelationshipList(Long userId, String targetShip) {
+    public PageBean<RelationshipVo> getFollowFansList(Long userId, RequestListDTO request, String targetShip) {
         List<RelationshipDo> relationshipList = null;
+        int total = 0;
+        TargetStatisticDo statisticDo = followDao.selectShipStatistic(userId);
         if (SysConstant.RELATIONSHIP_FOLLOW.equals(targetShip)) {
-            relationshipList = followDao.selectFollowList(userId);
+            if (statisticDo == null || statisticDo.getFollowCount() == 0) {
+                return new PageBean<>(0, List.of());
+            }
+            total = statisticDo.getFollowCount();
+            relationshipList = followDao.selectFollowList(userId, request);
         } else if (SysConstant.RELATIONSHIP_FANS.equals(targetShip)) {
-            relationshipList = followDao.selectFansList(userId);
+            if (statisticDo == null || statisticDo.getFansCount() == 0) {
+                return new PageBean<>(0, List.of());
+            }
+            total = statisticDo.getFansCount();
+            relationshipList = followDao.selectFansList(userId, request);
         }
-        if (CollectionUtils.isEmpty(relationshipList)) {
-            return List.of();
-        }
-        return relationshipList.stream()
+        List<RelationshipVo> collect = relationshipList.stream()
                 .map(relationship -> {
                     RelationshipVo relationshipVo = new RelationshipVo()
                             .setFollowActionId(relationship.getUid())
@@ -105,11 +113,43 @@ public class UserSocialServiceImpl implements UserSocialService {
                     return relationshipVo;
                 })
                 .collect(Collectors.toList());
+        return new PageBean<>(total, collect);
     }
 
     @Override
     public TargetStatisticDo getRelationShipStatistic(Long userId) {
         TargetStatisticDo statisticDo = followDao.selectShipStatistic(userId);
         return statisticDo == null ? new TargetStatisticDo() : statisticDo;
+    }
+
+    @Override
+    public List<RelationshipVo> getRelationshipList(List<Long> userIdList, Long userId) {
+        List<String> collect = userIdList.stream().map(targetUser -> {
+            long masterId = Math.max(targetUser, userId);
+            long slaveId = Math.min(targetUser, userId);
+            return masterId + SysConstant.SEPARATOR + slaveId;
+        }).collect(Collectors.toList());
+        List<RelationshipDo> relationships = followDao.selectBatchIds(collect);
+        if (CollectionUtils.isEmpty(relationships)) {
+            return List.of();
+        }
+        List<RelationshipVo> relationshipList = relationships.stream()
+                .filter(ship -> {
+                    if (Objects.equals(ship.getUserIdMaster(), userId)) {
+                        return Objects.equals(ship.getMasterWatchSlave(), 1);
+                    }
+                    return Objects.equals(ship.getSlaveWatchMaster(), 1);
+                })
+                .map(ship -> {
+                    RelationshipVo relationshipVo = new RelationshipVo()
+                            .setFollowActionId(ship.getUid())
+                            .setIsEachFollow(Objects.equals(ship.getMasterWatchSlave(), 1) &&
+                                    Objects.equals(ship.getSlaveWatchMaster(), 1) ? 1 : 0);
+                    ;
+                    relationshipVo.setUid(Objects.equals(ship.getUserIdMaster(), userId) ? ship.getUserIdSlave() : ship.getUserIdSlave());
+                    return relationshipVo;
+                })
+                .collect(Collectors.toList());
+        return relationshipList;
     }
 }

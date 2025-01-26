@@ -23,7 +23,21 @@ public class PageBean<T> implements Serializable {
      */
     private boolean hasMore;
     /**
+     * 数据总条数
+     */
+    private int total;
+    /**
      * 数据list
      */
     private List<T> list;
+
+    public PageBean(boolean hasMore, List<T> list) {
+        this.hasMore = hasMore;
+        this.list = list;
+    }
+
+    public PageBean(int total, List<T> list) {
+        this.total = total;
+        this.list = list;
+    }
 }

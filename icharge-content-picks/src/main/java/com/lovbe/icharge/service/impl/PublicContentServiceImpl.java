@@ -15,9 +15,11 @@ import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
@@ -442,7 +444,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         // 获取关注状态
         Set<Long> followIds = new HashSet<>();
         if (userId != null) {
-            ResponseBean<List<RelationshipVo>> relationshipList = socialService.getRelationshipList(userId, SysConstant.RELATIONSHIP_FOLLOW);
+            ResponseBean<List<RelationshipVo>> relationshipList = socialService.getRelationshipList(userIds, userId);
             if (relationshipList != null && !CollectionUtils.isEmpty(relationshipList.getData())) {
                 relationshipList.getData().forEach(ship -> followIds.add(ship.getUid()));
             }
@@ -529,270 +531,84 @@ public class PublicContentServiceImpl implements PublicContentService {
         }
     }
 
-    /**
-     * @description: 获取搜索用户
-     * @param: data
-     * @param: searchResult
-     * @author: lovbe0210
-     * @date: 2025/1/16 20:26
-     */
-    private void getSearchUserResult(GlobalSearchDTO data, SearchResultVo searchResult) {
-        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_USER);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 设置字段分词匹配
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        // 添加关键词匹配 用户名
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_USERNAME, data.getKeywords()));
-        boolQuery.minimumShouldMatch(1);
-        searchSourceBuilder.query(boolQuery);
-        // 只获取id字段
-        searchSourceBuilder.fetchSource(new String[]{"uid", "username"}, null);
-        // 设置高亮显示
-        HighlightBuilder highlightBuilder = new HighlightBuilder();
-        highlightBuilder.field(SysConstant.ES_FILED_USERNAME).fragmentSize(0).numOfFragments(0);
-        highlightBuilder.requireFieldMatch(true);
-        highlightBuilder.preTags("<span style=\"color: red\">");
-        highlightBuilder.postTags("</span>");
-        searchSourceBuilder.highlighter(highlightBuilder);
-        // 添加分页参数
-        searchSourceBuilder.from(data.getOffset());
-        searchSourceBuilder.size(data.getLimit());
-        searchRequest.source(searchSourceBuilder);
-        // 发送请求并处理响应
-        try {
-            SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            SearchHits searchHits = response.getHits();
-            if (searchHits != null && searchHits.getTotalHits().value == 0) {
-                searchResult.setSearchUserCount(0)
-                        .setSearchUserList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0) {
-                searchResult.setSearchUserCount(Math.toIntExact(searchHits.getTotalHits().value))
-                        .setSearchUserList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length != 0) {
-                // 构造搜索数据
-                List<SearchUserVo> userList = Arrays.stream(searchHits.getHits())
-                        .map(hit -> {
-                            UserInfoDo userInfo = commonService.getCacheUser(Long.valueOf(hit.getId()));
-                            SearchUserVo userVo = new SearchUserVo();
-                            BeanUtils.copyProperties(userInfo, userVo);
-                            if (userInfo.getUid() == null || !CommonStatusEnum.isNormal(userInfo.getStatus())) {
-                                return null;
-                            }
-                            if (!CollectionUtils.isEmpty(hit.getHighlightFields())) {
-                                // 替换高亮红
-                                hit.getHighlightFields().values().forEach(highlightField -> {
-                                    String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
-                                    if (SysConstant.ES_FILED_USERNAME.equals(highlightField.getName())) {
-                                        userVo.setShowUsername(highLightValue);
-                                    }
-                                });
-                            }
-                            return userVo;
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(userList)) {
-                    searchResult.setSearchUserCount(Math.toIntExact(searchHits.getTotalHits().value))
-                            .setSearchUserList(List.of());
-                } else {
-                    searchResult.setSearchUserCount(Math.toIntExact(searchHits.getTotalHits().value))
-                            .setSearchUserList(userList);
-                }
-            }
-        } catch (IOException e) {
-            log.error("[获取搜索用户] --- 查询异常，errorInfo: {}", e.toString());
+    @Override
+    public RamblyJotVo getRamblyJotInfo(Long userId, Long ramblyJotId) {
+        RamblyJotDo ramblyJotDo = publicContentDao.getRamblyJotInfo(ramblyJotId);
+        if (ramblyJotDo == null) {
+            throw new ServiceException(ServiceErrorCodes.RAMBLY_JOT_NOT_EXIST);
         }
+        // 判断状态，如果是未登录或非本人自己，则只能看到审核成功且公开的随笔内容
+        if ((userId == null || !Objects.equals(userId, ramblyJotDo.getUserId()))
+                && (ramblyJotDo.getIsPublic() == 0 || ramblyJotDo.getPublishStatus() != SysConstant.PUBLISH_SUCCESS)) {
+            throw new ServiceException(ServiceErrorCodes.RAMBLY_JOT_NOT_EXIST);
+        }
+
+        RamblyJotVo ramblyJotVo = new RamblyJotVo();
+        BeanUtil.copyProperties(ramblyJotDo, ramblyJotVo);
+        ramblyJotVo.setUserInfo(commonService.getCacheUser(ramblyJotDo.getUserId()));
+        if (ramblyJotDo.getContentId() != null) {
+            ContentDo contentDo = publicContentDao.selectContent(ramblyJotDo.getContentId());
+            if (contentDo != null) {
+                ramblyJotVo.setContent(contentDo.getContent());
+            }
+        }
+        // 获取点赞状态
+        if (userId != null) {
+            // 已登陆查询点赞记录
+            String likesSetKey = RedisKeyConstant.getUserLikesSet(userId);
+            boolean hasValue = RedisUtil.zsHasValue(likesSetKey, ramblyJotId);
+            ramblyJotVo.setIfLike(hasValue);
+        }
+        // 获取点赞列表
+        String likedSetKey = RedisKeyConstant.getTargetLikedSet(ramblyJotId);
+        Set<ZSetOperations.TypedTuple<Object>> tupleList = RedisUtil.zsGetSet(likedSetKey, 0, 13, true);
+        if (!CollectionUtils.isEmpty(tupleList)) {
+            List<UserInfoDo> userIdList = new ArrayList<>();
+            for (ZSetOperations.TypedTuple<Object> tuple : tupleList) {
+                userIdList.add(commonService.getCacheUser((Long) tuple.getValue()));
+            }
+            ramblyJotVo.setLikeUserList(userIdList);
+        } else {
+            ramblyJotVo.setLikeUserList(List.of());
+        }
+        return ramblyJotVo;
     }
 
-    /**
-     * @description: 获取搜索用户
-     * @param: data
-     * @param: searchResult
-     * @author: lovbe0210
-     * @date: 2025/1/16 20:26
-     */
-    private void getSearchColumnResult(GlobalSearchDTO data, SearchResultVo searchResult) {
-        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_COLUMN);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 设置字段分词匹配
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        // 过滤查询公开专栏
-        boolQuery.filter(QueryBuilders.termQuery(SysConstant.ES_FILED_PUBLIC, 1));
-        // 添加关键词匹配 用户名
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TITLE, data.getKeywords()).boost(1.0F));
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_SYNOPSIS, data.getKeywords()).boost(0.8F));
-        boolQuery.minimumShouldMatch(1);
-        searchSourceBuilder.query(boolQuery);
-        // 只获取uid, title, synopsis字段
-        searchSourceBuilder.fetchSource(new String[]{SysConstant.ES_FILED_UID, SysConstant.ES_FILED_TITLE, SysConstant.ES_FILED_SYNOPSIS}, null);
-        // 设置高亮显示
-        HighlightBuilder highlightBuilder = new HighlightBuilder();
-        highlightBuilder.field(SysConstant.ES_FILED_TITLE).fragmentSize(0).numOfFragments(0);
-        highlightBuilder.field(SysConstant.ES_FILED_SYNOPSIS).fragmentSize(0).numOfFragments(0);
-        highlightBuilder.requireFieldMatch(true);
-        highlightBuilder.preTags("<span style=\"color: red\">");
-        highlightBuilder.postTags("</span>");
-        searchSourceBuilder.highlighter(highlightBuilder);
-        // 添加分页参数
-        searchSourceBuilder.from(data.getOffset());
-        searchSourceBuilder.size(data.getLimit());
-        searchRequest.source(searchSourceBuilder);
-        // 发送请求并处理响应
-        try {
-            SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            SearchHits searchHits = response.getHits();
-            if (searchHits != null && searchHits.getTotalHits().value == 0) {
-                searchResult.setSearchColumnCount(0)
-                        .setSearchColumnList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0) {
-                searchResult.setSearchColumnCount(Math.toIntExact(searchHits.getTotalHits().value))
-                        .setSearchColumnList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length != 0) {
-                // 构造搜索数据
-                Map<Long, RecommendColumnVo> columnMap = Arrays.stream(searchHits.getHits())
-                        .map(hit -> {
-                            RecommendColumnVo columnVo = new RecommendColumnVo();
-                            columnVo.setUid(Long.valueOf(hit.getId()));
-                            if (!CollectionUtils.isEmpty(hit.getHighlightFields())) {
-                                // 替换高亮红
-                                hit.getHighlightFields().values().forEach(highlightField -> {
-                                    String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
-                                    if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
-                                        columnVo.setHighLightTitle(highLightValue);
-                                    }
-                                    if (SysConstant.ES_FILED_SYNOPSIS.equals(highlightField.getName())) {
-                                        columnVo.setHighLightSynopsis(highLightValue);
-                                    }
-                                });
-                            }
-                            return columnVo;
-                        })
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(RecommendColumnVo::getUid, Function.identity(), (a, b) -> b));
-                if (CollectionUtils.isEmpty(columnMap)) {
-                    searchResult.setSearchColumnCount(Math.toIntExact(searchHits.getTotalHits().value))
-                            .setSearchColumnList(List.of());
-                } else {
-                    // 获取专栏信息
-                    List<RecommendColumnVo> columnList = publicContentDao.selectPublicColumnList(columnMap.keySet());
-                    if (!CollectionUtils.isEmpty(columnList)) {
-                        columnList.forEach(column -> {
-                            RecommendColumnVo columnVo = columnMap.get(column.getUid());
-                            if (columnVo != null && columnVo.getHighLightTitle() != null) {
-                                column.setHighLightTitle(columnVo.getHighLightTitle());
-                            }
-                            if (columnVo != null && columnVo.getHighLightSynopsis() != null) {
-                                column.setHighLightSynopsis(columnVo.getHighLightSynopsis());
-                            }
-                        });
-                    }
-                    searchResult.setSearchColumnCount(Math.toIntExact(searchHits.getTotalHits().value))
-                            .setSearchColumnList(columnList);
-                }
-            }
-        } catch (IOException e) {
-            log.error("[获取搜索用户] --- 查询异常，errorInfo: {}", e.toString());
+    @Override
+    public PageBean<RamblyJotVo> getPublicRamblyJot(BaseRequest<RequestListDTO> baseRequest, Long userId) {
+        RequestListDTO requestData = baseRequest.getData();
+        // 获取所有公开已发布的随笔信息
+        List<RamblyJotDo> ramblyJotList = publicContentDao.selectPublicEssayList(requestData);
+        if (CollectionUtils.isEmpty(ramblyJotList)) {
+            return new PageBean<>(false, List.of());
         }
+
+        // 登录用户获取点赞列表
+        Set<Object> likeSet = new HashSet<>();
+        if (userId != null) {
+            String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+            likeSet.addAll(RedisUtil.zsGetSet(userLikedSet, 0, -1));
+        }
+        List<RamblyJotVo> collect = ramblyJotList.stream()
+                .map(ramblyJot -> {
+                    RamblyJotVo ramblyJotVo = new RamblyJotVo();
+                    BeanUtil.copyProperties(ramblyJot, ramblyJotVo);
+                    if (StringUtils.hasLength(ramblyJot.getPreviewImgStr())) {
+                        ramblyJotVo.setPreviewImg(JsonUtils.parseArray(ramblyJot.getPreviewImgStr(), String.class));
+                    } else {
+                        ramblyJotVo.setPreviewImg(List.of());
+                    }
+                    ramblyJotVo.setUserInfo(commonService.getCacheUser(ramblyJot.getUserId()));
+                    if (userId != null) {
+                        ramblyJotVo.setIfLike(likeSet.contains(ramblyJot.getUid()));
+                    }
+                    return ramblyJotVo;
+                })
+                .collect(Collectors.toList());
+        boolean hasMore = collect.size() == requestData.getLimit();
+        return new PageBean<>(hasMore, collect);
     }
 
-    /**
-     * @description: 获取文章搜索
-     * @param: data
-     * @param: searchResult
-     * @author: lovbe0210
-     * @date: 2025/1/16 13:43
-     */
-    private void getSearchArticleResult(GlobalSearchDTO data, SearchResultVo searchResult) {
-        SearchRequest searchRequest = new SearchRequest(SysConstant.ES_INDEX_ARTICLE);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 设置字段分词匹配
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        // 添加isPublic过滤公开内容,content不为null过滤已发布内容
-        boolQuery.filter(QueryBuilders.termQuery(SysConstant.ES_FILED_PUBLIC, 1))
-                .filter(QueryBuilders.existsQuery(SysConstant.ES_FILED_CONTENT));
-        // 添加关键词匹配 标题、文章摘要、文章内容
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_TITLE, data.getKeywords()).boost(1.0F));
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_SUMMARY, data.getKeywords()).boost(0.8F));
-        boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CONTENT, data.getKeywords()).boost(0.6F));
-        boolQuery.minimumShouldMatch(1);
-        searchSourceBuilder.query(boolQuery);
-        // 只获取id字段
-        searchSourceBuilder.fetchSource(new String[]{SysConstant.ES_FILED_UID, SysConstant.ES_FILED_TITLE, SysConstant.ES_FILED_SUMMARY}, null);
-        // 设置高亮显示
-        HighlightBuilder highlightBuilder = new HighlightBuilder();
-        highlightBuilder.field("title").fragmentSize(0).numOfFragments(0);
-        highlightBuilder.field("summary").fragmentSize(0).numOfFragments(0);
-        highlightBuilder.requireFieldMatch(true);
-        highlightBuilder.preTags("<span style=\"color: red\">");
-        highlightBuilder.postTags("</span>");
-        searchSourceBuilder.highlighter(highlightBuilder);
-        // 添加分页参数
-        searchSourceBuilder.from(data.getOffset());
-        searchSourceBuilder.size(data.getLimit());
-        searchRequest.source(searchSourceBuilder);
-        // 发送请求并处理响应
-        try {
-            SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            SearchHits searchHits = response.getHits();
-            if (searchHits != null && searchHits.getTotalHits().value == 0) {
-                searchResult.setSearchArticleCount(0)
-                        .setSearchArticleList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0) {
-                searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
-                        .setSearchArticleList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length != 0) {
-                // 构造搜索数据
-                List<Long> articleIds = new ArrayList<>();
-                Map<Long, FeaturedArticleVo> articleMap = Arrays.stream(searchHits.getHits())
-                        .map(hit -> {
-                            FeaturedArticleVo articleVo = new FeaturedArticleVo();
-                            articleVo.setUid(Long.valueOf(hit.getId()));
-                            articleIds.add(Long.valueOf(hit.getId()));
-                            if (!CollectionUtils.isEmpty(hit.getHighlightFields())) {
-                                // 替换高亮红
-                                hit.getHighlightFields().values().forEach(highlightField -> {
-                                    String highLightValue = StringUtils.arrayToDelimitedString(highlightField.getFragments(), "");
-                                    if (SysConstant.ES_FILED_TITLE.equals(highlightField.getName())) {
-                                        articleVo.setTitle(highLightValue);
-                                    }
-                                    if (SysConstant.ES_FILED_SUMMARY.equals(highlightField.getName())) {
-                                        articleVo.setSummary(highLightValue);
-                                    }
-                                });
-                            }
-                            return articleVo;
-                        })
-                        .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
-                // 获取文章详细信息
-                List<FeaturedArticleVo> articleVoList = publicContentDao.selectPublicArticleList(articleIds);
-                if (CollectionUtils.isEmpty(articleVoList)) {
-                    // 用户信息填充
-                    for (FeaturedArticleVo article : articleVoList) {
-                        article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
-                        // TODO 关注情况
-
-                    }
-                    searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
-                            .setSearchArticleList(List.of());
-                    return;
-                }
-                // 替换高亮字段
-                articleVoList.stream().forEach(article -> {
-                    FeaturedArticleVo highLightArticle = articleMap.get(article.getUid());
-                    if (highLightArticle != null && highLightArticle.getTitle() != null) {
-                        article.setTitle(highLightArticle.getTitle());
-                    }
-                    if (highLightArticle != null && highLightArticle.getSummary() != null) {
-                        article.setSummary(highLightArticle.getSummary());
-                    }
-                });
-                searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
-                        .setSearchArticleList(articleVoList);
-            }
-        } catch (IOException e) {
-            log.error("[获取搜索文章] --- 查询异常，errorInfo: {}", e.toString());
-        }
-    }
 
     /**
      * @description: 获取排行榜文章

@@ -3,7 +3,8 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 
@@ -143,4 +144,24 @@ public interface PublicContentService {
      * @date: 2025/1/12 17:18
      */
     PageBean<FeaturedArticleVo> getCategoryArticleList(BaseRequest<RecommendRequestDTO> baseRequest, Long userId);
+
+    /**
+     * @description: 获取随笔信息用于阅读
+     * @param: userId
+     * @param: ramblyJotId
+     * @return: com.lovbe.icharge.common.model.vo.RamblyJotVo
+     * @author: lovbe0210
+     * @date: 2025/1/23 23:04
+     */
+    RamblyJotVo getRamblyJotInfo(Long userId, Long ramblyJotId);
+
+    /**
+     * @description: 获取公开随笔列表
+     * @param: baseRequest
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.PageBean
+     * @author: lovbe0210
+     * @date: 2025/1/26 23:26
+     */
+    PageBean<RamblyJotVo> getPublicRamblyJot(BaseRequest<RequestListDTO> baseRequest, Long userId);
 }

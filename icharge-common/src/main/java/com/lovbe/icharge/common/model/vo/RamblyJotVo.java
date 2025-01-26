@@ -1,6 +1,7 @@
-package com.lovbe.icharge.entity.vo;
+package com.lovbe.icharge.common.model.vo;
 
 import com.lovbe.icharge.common.model.base.BaseEntity;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -19,7 +20,7 @@ public class RamblyJotVo extends BaseEntity {
      */
     private String title;
     /**
-     * 最新内容版本id
+     * 内容
      */
     private String content;
     /**
@@ -27,17 +28,13 @@ public class RamblyJotVo extends BaseEntity {
      */
     private String previewContent;
     /**
-     * 所属用户id
+     * 所属用户
      */
-    private Long userId;
+    private UserInfoDo userInfo;
     /**
      * 封面地址
      */
     private List<String> previewImg;
-    /**
-     * 我已点赞,需要关联查库
-     */
-    private int ilike;
     /**
      * 点赞数
      */
@@ -54,4 +51,12 @@ public class RamblyJotVo extends BaseEntity {
      * 发布状态 1审核中 2审核失败 3已发布
      */
     private int publishStatus;
+    /**
+     * 我已点赞,需要关联查库
+     */
+    private boolean ifLike;
+    /**
+     * 点赞用户列表
+     */
+    private List<UserInfoDo> likeUserList;
 }

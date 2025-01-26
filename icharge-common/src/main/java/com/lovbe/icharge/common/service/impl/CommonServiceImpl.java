@@ -28,6 +28,8 @@ import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.ai.chat.ChatClient;
+import org.springframework.ai.chat.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -132,7 +134,12 @@ public class CommonServiceImpl implements CommonService {
     }
 
     @Override
-    public AIAuditResultDTO sendAuditChat(String textValue) {
+    public AIAuditResultDTO sendAuditChat(Integer targetTypeArticle, String textValue) {
+        String promptContent = switch (targetTypeArticle) {
+            case 1 -> aiPromptProperties.getArticleAuditPromptContent();
+            case 3 -> aiPromptProperties.getEssayAuditPromptContent();
+            default -> "";
+        };
         String message = """
                 {
                   "messages": [
@@ -141,7 +148,8 @@ public class CommonServiceImpl implements CommonService {
                   ],
                   response_format={"type": "json_object"}
                 }
-                """.formatted(aiPromptProperties.getAuditPromptContent(), textValue);
+                """.formatted(promptContent, textValue);
+        message = message.replace("${permittedKeywords}", aiPromptProperties.getPermittedKeywords());
         AIAuditResultDTO resultDTO = null;
         try {
             String call = this.chatClient.call(message);
@@ -149,7 +157,7 @@ public class CommonServiceImpl implements CommonService {
                     {"result": true}
                     """;*/
             if (log.isDebugEnabled()) {
-                log.debug("kimi返回审核结果: {}", call);
+                log.debug("大模型返回审核结果: {}", call);
             }
             if (StringUtils.hasLength(call)) {
                 call = call.replace("```json", "");
@@ -160,9 +168,9 @@ public class CommonServiceImpl implements CommonService {
             // kimi有一类异常是文本本身就违规或输出内容违规，需要转换此类异常为审核失败
             String errorMsg = e.toString();
             if (errorMsg != null && errorMsg.indexOf(SysConstant.KIMI_FAILED_TYPE) != -1) {
-                resultDTO = new AIAuditResultDTO(false, Arrays.asList("文章内容可能包含不安全或敏感内容"), null);
+                resultDTO = new AIAuditResultDTO(false, Arrays.asList("内容可能包含不安全或敏感内容"), null);
             } else {
-                log.error("[kimi请求失败] --- errorInfo: {}", errorMsg);
+                log.error("[大模型请求失败] --- errorInfo: {}", errorMsg);
             }
         }
         return resultDTO;

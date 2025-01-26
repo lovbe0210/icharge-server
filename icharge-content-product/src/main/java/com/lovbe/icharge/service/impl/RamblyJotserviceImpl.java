@@ -2,29 +2,36 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.dao.RamblyJotDao;
-import com.lovbe.icharge.common.model.dto.ContentDo;
+import com.lovbe.icharge.entity.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
-import com.lovbe.icharge.entity.dto.RamblyJotDo;
-import com.lovbe.icharge.entity.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.service.RamblyJotService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -32,29 +39,20 @@ import java.util.stream.Collectors;
  * @Date: 2024/11/15 13:14
  * @Description: MS
  */
+@Slf4j
 @Service
 public class RamblyJotserviceImpl implements RamblyJotService {
     @Resource
     private RamblyJotDao ramblyJotDao;
     @Resource
     private ContentDao contentDao;
-
-    @Override
-    public RamblyJotVo getRamblyJotInfo(long userId, Long ramblyJotId) {
-        RamblyJotDo ramblyJotDo = ramblyJotDao.selectById(ramblyJotId);
-        if (ramblyJotDo == null || CommonStatusEnum.isDelete(ramblyJotDo.getStatus())) {
-            throw new ServiceException(ServiceErrorCodes.RAMBLY_JOT_NOT_EXIST);
-        }
-        RamblyJotVo ramblyJotVo = new RamblyJotVo();
-        BeanUtil.copyProperties(ramblyJotDo, ramblyJotVo);
-        if (ramblyJotDo.getContentId() != null) {
-            ContentDo contentDo = contentDao.selectById(ramblyJotDo.getContentId());
-            if (contentDo != null) {
-                ramblyJotVo.setContent(contentDo.getContent());
-            }
-        }
-        return ramblyJotVo;
-    }
+    @Resource
+    private CommonService commonService;
+    // 文档，专栏，随笔，阅读
+    @Value("${spring.kafka.topics.action-essay-publish}")
+    private String publishEssayTopic;
+    @Value("${spring.application.name}")
+    private String appName;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -81,10 +79,16 @@ public class RamblyJotserviceImpl implements RamblyJotService {
         contentDao.insert(contentDo);
         ramblyJotDo.setContentId(contentDo.getUid())
                 .setUserId(userId)
+                .setIsPublic(1)
+                .setPublishStatus(1)
                 .setTitle("灵感时刻-" + LocalDateTimeUtil.format(LocalDateTime.now(), SysConstant.NORMAL_TIME_FORMAT));
         ramblyJotDao.insertOrUpdate(ramblyJotDo);
         RamblyJotVo ramblyJotVo = new RamblyJotVo();
         BeanUtil.copyProperties(ramblyJotDo, ramblyJotVo);
+
+        // 发送审核消息
+        commonService.sendMessage(appName, publishEssayTopic,
+                new ContentPublishDTO(ramblyJotDo.getUid(), SysConstant.TARGET_TYPE_ESSAY, contentDo.getUid(), ramblyJotDo.getCreateTime()));
         return ramblyJotVo;
     }
 
@@ -93,11 +97,12 @@ public class RamblyJotserviceImpl implements RamblyJotService {
         List<RamblyJotDo> ramblyJotDos = ramblyJotDao.selectList(new LambdaQueryWrapper<RamblyJotDo>()
                 .eq(RamblyJotDo::getUserId, userId)
                 .eq(RamblyJotDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
-                .orderByDesc(RamblyJotDo::getUpdateTime));
+                .orderByDesc(RamblyJotDo::getCreateTime));
         if (CollectionUtils.isEmpty(ramblyJotDos)) {
             return List.of();
         }
-        return ramblyJotDos.stream().map(ramblyJotDo -> {
+        return ramblyJotDos.stream()
+                .map(ramblyJotDo -> {
                     RamblyJotVo ramblyJotVo = new RamblyJotVo();
                     BeanUtil.copyProperties(ramblyJotDo, ramblyJotVo);
                     return ramblyJotVo;
@@ -111,7 +116,7 @@ public class RamblyJotserviceImpl implements RamblyJotService {
         checkRamblyJotStatus(userId, ramblyJotDo);
 
         Long contentId = ramblyJotDo.getContentId();
-        if (contentId != null){
+        if (contentId != null) {
             ContentDo contentDo = new ContentDo();
             contentDo.setUid(contentId);
             contentDo.setStatus(CommonStatusEnum.DELETE.getStatus());
@@ -127,6 +132,55 @@ public class RamblyJotserviceImpl implements RamblyJotService {
         checkRamblyJotStatus(userId, ramblyJotDo);
         ramblyJotDo.setIsPublic(data.getIsPublic());
         ramblyJotDao.updateById(ramblyJotDo);
+    }
+
+    @Override
+    public void handlerPublishAction(List<ContentPublishDTO> collect) {
+        // 随笔不可编辑，因此直接获取content内容
+        List<Long> contentIdList = collect.stream()
+                .map(ContentPublishDTO::getContentId)
+                .collect(Collectors.toList());
+        List<ContentDo> contentList = contentDao.selectBatchIds(contentIdList);
+        HashMap<Long, ContentDo> contentMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(contentList)) {
+            contentMap.putAll(contentList.stream().collect(Collectors.toMap(ContentDo::getUid, Function.identity())));
+        }
+        for (ContentPublishDTO publishDTO : collect) {
+            // 获取内容进行审核
+            ContentDo contentDo = contentMap.get(publishDTO.getContentId());
+            if (contentDo == null || !StringUtils.hasLength(contentDo.getContent())) {
+                continue;
+            }
+            try {
+                // 对内容进行解析，获取纯文本内容
+                JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
+                String textValue = CommonUtils.getContentTextValue(parseObj);
+                if (log.isDebugEnabled()) {
+                    log.debug("[随笔内容审核] --- textValue: {}", textValue);
+                }
+                UpdateWrapper<RamblyJotDo> updateWrapper = new UpdateWrapper<RamblyJotDo>()
+                        .eq("uid", publishDTO.getTargetId());
+                // 发送随笔内容审核请求
+                AIAuditResultDTO resultDto = commonService.sendAuditChat(SysConstant.TARGET_TYPE_ESSAY, textValue);
+                if (resultDto == null) {
+                    log.error("[随笔内容审核] --- 大模型审核结果为空，请在日志中查看详细错误");
+                    // TODO 对于审核异常的需要放入死信队列手动审核
+                    continue;
+                }
+                // 结果解析ok
+                if (resultDto != null && resultDto.isResult()) {
+                    log.info("[随笔内容审核] --- 大模型审核通过");
+                    // 根据发布时间contentId更新发布状态
+                    updateWrapper.set("publish_status", SysConstant.PUBLISH_SUCCESS);
+                } else {
+                    log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
+                    updateWrapper.set("publish_status", SysConstant.PUBLISH_FAILED);
+                }
+                ramblyJotDao.update(updateWrapper);
+            } catch (Exception e) {
+                log.error("[随笔内容审核] --- 正文内容解析失败，contentId: {}, errorInfo: {}", publishDTO.getContentId(), e.toString());
+            }
+        }
     }
 
     private static void checkRamblyJotStatus(long userId, RamblyJotDo ramblyJotDo) {

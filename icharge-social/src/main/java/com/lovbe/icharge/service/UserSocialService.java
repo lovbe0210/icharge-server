@@ -1,6 +1,9 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
+import com.lovbe.icharge.common.model.dto.RelationshipDo;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import com.lovbe.icharge.entity.dto.*;
@@ -27,7 +30,7 @@ public interface UserSocialService {
      * @description: 获取用户关系
      * @param: targetUser
      * @param: userId
-     * @return: com.lovbe.icharge.entity.dto.RelationshipDo
+     * @return: com.lovbe.icharge.common.model.dto.RelationshipDo
      * @author: lovbe0210
      * @date: 2025/1/20 22:41
      */
@@ -40,7 +43,7 @@ public interface UserSocialService {
      * @author: lovbe0210
      * @date: 2025/1/21 17:47
      */
-    List<RelationshipVo> getRelationshipList(Long userId, String targetShip);
+    PageBean<RelationshipVo> getFollowFansList(Long userId, RequestListDTO request, String targetShip);
     
     /** 
      * @description: 获取关注和粉丝统计
@@ -50,4 +53,14 @@ public interface UserSocialService {
      * @date: 2025/1/22 21:34
      */
     TargetStatisticDo getRelationShipStatistic(Long userId);
+
+    /**
+     * @description: 批量查询用户的关注记录
+     * @param: userIdList
+     * @param: userId
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.RelationshipDo>
+     * @author: lovbe0210
+     * @date: 2025/1/23 21:24
+     */
+    List<RelationshipVo> getRelationshipList(List<Long> userIdList, Long userId);
 }

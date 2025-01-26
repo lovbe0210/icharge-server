@@ -1,10 +1,15 @@
 package com.lovbe.icharge.service.feign;
 
+import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.RelationshipDo;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
@@ -24,7 +29,7 @@ public interface SocialService {
      * @author: lovbe0210
      * @date: 2025/1/22 15:13
      */
-    @GetMapping("/api/sl/user/relationship/{ship}")
-    ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestHeader("userId") Long userId,
-                                                           @PathVariable("ship") String targetShip);
+    @GetMapping("/api/sl/user/follows/query")
+    ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody List<Long> userIds,
+                                                           @RequestHeader("userId") Long userId);
 }

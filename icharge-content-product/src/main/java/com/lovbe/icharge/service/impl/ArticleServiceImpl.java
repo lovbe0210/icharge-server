@@ -504,15 +504,15 @@ public class ArticleServiceImpl implements ArticleService {
                     log.debug("[文章内容审核] --- textValue: {}", textValue);
                 }
                 // 发送文章内容审核请求
-                AIAuditResultDTO resultDto = commonService.sendAuditChat(textValue);
+                AIAuditResultDTO resultDto = commonService.sendAuditChat(SysConstant.TARGET_TYPE_ARTICLE, textValue);
                 if (resultDto == null) {
-                    log.error("[文章内容审核] --- kimi审核结果为空，请在日志中查看详细错误");
+                    log.error("[文章内容审核] --- 大模型审核结果为空，请在日志中查看详细错误");
                     // TODO 对于审核异常的需要放入死信队列手动审核
                     continue;
                 }
                 // 结果解析ok
                 if (resultDto != null && resultDto.isResult()) {
-                    log.info("[文章内容审核] --- kimi审核通过");
+                    log.info("[文章内容审核] --- 大模型审核通过");
                     // 根据发布时间contentId更新发布状态
                     int update = articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_SUCCESS);
                     // 说明自上次发布后再无修改
@@ -552,7 +552,7 @@ public class ArticleServiceImpl implements ArticleService {
                         commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
                     }
                 } else if (resultDto != null && !resultDto.isResult()) {
-                    log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
+                    log.info("[文章内容审核] --- 大模型审核失败, reason: {}", resultDto.getReason());
                     articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_FAILED);
                 }
             } catch (Exception e) {

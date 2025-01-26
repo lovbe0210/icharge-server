@@ -4,7 +4,8 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
@@ -51,6 +52,34 @@ public class PublicContentController {
     public ResponseBean<PublicArticleVo> getArticleInfo(@PathVariable("uri") String uri,
                                                         @RequestHeader(value = "userId", required = false) Long userId) {
         return ResponseBean.ok(contentService.getArticleInfo(uri, userId));
+    }
+
+    /**
+     * @description: 获取公开随笔列表
+     * @param: baseRequest
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.base.PageBean>
+     * @author: lovbe0210
+     * @date: 2025/1/26 23:25
+     */
+    @PostMapping("/ramblyjot/list")
+    public ResponseBean<PageBean> getPublicRamblyJotList(@RequestBody @Valid BaseRequest<RequestListDTO> baseRequest,
+                                                         @RequestHeader(value = "userId", required = false) Long userId){
+        return ResponseBean.ok(contentService.getPublicRamblyJot(baseRequest, userId));
+    }
+
+    /**
+     * description: 获取随笔信息用于阅读
+     *
+     * @param userId
+     * @return ResponseBean<RamblyJotVo>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @GetMapping("/ramblyjot/{ramblyJotId}")
+    public ResponseBean<RamblyJotVo> getRamblyJotInfo(@PathVariable("ramblyJotId") Long ramblyJotId,
+                                                      @RequestHeader(value = "userId", required = false) Long userId) {
+        return ResponseBean.ok(contentService.getRamblyJotInfo(userId, ramblyJotId));
     }
 
     /**

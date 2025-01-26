@@ -14,9 +14,17 @@ public class AIPromptProperties {
     /**
      * 文章审核系统引导语句
      */
-    private String auditPromptContent;
+    private String articleAuditPromptContent;
+    /**
+     * 随笔审核系统引导语句
+     */
+    private String essayAuditPromptContent;
     /**
      * 人物画像系统引导语句
      */
     private String portraitTagPromptContent;
+    /**
+     * 允许存在词汇白名单
+     */
+    private String permittedKeywords;
 }
