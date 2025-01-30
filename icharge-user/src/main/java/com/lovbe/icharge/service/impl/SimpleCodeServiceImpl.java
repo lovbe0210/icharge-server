@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ErrorCode;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
@@ -12,12 +13,13 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.dto.VCodeTemplateDO;
+import com.lovbe.icharge.common.model.vo.BindingCodeReqVo;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
-import com.lovbe.icharge.dto.SimpleSendResultDTO;
+import com.lovbe.icharge.entity.dto.SimpleSendResultDTO;
 import com.lovbe.icharge.dao.AccountMapper;
 import com.lovbe.icharge.dao.SimpleCodeMapper;
 import com.lovbe.icharge.service.SimpleCodeService;
@@ -25,6 +27,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -41,10 +44,11 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     private AccountMapper accountMapper;
 
     @Override
-    public void sendSmsCode(SmsCodeReqVo reqVo) {
+    public void sendSmsCode(SmsCodeReqVo reqVo, Long userId) {
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
                 .setMobile(reqVo.getMobile())
                 .setScene(reqVo.getScene())
+                .setUserId(userId)
                 .setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
         checkCodeSceneValidate(codeReqDTO);
@@ -56,9 +60,13 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     }
 
     @Override
-    public void sendEmailCode(EmailCodeReqVo reqVo) {
+    public void sendEmailCode(EmailCodeReqVo reqVo, Long userId) {
         // 判断并创建验证码
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO().setEmail(reqVo.getEmail()).setScene(reqVo.getScene().getScene()).setUsedIp(ServletUtils.getClientIP());
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
+                .setEmail(reqVo.getEmail())
+                .setScene(reqVo.getScene().getScene())
+                .setUserId(userId)
+                .setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
         checkCodeSceneValidate(codeReqDTO);
         // 判断能否创建验证码
@@ -69,7 +77,21 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     }
 
     @Override
-    public void useVerifyCode(@Valid SimpleCodeReqDTO reqDTO) throws ServiceException {
+    public void useVerifyCode(SimpleCodeReqDTO reqDTO, Long userId) throws ServiceException {
+        // 业务参数校验
+        Integer scene = reqDTO.getScene();
+        if (CodeSceneEnum.sceneMustLogin(scene)) {
+            AccountDo accountDo = accountMapper.selectById(userId);
+            Assert.isTrue(accountDo != null && CommonStatusEnum.isNormal(accountDo.getStatus()), ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR.getMsg());
+            reqDTO.setMobile(accountDo.getMobile())
+                    .setEmail(accountDo.getEmail())
+                    .setUserId(userId);
+        } else if (CodeSceneEnum.sceneIsMobile(scene)) {
+            Assert.notNull(reqDTO.getMobile(), SysConstant.NOT_EMPTY_MOBILE);
+        }else {
+            Assert.notNull(reqDTO.getEmail(), SysConstant.NOT_EMPTY_EMAIL);
+        }
+
         // 记录验证码使用次数
         String payload = CodeSceneEnum.sceneIsMobile(reqDTO.getScene()) ? reqDTO.getMobile() : reqDTO.getEmail();
         String incrKey = RedisKeyConstant.getVerifyCountKey(payload);
@@ -97,6 +119,32 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         String newExpire = StringUtils.arrayToDelimitedString(split, "_");
         RedisUtil.hset(codeControlKey, reqDTO.getCode(), newExpire);
         // TODO 记录日志
+    }
+
+    @Override
+    public void sendBandingCode(BindingCodeReqVo data, Long userId) {
+        // 获取账号信息
+        AccountDo accountDo = accountMapper.selectById(userId);
+        if (accountDo == null) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+        }
+        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
+                .setUserId(userId)
+                .setScene(data.getScene().getScene());
+        if (CodeSceneEnum.sceneIsMobile(data.getScene())) {
+            codeReqDTO.setMobile(accountDo.getMobile());
+        } else {
+            codeReqDTO.setEmail(accountDo.getEmail());
+        }
+
+        // 判断使用场景是否合法
+        checkCodeSceneValidate(codeReqDTO);
+        // 判断能否创建验证码
+        String code = canCreateCode(codeReqDTO);
+        codeReqDTO.setCode(code);
+        // 发送短信验证码
+        sendSimpleCode(codeReqDTO);
+
     }
 
     /**
@@ -194,7 +242,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                         .orderByDesc(VCodeTemplateDO::getUpdateTime));
         // 验证码模板不存在
         if (CollectionUtils.isEmpty(template)) {
-            log.error("[发送短信] --- 系统错误，未获取到场景：{}的模板内容", sceneEnum.getDescription());
+            log.error("[发送短信] --- 系统错误，未获取到场景：{}的模板内容", sceneEnum.getTemplateCode());
             throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
         }
         VCodeTemplateDO templateDO = template.get(0);
@@ -240,66 +288,84 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
      */
     private void checkCodeSceneValidate(SimpleCodeReqDTO codeReqDTO) {
         LambdaQueryWrapper<AccountDo> queryWrapper = new LambdaQueryWrapper<>();
-        if (CodeSceneEnum.sceneIsMobile(codeReqDTO.getScene())) {
+        if (Objects.equals(codeReqDTO.getScene(), CodeSceneEnum.MOBILE_RESET_PASSWORD.getScene())) {
             queryWrapper.eq(AccountDo::getMobile, codeReqDTO.getMobile());
-        } else {
+        } else if (Objects.equals(codeReqDTO.getScene(), CodeSceneEnum.EMAIL_RESET_PASSWORD.getScene())) {
             queryWrapper.eq(AccountDo::getEmail, codeReqDTO.getEmail());
+        } else {
+            queryWrapper.eq(AccountDo::getUid, codeReqDTO.getUserId());
         }
         AccountDo accountDo = accountMapper.selectOne(queryWrapper);
-        if (accountDo != null) {
-            codeReqDTO.setUserId(accountDo.getUid());
-        }
         switch (CodeSceneEnum.getCodeByScene(codeReqDTO.getScene())) {
-            // 未注册不可发验证码
             case BIND_MOBILE:
-                if (accountDo == null || !StringUtils.isEmpty(accountDo.getMobile())) {
+                if (accountDo == null ||
+                        !StringUtils.hasLength(accountDo.getEmail()) ||
+                        StringUtils.hasLength(accountDo.getMobile())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
                 }
-                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                break;
+            case VERIFY_MOBILE:
+                if (accountDo == null) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+                }
+                if (StringUtils.hasLength(accountDo.getMobile()) &&
+                        Objects.equals(codeReqDTO.getMobile(), accountDo.getMobile())) {
+                    throw new ServiceException(ServiceErrorCodes.USER_MOBILE_USED);
                 }
                 break;
             case BIND_EMAIL:
-                if (accountDo == null || !StringUtils.isEmpty(accountDo.getEmail())) {
+                if (accountDo == null ||
+                        !StringUtils.isEmpty(accountDo.getMobile()) ||
+                        StringUtils.hasLength(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
                 }
-                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
+                break;
+            case VERIFY_EMAIL:
+                if (accountDo == null) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
+                }
+                if (StringUtils.hasLength(accountDo.getEmail()) &&
+                        Objects.equals(codeReqDTO.getEmail(), accountDo.getEmail())) {
+                    throw new ServiceException(ServiceErrorCodes.USER_EMAIL_USED);
                 }
                 break;
             case MOBILE_UPDATE_EMAIL:
+            case MOBILE_UPDATE_MOBILE:
             case MOBILE_UPDATE_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getMobile())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
                 }
-                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
-                }
                 break;
             case EMAIL_UPDATE_MOBILE:
+            case EMAIL_UPDATE_EMAIL:
             case EMAIL_UPDATE_PASSWORD:
                 if (accountDo == null || StringUtils.isEmpty(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
-                }
-                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.AUTH_LOGIN_USER_DISABLED);
                 }
                 break;
             case MOBILE_RESET_PASSWORD:
                 if (accountDo == null || !StringUtils.hasLength(accountDo.getMobile())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
                 }
-                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.ACCOUNT_DISABLED);
-                }
                 break;
             case EMAIL_RESET_PASSWORD:
                 if (accountDo == null || !StringUtils.hasLength(accountDo.getEmail())) {
                     throw new ServiceException(ServiceErrorCodes.USER_ACCOUNT_NOT_EXISTS);
                 }
-                if (!CommonStatusEnum.isNormal(accountDo.getStatus())) {
-                    throw new ServiceException(ServiceErrorCodes.ACCOUNT_DISABLED);
+                break;
+            case MOBILE_LOGIN:
+            case EMAIL_LOGIN:
+                return;
+            default:
+                if (accountDo == null) {
+                    throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
                 }
+        }
+        if (CommonStatusEnum.isDisable(accountDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.ACCOUNT_DISABLED);
+        }
+        if (CommonStatusEnum.isDelete(accountDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
         }
     }
 

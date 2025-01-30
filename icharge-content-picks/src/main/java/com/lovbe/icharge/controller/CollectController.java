@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
@@ -36,7 +37,7 @@ public class CollectController {
      * @date: 2024/9/16 11:56
      */
     @GetMapping("/collect/tags/count")
-    public ResponseBean<PublicArticleVo> getCollectTagCount(@RequestHeader("userId") Long userId) {
+    public ResponseBean<PublicArticleVo> getCollectTagCount(@RequestHeader(SysConstant.USERID) Long userId) {
         List<CollectTagsDTO> data = collectService.getCollectTagCount(userId);
         return ResponseBean.ok(data);
     }
@@ -50,7 +51,7 @@ public class CollectController {
      * @date: 2024/9/16 11:56
      */
     @GetMapping("/collect/tags/list")
-    public ResponseBean<PublicArticleVo> getCollectTagList(@RequestHeader("userId") Long userId) {
+    public ResponseBean<PublicArticleVo> getCollectTagList(@RequestHeader(SysConstant.USERID) Long userId) {
         List<CollectTagsDTO> data = collectService.getCollectTagList(userId);
         return ResponseBean.ok(data);
     }
@@ -65,7 +66,7 @@ public class CollectController {
      */
     @PostMapping("/collect/tag/edit")
     public ResponseBean<PublicArticleVo> updateCollectTag(@RequestBody @Valid BaseRequest<CollectTagsDTO> baseRequest,
-                                                           @RequestHeader("userId") Long userId) {
+                                                           @RequestHeader(SysConstant.USERID) Long userId) {
         Assert.hasLength(baseRequest.getData().getTitle(), "收藏分组名称不得为空");
         Long tagId = collectService.updateCollectTag(baseRequest.getData(), userId);
         return ResponseBean.ok(tagId);
@@ -81,7 +82,7 @@ public class CollectController {
      */
     @PostMapping("/collect/tag/delete")
     public ResponseBean<PublicArticleVo> deleteCollectTag(@RequestBody @Valid BaseRequest<CollectTagsDTO> baseRequest,
-                                                          @RequestHeader("userId") Long userId) {
+                                                          @RequestHeader(SysConstant.USERID) Long userId) {
         Assert.notNull(baseRequest.getData().getUid(), "收藏分组标签id不得为空");
         collectService.deleteCollectTag(baseRequest.getData(), userId);
         return ResponseBean.ok();
@@ -97,7 +98,7 @@ public class CollectController {
      */
     @PostMapping("/collect/list")
     public ResponseBean<PublicArticleVo> getCollectContentList(@RequestBody @Valid BaseRequest<CollectRequestDTO> baseRequest,
-                                                               @RequestHeader("userId") Long userId) {
+                                                               @RequestHeader(SysConstant.USERID) Long userId) {
         List<CollectVo> collectList = collectService.getCollectList(baseRequest.getData(), userId);
         return ResponseBean.ok(collectList);
     }
@@ -112,7 +113,7 @@ public class CollectController {
      */
     @GetMapping("/collect/info/{collectId}")
     public ResponseBean<PublicArticleVo> getCollectInfo(@PathVariable("collectId") Long collectId,
-                                                               @RequestHeader("userId") Long userId) {
+                                                               @RequestHeader(SysConstant.USERID) Long userId) {
         CollectVo collect = collectService.getCollectInfo(collectId, userId);
         return ResponseBean.ok(collect);
     }
@@ -127,7 +128,7 @@ public class CollectController {
      */
     @PostMapping("/collect/mark")
     public ResponseBean<PublicArticleVo> markContent(@RequestBody @Valid BaseRequest<CollectTargetDTO> baseRequest,
-                                                     @RequestHeader("userId") Long userId) {
+                                                     @RequestHeader(SysConstant.USERID) Long userId) {
         CollectTargetDTO data = baseRequest.getData();
         if (data.getTargetId() == null || data.getTargetType() == null) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
@@ -146,7 +147,7 @@ public class CollectController {
      */
     @PostMapping("/collect/unmark")
     public ResponseBean<PublicArticleVo> cancelMarkContent(@RequestBody @Valid BaseRequest<CollectTargetDTO> baseRequest,
-                                                           @RequestHeader("userId") Long userId) {
+                                                           @RequestHeader(SysConstant.USERID) Long userId) {
         CollectTargetDTO data = baseRequest.getData();
         if (data.getUid() == null) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);

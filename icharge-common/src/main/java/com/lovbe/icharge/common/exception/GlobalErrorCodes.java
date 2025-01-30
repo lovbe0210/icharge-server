@@ -19,7 +19,7 @@ public interface GlobalErrorCodes {
     ErrorCode BAD_REQUEST = new ErrorCode(400, "error request");
     ErrorCode LOCKED = new ErrorCode(400, "请求失败，请稍后再试");
     ErrorCode TOO_MANY_REQUESTS = new ErrorCode(400, "请求过于频繁，请稍后再试");
-    ErrorCode SLIDER_VERIFY_FAILED = new ErrorCode(400, "滑块验证失败，请稍后再试");
+    ErrorCode SLIDER_VERIFY_FAILED = new ErrorCode(400, "请先完成滑块验证");
     ErrorCode UNAUTHORIZED = new ErrorCode(401, "token已过期");
     ErrorCode ACCOUNT_LOGIN_EXPIRED = new ErrorCode(403, "账号信息已过期, 请重新登录");
     ErrorCode NOT_FOUND = new ErrorCode(404, "请求未找到");

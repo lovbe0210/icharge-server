@@ -2,8 +2,8 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.dto.AccountDo;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
-import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.entity.vo.AccountVo;
 
 /**
  * @Author: lovbe
@@ -39,4 +39,13 @@ public interface AccountService {
      * @date: 2024/8/14 20:54
      */
     int updateAccount(AccountDo account);
+
+    /**
+     * @description: 获取账号设置状态
+     * @param: userId
+     * @return: com.lovbe.icharge.entity.vo.AccountVo
+     * @author: lovbe0210
+     * @date: 2025/1/29 15:35
+     */
+    AccountVo getAccountSettings(Long userId);
 }

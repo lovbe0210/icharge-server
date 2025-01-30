@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 @FeignClient(name = "user", fallback = UserServiceFeignFallback.class)
 public interface UserService {
 
-    @PostMapping("/api/user/createUserIfAbsent")
+    @PostMapping("/api/user/createIfAbsent")
     ResponseBean<LoginUser> createUserIfAbsent(BaseRequest<AuthUserDTO> authUserDTO);
 
     @PostMapping("/api/user/getUser/loginPayload")
     ResponseBean<LoginUser> getLoginUserByPayload(BaseRequest<AuthUserDTO> authUserDTO);
 
-    @PostMapping("/api/user/useVerifyCode")
+    @PostMapping("/api/user/code/verify")
     ResponseBean useVerifyCode(BaseRequest<SimpleCodeReqDTO> simpleCodeReqDTO);
 
     @PostMapping("/api/user/mobile/code")

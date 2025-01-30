@@ -1,4 +1,4 @@
-package com.lovbe.icharge.dto;
+package com.lovbe.icharge.entity.dto;
 
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.validation.Mobile;

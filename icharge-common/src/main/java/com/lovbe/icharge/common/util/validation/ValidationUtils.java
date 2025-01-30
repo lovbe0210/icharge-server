@@ -27,7 +27,7 @@ import static com.lovbe.icharge.common.util.CommonUtils.bitwiseInvert;
  * @author 芋道源码
  */
 public class ValidationUtils {
-    public static final String MOBILE_REGEXP = "^(?:(?:\\+|00)86)?1(?:(?:3[\\d])|(?:4[0,1,4-9])|(?:5[0-3,5-9])|(?:6[2,5-7])|(?:7[0-8])|(?:8[\\d])|(?:9[0-3,5-9]))\\d{8}$";
+    public static final String MOBILE_REGEXP = "^(?:(?:\\+|00)86)?1[3-9]\\d{9}$";
 
     private static final Pattern PATTERN_MOBILE = Pattern.compile(MOBILE_REGEXP);
 
@@ -92,7 +92,6 @@ public class ValidationUtils {
             if (RedisUtil.get(redisKey) == null) {
                 return false;
             }
-            RedisUtil.del(redisKey);
             return true;
         }catch (Exception e) {
             log.error("[滑块验证] --- 滑块解析失败，sourceValue：{}", value);

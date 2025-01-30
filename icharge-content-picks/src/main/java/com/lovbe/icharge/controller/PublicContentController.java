@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
@@ -50,7 +51,7 @@ public class PublicContentController {
      */
     @GetMapping("/article/{uri}")
     public ResponseBean<PublicArticleVo> getArticleInfo(@PathVariable("uri") String uri,
-                                                        @RequestHeader(value = "userId", required = false) Long userId) {
+                                                        @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getArticleInfo(uri, userId));
     }
 
@@ -64,7 +65,7 @@ public class PublicContentController {
      */
     @PostMapping("/ramblyjot/list")
     public ResponseBean<PageBean> getPublicRamblyJotList(@RequestBody @Valid BaseRequest<RequestListDTO> baseRequest,
-                                                         @RequestHeader(value = "userId", required = false) Long userId){
+                                                         @RequestHeader(value = SysConstant.USERID, required = false) Long userId){
         return ResponseBean.ok(contentService.getPublicRamblyJot(baseRequest, userId));
     }
 
@@ -78,7 +79,7 @@ public class PublicContentController {
      */
     @GetMapping("/ramblyjot/{ramblyJotId}")
     public ResponseBean<RamblyJotVo> getRamblyJotInfo(@PathVariable("ramblyJotId") Long ramblyJotId,
-                                                      @RequestHeader(value = "userId", required = false) Long userId) {
+                                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getRamblyJotInfo(userId, ramblyJotId));
     }
 
@@ -94,7 +95,7 @@ public class PublicContentController {
                            @RequestParam("csh") Double csh,
                            @RequestParam ("sh")Double sh,
                            @RequestHeader("sign") String sign,
-                           @RequestHeader(value = "userId", required = false) Long userId) {
+                           @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         if (st == null || csh == null || sh == null || !StringUtils.hasLength(sign)) {
             return;
         }
@@ -111,7 +112,7 @@ public class PublicContentController {
      */
     @GetMapping("/article/list/{authorId}")
     public ResponseBean<PublicArticleVo> getArticleList(@PathVariable("authorId") Long authorId,
-                                                        @RequestHeader(value = "userId", required = false) Long userId) {
+                                                        @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getArticleList(authorId, userId));
     }
 
@@ -125,7 +126,7 @@ public class PublicContentController {
      */
     @GetMapping("/column/dir/{uri}")
     public ResponseBean<PublicArticleVo> getColumnDir(@PathVariable("uri") String uri,
-                                                      @RequestHeader(value = "userId", required = false) Long userId) {
+                                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getColumnDir(uri, userId));
     }
 
@@ -139,7 +140,7 @@ public class PublicContentController {
      */
     @PostMapping("/article/category")
     public ResponseBean<Map> getCategoryArticleList(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                                    @RequestHeader(value = "userId", required = false) Long userId) {
+                                                    @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         RecommendRequestDTO data = baseRequest.getData();
         Assert.notNull(data.getFirstCategory(), ServiceErrorCodes.CATE_MENU_NOT_NULL.getMsg());
         PageBean<FeaturedArticleVo> recommendArticle = contentService.getCategoryArticleList(baseRequest, userId);
@@ -156,7 +157,7 @@ public class PublicContentController {
      */
     @PostMapping("/article/recommend")
     public ResponseBean<Map> getRecommendedArticleList(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                                       @RequestHeader(value = "userId", required = false) Long userId) {
+                                                       @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         PageBean<FeaturedArticleVo> recommendArticle = contentService.getRecommendedArticleList(baseRequest, userId);
         return ResponseBean.ok(recommendArticle);
     }
@@ -183,7 +184,7 @@ public class PublicContentController {
      */
     @PostMapping("/article/rank")
     public ResponseBean getRankArticle(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                       @RequestHeader(value = "userId", required = false) Long userId) {
+                                       @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         PageBean<FeaturedArticleVo> rankPageBean = contentService.getRankArticleList(baseRequest.getData(), userId);
         return ResponseBean.ok(rankPageBean);
     }
@@ -210,7 +211,7 @@ public class PublicContentController {
      */
     @PostMapping("/column/rank")
     public ResponseBean getRankColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                      @RequestHeader(value = "userId", required = false) Long userId) {
+                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         PageBean<RecommendColumnVo> featuredArticle = contentService.getRankColumn(baseRequest.getData(), userId);
         return ResponseBean.ok(featuredArticle);
     }
@@ -237,7 +238,7 @@ public class PublicContentController {
      */
     @PostMapping("/author/rank")
     public ResponseBean getRankAuthor(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                      @RequestHeader(value = "userId", required = false) Long userId) {
+                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         PageBean<ExcellentAuthorVo> rankAuthor = contentService.getRankAuthor(baseRequest.getData(), userId);
         return ResponseBean.ok(rankAuthor);
     }
@@ -251,7 +252,7 @@ public class PublicContentController {
      */
     @PostMapping("/column/public")
     public ResponseBean getPublicColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
-                                        @RequestHeader(value = "userId", required = false) Long userId) {
+                                        @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         PageBean<RecommendColumnVo> featuredArticle = contentService.getPublicColumn(baseRequest.getData(), userId);
         return ResponseBean.ok(featuredArticle);
     }

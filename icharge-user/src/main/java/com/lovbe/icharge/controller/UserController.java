@@ -6,9 +6,9 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.dto.BatchUserRequestDTO;
-import com.lovbe.icharge.dto.ForgetPasswordDTO;
-import com.lovbe.icharge.dto.UpdateUserDTO;
+import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
+import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ public class UserController {
      * @param authUserDTO
      * @return ResponseBean<LoginUser>
      */
-    @PostMapping("/createUserIfAbsent")
+    @PostMapping("/createIfAbsent")
     public ResponseBean<LoginUser> createUserIfAbsent(@RequestBody @Valid BaseRequest<AuthUserDTO> authUserDTO) {
         return ResponseBean.ok(userService.createUserIfAbsent(authUserDTO.getData()));
     }
@@ -90,7 +90,7 @@ public class UserController {
      * @date: 2024/12/14 23:39
      */
     @GetMapping("/id/{userId}")
-    public ResponseBean getUserInfo(@PathVariable("userId")Long userId) {
+    public ResponseBean getUserInfo(@PathVariable(SysConstant.USERID)Long userId) {
         return ResponseBean.ok(userService.getUserInfo(userId));
     }
 

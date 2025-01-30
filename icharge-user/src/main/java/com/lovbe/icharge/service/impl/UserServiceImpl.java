@@ -19,18 +19,16 @@ import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
-import com.lovbe.icharge.common.util.validation.ValidationUtils;
 import com.lovbe.icharge.config.ServiceProperties;
-import com.lovbe.icharge.dto.BatchUserRequestDTO;
-import com.lovbe.icharge.dto.ForgetPasswordDTO;
-import com.lovbe.icharge.dto.UpdateUserDTO;
+import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
+import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,10 +36,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe

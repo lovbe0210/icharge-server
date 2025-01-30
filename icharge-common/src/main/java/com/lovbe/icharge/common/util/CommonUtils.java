@@ -1,6 +1,9 @@
 package com.lovbe.icharge.common.util;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.symmetric.AES;
+import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
@@ -9,6 +12,8 @@ import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 /**
@@ -17,6 +22,12 @@ import java.util.Random;
  * @Description: 公共工具类
  */
 public class CommonUtils {
+    private static byte[] key = new byte[]{2, -115, 44, -80, 32, -60, -55, -103, 37, 54, 30, 72, -121, -103, 107, 123};
+    private static AES aes;
+
+    static {
+        aes = SecureUtil.aes(key);
+    }
     /**
      * @description 获取指定长度的字母数字组合
      * @param[1] length
@@ -51,13 +62,24 @@ public class CommonUtils {
         char[] chars = input.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
+            if (!Character.isLetterOrDigit(c)) {
+                continue;
+            }
             // 只针对数字或字母异或操作，对于异或之后超出数字或字母范围的还是使用原字符
-            if (Character.isLetterOrDigit(c) && Character.isLetterOrDigit(c ^ 1)) {
-                int invertedChar = c ^ 1;
+            int invertedChar = c ^ 127;
+            if (Character.isLetterOrDigit(invertedChar)) {
                 chars[i] = (char) invertedChar;
             }
         }
         return new String(chars);
+    }
+
+    public static String encryptStr(String sourceStr) {
+        return aes.encryptHex(sourceStr);
+    }
+
+    public static String decryptStr(String sourceStr) {
+        return aes.decryptStr(sourceStr);
     }
 
     /**

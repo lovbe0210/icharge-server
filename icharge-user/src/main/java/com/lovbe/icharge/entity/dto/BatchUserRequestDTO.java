@@ -1,4 +1,4 @@
-package com.lovbe.icharge.dto;
+package com.lovbe.icharge.entity.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;

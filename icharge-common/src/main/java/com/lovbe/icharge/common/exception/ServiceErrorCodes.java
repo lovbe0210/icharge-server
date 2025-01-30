@@ -12,7 +12,8 @@ public interface ServiceErrorCodes {
     ErrorCode USER_EMAIL_NOT_EXISTS = new ErrorCode(400, "邮箱未注册用户，请注册后再进行登录");
     ErrorCode USER_NOT_EXIST = new ErrorCode(400, "请求错误，用户信息不存在");
     ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(400, "没有找到匹配的账号");
-    ErrorCode USER_MOBILE_USED = new ErrorCode(400, "修改手机失败，该手机号({})已经被使用");
+    ErrorCode USER_MOBILE_USED = new ErrorCode(400, "手机号已经被使用");
+    ErrorCode USER_EMAIL_USED = new ErrorCode(400, "邮箱号已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(400, "用户积分余额不足");
     ErrorCode MOBILE_NOT_EXIST = new ErrorCode(400, "手机号不存在");
     ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(400, "验证码发送失败，请稍后再试");
@@ -25,7 +26,6 @@ public interface ServiceErrorCodes {
     ErrorCode AUTH_LOGIN_BAD_CREDENTIALS = new ErrorCode(400, "登录失败，账号或密码不正确");
     ErrorCode AUTH_LOGIN_USER_DISABLED = new ErrorCode(405, "登录失败，账号被禁用");
     ErrorCode AUTH_SOCIAL_USER_NOT_FOUND = new ErrorCode(400, "登录失败，解析不到三方登录信息");
-    ErrorCode AUTH_MOBILE_USED = new ErrorCode(400, "手机号已经被使用");
     ErrorCode AUTH_CODE_EXPIRED = new ErrorCode(406, "验证码已过期，请重新获取");
     ErrorCode AUTH_CODE_ERROR = new ErrorCode(400, "验证码错误");
     ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(400, "登录方式不得为空");

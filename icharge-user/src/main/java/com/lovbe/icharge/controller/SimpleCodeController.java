@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
+import com.lovbe.icharge.common.model.vo.BindingCodeReqVo;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.service.SimpleCodeService;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -35,15 +37,10 @@ public class SimpleCodeController {
      * @author lovbe0210
      * @date 2024/8/23 16:22
      */
-    @PostMapping("/useVerifyCode")
-    public ResponseBean useVerifyCode(@RequestBody @Valid BaseRequest<SimpleCodeReqDTO> codeReqDTO) {
-        Integer scene = codeReqDTO.getData().getScene();
-        if (CodeSceneEnum.sceneIsMobile(scene)) {
-            Assert.notNull(codeReqDTO.getData().getMobile(), SysConstant.NOT_EMPTY_MOBILE);
-        }else {
-            Assert.notNull(codeReqDTO.getData().getEmail(), SysConstant.NOT_EMPTY_EMAIL);
-        }
-        codeService.useVerifyCode(codeReqDTO.getData());
+    @PostMapping("/code/verify")
+    public ResponseBean useVerifyCode(@RequestBody @Valid BaseRequest<SimpleCodeReqDTO> codeReqDTO,
+                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
+        codeService.useVerifyCode(codeReqDTO.getData(), userId);
         return ResponseBean.ok();
     }
 
@@ -55,8 +52,9 @@ public class SimpleCodeController {
      * @return ResponseBean
      */
     @PostMapping("/mobile/code")
-    public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<SmsCodeReqVo> reqVo) {
-        codeService.sendSmsCode(reqVo.getData());
+    public ResponseBean sendSmsCode(@RequestBody @Valid BaseRequest<SmsCodeReqVo> reqVo,
+                                    @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
+        codeService.sendSmsCode(reqVo.getData(), userId);
         return ResponseBean.ok();
     }
 
@@ -68,8 +66,23 @@ public class SimpleCodeController {
      * @return ResponseBean
      */
     @PostMapping("/email/code")
-    public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo) {
-        codeService.sendEmailCode(reqVo.getData());
+    public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo,
+                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
+        codeService.sendEmailCode(reqVo.getData(), userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * description: 通过绑定手机或邮箱发送验证码
+     * @author: Lvhl
+     * @date: 2024/8/2 17:49
+     * @param reqVo
+     * @return ResponseBean
+     */
+    @PostMapping("/binding/code")
+    public ResponseBean sendBandingCode(@RequestBody @Valid BaseRequest<BindingCodeReqVo> reqVo,
+                                        @RequestHeader(SysConstant.USERID) Long userId) {
+        codeService.sendBandingCode(reqVo.getData(), userId);
         return ResponseBean.ok();
     }
 }

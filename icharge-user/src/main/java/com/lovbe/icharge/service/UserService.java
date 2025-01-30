@@ -4,9 +4,9 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.dto.BatchUserRequestDTO;
-import com.lovbe.icharge.dto.ForgetPasswordDTO;
-import com.lovbe.icharge.dto.UpdateUserDTO;
+import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
+import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 
 import java.util.List;
 

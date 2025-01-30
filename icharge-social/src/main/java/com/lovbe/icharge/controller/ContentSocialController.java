@@ -41,7 +41,7 @@ public class ContentSocialController {
      */
     @PostMapping("/content/like")
     public ResponseBean markContent(@RequestBody @Valid BaseRequest<ContentLikeDTO> baseRequest,
-                                    @RequestHeader("userId") Long userId) {
+                                    @RequestHeader(SysConstant.USERID) Long userId) {
         socialService.contentLikeMark(baseRequest.getData(), userId);
         return ResponseBean.ok();
     }
@@ -55,7 +55,7 @@ public class ContentSocialController {
      */
     @PostMapping("/iflike")
     public ResponseBean ifLike(@RequestBody @Valid BaseRequest<ContentLikeDTO> baseRequest,
-                               @RequestHeader("userId") Long userId) {
+                               @RequestHeader(SysConstant.USERID) Long userId) {
         boolean likeFlag = socialService.ifLike(baseRequest.getData(), userId);
         return ResponseBean.ok(likeFlag);
     }
@@ -69,7 +69,7 @@ public class ContentSocialController {
      */
     @PostMapping("/target/comments")
     public ResponseBean getCommentList(@RequestBody @Valid BaseRequest<TargetCommentDTO> baseRequest,
-                                       @RequestHeader(value = "userId", required = false) Long userId) {
+                                       @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return socialService.getCommentList(baseRequest, userId);
     }
 
@@ -82,7 +82,7 @@ public class ContentSocialController {
      */
     @PostMapping("/comment/replies")
     public ResponseBean getCommentReplyList(@RequestBody @Valid BaseRequest<TargetCommentDTO> baseRequest,
-                                            @RequestHeader(value = "userId", required = false) Long userId) {
+                                            @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         Assert.notNull(baseRequest.getData().getCommentId(), "回复评论的id不得为空");
         List<ReplyCommentVo> commentReplyList = socialService.getCommentReplyList(baseRequest, userId);
         return ResponseBean.ok(commentReplyList);
@@ -97,7 +97,7 @@ public class ContentSocialController {
      */
     @PutMapping("/target/comment")
     public ResponseBean replyComment(@Validated ReplyCommentDTO replyCommentDTO,
-                                     @RequestHeader("userId") Long userId) {
+                                     @RequestHeader(SysConstant.USERID) Long userId) {
         MultipartFile contentImg = replyCommentDTO.getContentImgFile();
         if (contentImg != null && contentImg.getSize() > SysConstant.SIZE_10MB) {
             throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
@@ -115,7 +115,7 @@ public class ContentSocialController {
      */
     @PostMapping("/comment/delete/{uid}")
     public ResponseBean deleteReplyComment(@PathVariable("uid") Long uid,
-                                           @RequestHeader("userId") Long userId) {
+                                           @RequestHeader(SysConstant.USERID) Long userId) {
         socialService.deleteReplyComment(uid, userId);
         return ResponseBean.ok();
     }

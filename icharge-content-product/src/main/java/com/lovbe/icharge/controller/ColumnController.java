@@ -45,7 +45,7 @@ public class ColumnController {
      * @return ResponseBean<ColumnVo>
      */
     @GetMapping("/column/list")
-    public ResponseBean<List<ColumnVo>> getColumnList(@RequestHeader("userId") long userId) {
+    public ResponseBean<List<ColumnVo>> getColumnList(@RequestHeader(SysConstant.USERID) long userId) {
         List<ColumnVo> columnList = columnService.getColumnList(userId);
         return ResponseBean.ok(columnList);
     }
@@ -60,7 +60,7 @@ public class ColumnController {
      */
     @PostMapping("/column/create")
     public ResponseBean<ColumnVo> createColumn(@RequestBody @Valid BaseRequest<CreateColumnDTO> columnDTO,
-                                               @RequestHeader("userId") long userId) {
+                                               @RequestHeader(SysConstant.USERID) long userId) {
 
         ColumnVo columnVo = columnService.createColumn(columnDTO.getData(), userId);
         return ResponseBean.ok(columnVo);
@@ -76,7 +76,7 @@ public class ColumnController {
      */
         @PostMapping("/column/article/create")
     public ResponseBean<ArticleVo> createArticle(@RequestBody @Valid BaseRequest<ColumnDTO> request,
-                                                 @RequestHeader("userId") long userId) {
+                                                 @RequestHeader(SysConstant.USERID) long userId) {
         ArticleVo article = articleService.createBlankDoc(request.getData().getUid(), userId);
         return ResponseBean.ok(article);
     }
@@ -91,7 +91,7 @@ public class ColumnController {
      */
     @PostMapping("/column/article/copy")
     public ResponseBean<ArticleVo> copyArticle(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
-                                               @RequestHeader("userId") long userId) {
+                                               @RequestHeader(SysConstant.USERID) long userId) {
 
         ArticleOperateDTO data = requestDto.getData();
         Assert.notNull(data.getColumnId(), "专栏id不得为空");
@@ -109,7 +109,7 @@ public class ColumnController {
      */
     @PostMapping("/column/delete")
     public ResponseBean<ArticleVo> deleteColumnInfo(@RequestBody @Valid BaseRequest<ColumnDTO> columnRequest,
-                                                    @RequestHeader("userId") long userId) {
+                                                    @RequestHeader(SysConstant.USERID) long userId) {
         columnService.deleteColumnInfo(columnRequest.getData(), userId);
         return ResponseBean.ok();
     }
@@ -124,7 +124,7 @@ public class ColumnController {
      */
     @GetMapping("/column/{columnId}")
     public ResponseBean<ColumnVo> getColumnForEdit(@PathVariable("columnId") Long columnId,
-                                                   @RequestHeader("userId") long userId) {
+                                                   @RequestHeader(SysConstant.USERID) long userId) {
 
         ColumnVo columnVo = columnService.getColumnForEdit(columnId, userId);
         return ResponseBean.ok(columnVo);
@@ -140,7 +140,7 @@ public class ColumnController {
      */
     @GetMapping("/column/dir/{columnId}")
     public ResponseBean<ArticleVo> getColumnDir(@PathVariable("columnId") Long columnId,
-                                                @RequestHeader("userId") long userId) {
+                                                @RequestHeader(SysConstant.USERID) long userId) {
         JSONArray columnDir = columnService.getColumnDir(columnId, userId);
         return ResponseBean.ok(columnDir);
     }
@@ -155,7 +155,7 @@ public class ColumnController {
      */
     @GetMapping("/column/article/list/{columnId}")
     public ResponseBean<List<ArticleVo>> getColumnArticleList(@PathVariable("columnId") Long columnId,
-                                                              @RequestHeader("userId") long userId) {
+                                                              @RequestHeader(SysConstant.USERID) long userId) {
         List<ArticleVo> articleList = columnService.getColumnArticleList(columnId, userId);
         return ResponseBean.ok(articleList);
     }
@@ -171,7 +171,7 @@ public class ColumnController {
      */
     @PutMapping("/column/update")
     public ResponseBean<ArticleVo> updateColumnInfo(@Validated ColumnDTO columnDTO,
-                                                    @RequestHeader("userId") long userId) {
+                                                    @RequestHeader(SysConstant.USERID) long userId) {
         MultipartFile coverFile = columnDTO.getCoverFile();
         if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_10MB) {
             throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
@@ -190,7 +190,7 @@ public class ColumnController {
      */
     @PostMapping("/column/dir/update")
     public ResponseBean<ArticleVo> updateColumnDir(@RequestBody @Valid BaseRequest<ColumnDTO> request,
-                                                   @RequestHeader("userId") long userId) {
+                                                   @RequestHeader(SysConstant.USERID) long userId) {
         Long dirContentId = columnService.updateColumnDir(request.getData(), userId);
         return ResponseBean.ok(dirContentId);
     }
@@ -205,7 +205,7 @@ public class ColumnController {
      */
     @PostMapping("/column/article/operate/batch")
     public ResponseBean<ArticleVo> batchOperate(@RequestBody @Valid BaseRequest<ColumnOperateDTO> columnRequest,
-                                                @RequestHeader("userId") long userId) {
+                                                @RequestHeader(SysConstant.USERID) long userId) {
         columnService.batchOperate(columnRequest, userId);
         return ResponseBean.ok();
     }

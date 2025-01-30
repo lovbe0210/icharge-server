@@ -39,7 +39,7 @@ public class ArticleController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/createdoc")
-    public ResponseBean<ArticleVo> createBlankDoc(@RequestHeader("userId") long userId) {
+    public ResponseBean<ArticleVo> createBlankDoc(@RequestHeader(SysConstant.USERID) long userId) {
         return ResponseBean.ok(articleService.createBlankDoc(null, userId));
     }
 
@@ -52,7 +52,7 @@ public class ArticleController {
      */
     @GetMapping("/article/{uri}")
     public ResponseBean<ArticleVo> getArticleForEdit(@PathVariable("uri") String uri,
-                                                     @RequestHeader("userId") long userId) {
+                                                     @RequestHeader(SysConstant.USERID) long userId) {
         return ResponseBean.ok(articleService.getArticleForEdit(uri, userId));
     }
 
@@ -66,7 +66,7 @@ public class ArticleController {
      */
     @PutMapping("/article/update")
     public ResponseBean<ArticleVo> updateArticle(@Validated ArticleDTO articleDTO,
-                                                 @RequestHeader("userId") long userId) {
+                                                 @RequestHeader(SysConstant.USERID) long userId) {
         MultipartFile coverFile = articleDTO.getCoverFile();
         if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_10MB) {
             throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
@@ -85,7 +85,7 @@ public class ArticleController {
      */
     @PostMapping("/article/update/simple")
     public ResponseBean<ArticleVo> simpleUpdateArticle(@RequestBody @Valid BaseRequest<ArticleDTO> baseRequest,
-                                                       @RequestHeader("userId") long userId) {
+                                                       @RequestHeader(SysConstant.USERID) long userId) {
         articleService.updateArticle(true, baseRequest.getData(), userId);
         return ResponseBean.ok();
     }
@@ -100,7 +100,7 @@ public class ArticleController {
      */
     @GetMapping("/article/content/{articleId}")
     public ResponseBean<ArticleVo> getContent(@PathVariable("articleId") Long articleId,
-                                              @RequestHeader("userId") long userId) {
+                                              @RequestHeader(SysConstant.USERID) long userId) {
         ContentVo content = articleService.getContent(articleId, userId);
         return ResponseBean.ok(content);
     }
@@ -115,7 +115,7 @@ public class ArticleController {
      */
     @PostMapping("/article/content/update")
     public ResponseBean<ArticleVo> updateContent(@RequestBody @Valid BaseRequest<ContentDTO> contentEntity,
-                                                 @RequestHeader("userId") long userId) {
+                                                 @RequestHeader(SysConstant.USERID) long userId) {
         Map content = articleService.updateContent(contentEntity, userId);
         return ResponseBean.ok(content);
     }
@@ -130,7 +130,7 @@ public class ArticleController {
      */
     @PostMapping("/article/list")
     public ResponseBean<ArticleVo> getMyArticleList(@RequestBody @Valid BaseRequest<RequestListDTO> requestDto,
-                                                    @RequestHeader("userId") long userId) {
+                                                    @RequestHeader(SysConstant.USERID) long userId) {
         List<ArticleVo> articleList = articleService.getMyArticleList(requestDto, userId);
         return ResponseBean.ok(articleList);
     }
@@ -145,7 +145,7 @@ public class ArticleController {
      */
     @PostMapping("/article/setop")
     public ResponseBean<ArticleVo> updateArticleTop(@RequestBody @Valid BaseRequest<ArticleDTO> requestDto,
-                                                    @RequestHeader("userId") long userId) {
+                                                    @RequestHeader(SysConstant.USERID) long userId) {
         articleService.updateArticleTop(requestDto, userId);
         return ResponseBean.ok();
     }
@@ -160,7 +160,7 @@ public class ArticleController {
      */
     @PostMapping("/article/operate/batch")
     public ResponseBean<ArticleVo> articleBatchOperate(@RequestBody @Valid BaseRequest<ArticleOperateDTO> requestDto,
-                                                       @RequestHeader("userId") long userId) {
+                                                       @RequestHeader(SysConstant.USERID) long userId) {
         articleService.articleBatchOperate(requestDto, userId);
         return ResponseBean.ok();
     }
@@ -175,7 +175,7 @@ public class ArticleController {
      */
     @PostMapping("/article/publish/{articleId}")
     public ResponseBean<ArticleVo> publishArticle(@PathVariable("articleId") Long articleId,
-                                                  @RequestHeader("userId") long userId) {
+                                                  @RequestHeader(SysConstant.USERID) long userId) {
         articleService.publishArticle(articleId, userId);
         return ResponseBean.ok();
     }
@@ -190,7 +190,7 @@ public class ArticleController {
      */
     @PostMapping("/article/delete/{articleId}")
     public ResponseBean<ArticleVo> deleteArticle(@PathVariable("articleId") Long articleId,
-                                                 @RequestHeader("userId") long userId) {
+                                                 @RequestHeader(SysConstant.USERID) long userId) {
         articleService.deleteArticle(articleId, userId);
         return ResponseBean.ok();
     }

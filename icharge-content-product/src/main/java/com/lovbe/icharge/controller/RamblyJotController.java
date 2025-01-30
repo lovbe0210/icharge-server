@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
@@ -32,7 +33,7 @@ public class RamblyJotController {
      */
     @PostMapping("/ramblyjot/create")
     public ResponseBean<RamblyJotVo> createRamblyJot(@RequestBody @Valid BaseRequest<RamblyJotDTO> baseRequest,
-                                                     @RequestHeader("userId") long userId) {
+                                                     @RequestHeader(SysConstant.USERID) long userId) {
         RamblyJotVo ramblyJotVo = ramblyJotService.createRamblyJot(baseRequest.getData(), userId);
         return ResponseBean.ok(ramblyJotVo);
     }
@@ -47,7 +48,7 @@ public class RamblyJotController {
      */
     @PostMapping("/ramblyjot/update")
     public ResponseBean<RamblyJotVo> updateRamblyJot(@RequestBody @Valid BaseRequest<RamblyJotDTO> baseRequest,
-                                                     @RequestHeader("userId") long userId) {
+                                                     @RequestHeader(SysConstant.USERID) long userId) {
         RamblyJotDTO data = baseRequest.getData();
         Assert.notNull(data.getUid(), "随笔id不得为空");
         Assert.notNull(data.getIsPublic(), "可见范围状态不得为空");
@@ -64,7 +65,7 @@ public class RamblyJotController {
      * @return ResponseBean<ArticleVO>
      */
     @PostMapping("/ramblyjot/list")
-    public ResponseBean<List<RamblyJotVo>> getRamblyJotList(@RequestHeader("userId") long userId) {
+    public ResponseBean<List<RamblyJotVo>> getRamblyJotList(@RequestHeader(SysConstant.USERID) long userId) {
         List<RamblyJotVo> ramblyJotList = ramblyJotService.getRamblyJotList(userId);
         return ResponseBean.ok(ramblyJotList);
     }
@@ -78,7 +79,7 @@ public class RamblyJotController {
      */
     @PostMapping("/ramblyjot/delete/{ramblyJotId}")
     public ResponseBean<List<RamblyJotVo>> deleteRamblyJot(@PathVariable("ramblyJotId") Long ramblyJotId,
-                                                           @RequestHeader("userId") long userId) {
+                                                           @RequestHeader(SysConstant.USERID) long userId) {
         ramblyJotService.deleteRamblyJot(ramblyJotId, userId);
         return ResponseBean.ok();
     }

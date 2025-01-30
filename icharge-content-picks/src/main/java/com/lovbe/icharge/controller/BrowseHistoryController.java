@@ -1,5 +1,6 @@
 package com.lovbe.icharge.controller;
 
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
@@ -31,7 +32,7 @@ public class BrowseHistoryController {
      */
     @PostMapping("/history")
     public ResponseBean getBrowseHistory(@RequestBody BaseRequest<RequestListDTO> request,
-                                         @RequestHeader("userId") Long userId) {
+                                         @RequestHeader(SysConstant.USERID) Long userId) {
         List<BrowseHistoryVo> historyList = browseHistoryService.getBrowseHistory(request, userId);
         return ResponseBean.ok(historyList);
     }
