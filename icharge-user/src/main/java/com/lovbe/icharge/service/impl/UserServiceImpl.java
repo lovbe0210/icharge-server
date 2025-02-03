@@ -29,6 +29,9 @@ import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import me.zhyd.oauth.config.AuthConfig;
+import me.zhyd.oauth.request.AuthQqRequest;
+import me.zhyd.oauth.request.AuthRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,8 +55,6 @@ public class UserServiceImpl implements UserService {
     private StorageService storageService;
     @Resource
     private UserMapper userMapper;
-    @Resource
-    private BCryptPasswordEncoder cryptPasswordEncoder;
     @Resource
     private CommonService commonService;
     @Resource
@@ -125,41 +126,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void resetUserPwd(ForgetPasswordDTO data) {
-        // 校验验证码是否正确
-        boolean isMobile = CodeSceneEnum.sceneIsMobile(data.getScene());
-        String payload = isMobile ? data.getMobile() : data.getEmail();
-        String codeExpireKey = RedisKeyConstant.getCodeControlKey(payload);
-        Object codeExpire = RedisUtil.hget(codeExpireKey, data.getVerifyCode());
-        if (codeExpire == null) {
-            throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
-        }
-        // 中间的为过期时间
-        String[] split = ((String) codeExpire).split("_");
-        Long expire = Long.valueOf(split[1]);
-        if (System.currentTimeMillis() > expire) {
-            throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);
-        }
-
-        // 判断用户是否有效
-        AccountDo account = accountService.getAccountByMobileOrEmail(data);
-        if (account == null) {
-            throw new ServiceException(ServiceErrorCodes.AUTH_ACCOUNT_STATUS_ERROR);
-        }
-
-        // 密码加密入库
-        String decodedPassword = Base64.decodeStr(CommonUtils.bitwiseInvert(data.getPassword()));
-        String encodePassword = cryptPasswordEncoder.encode(decodedPassword);
-        account.setPassword(encodePassword);
-        int updated = accountService.updateAccount(account);
-        if (updated == 0) {
-            account.setPassword("***").setMobile("***").setEmail("***");
-            log.error("[重置密码] --- 密码重置失败，account: {}", account);
-            throw new ServiceException(ServiceErrorCodes.ACCOUNT_PASSWORD_RESET_FAILED);
-        }
-    }
-
-    @Override
     public UserInfoDo getUserInfo(Long userId) {
         UserInfoDo userInfoDo = commonService.getCacheUser(userId);
         if (CommonStatusEnum.DISABLE.getStatus().equals(userInfoDo.getStatus())) {
@@ -224,6 +190,15 @@ public class UserServiceImpl implements UserService {
         return CollectionUtils.isEmpty(userInfoList) ? List.of() : userInfoList;
     }
 
+    @Override
+    public AuthRequest getAuthRequest() {
+        return new AuthQqRequest(AuthConfig.builder()
+                .clientId(properties.getQqAppId())
+                .clientSecret(properties.getQqAppKey())
+                .redirectUri(properties.getQqRedirectUrl())
+                .build());
+    }
+
     /**
      * @return String
      * @description 获取一个全局唯一的domain
@@ -234,10 +209,10 @@ public class UserServiceImpl implements UserService {
     public String createDomain(Long userId) {
         String domainKey = RedisKeyConstant.getDomainKey();
         String domain = IdUtil.nanoId(6);
-        boolean hsetted = !properties.getFilterDomain().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);
+        boolean hsetted = !properties.getDomainFilter().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);
         while (!hsetted) {
             domain = IdUtil.nanoId(6);
-            hsetted = !properties.getFilterDomain().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);
+            hsetted = !properties.getDomainFilter().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);
         }
         return domain;
     }

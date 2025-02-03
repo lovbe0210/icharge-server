@@ -42,6 +42,12 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>me.zhyd.oauth</groupId>
+            <artifactId>JustAuth</artifactId>
+            <version>${just-auth.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

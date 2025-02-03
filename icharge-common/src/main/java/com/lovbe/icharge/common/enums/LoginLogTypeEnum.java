@@ -16,7 +16,7 @@ public enum LoginLogTypeEnum implements BaseEnum {
     LOGIN_EMAIL_PASSWORD(102, "使用邮箱密码登录"),
     LOGIN_SMS_CODE(103, "使用短信验证码登陆"),
     LOGIN_EMAIL_CODE(104, "使用邮箱验证码登陆"),
-    LOGIN_SOCIAL(105, "使用社交登录"),
+    LOGIN_SOCIAL_QQ(105, "使用QQ登录"),
 
     LOGOUT_SELF(400, "自己主动登出"),
     LOGOUT_DELETE(403, "强制退出"),

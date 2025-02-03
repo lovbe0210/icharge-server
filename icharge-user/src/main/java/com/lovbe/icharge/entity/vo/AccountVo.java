@@ -3,8 +3,6 @@ package com.lovbe.icharge.entity.vo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.util.Date;
-
 /**
  * @Author: lovbe0210
  * @Date: 2025/1/29 11:33

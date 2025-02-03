@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
         KafkaProduceConfig.class,
         KafkaConsumerConfig.class,
         RedisConfig.class,
+        RedissonConfig.class,
         ElasticsearchConfig.class
 })
 public class AutoConfigHolder {

@@ -14,6 +14,7 @@ public interface ServiceErrorCodes {
     ErrorCode USER_ACCOUNT_NOT_EXISTS = new ErrorCode(400, "没有找到匹配的账号");
     ErrorCode USER_MOBILE_USED = new ErrorCode(400, "手机号已经被使用");
     ErrorCode USER_EMAIL_USED = new ErrorCode(400, "邮箱号已经被使用");
+    ErrorCode USER_DOMAIN_USED = new ErrorCode(400, "个人路径已经被使用");
     ErrorCode USER_POINT_NOT_ENOUGH = new ErrorCode(400, "用户积分余额不足");
     ErrorCode MOBILE_NOT_EXIST = new ErrorCode(400, "手机号不存在");
     ErrorCode SIMPLE_CODE_SEND_FAILED = new ErrorCode(400, "验证码发送失败，请稍后再试");

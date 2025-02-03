@@ -3,7 +3,6 @@ package com.lovbe.icharge.common.util;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.AES;
-import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
@@ -12,8 +11,6 @@ import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 /**

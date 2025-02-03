@@ -1,7 +1,6 @@
 package com.lovbe.icharge.config;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -24,5 +23,17 @@ public class ServiceProperties {
     /**
      * domain过滤，保留一些菜单值和特殊字符
      */
-    private Set<String> filterDomain = new HashSet<>();
+    private Set<String> domainFilter = new HashSet<>();
+    /**
+     * qq登录appId
+     */
+    private String qqAppId;
+    /**
+     * qq登录appKey
+     */
+    private String qqAppKey;
+    /**
+     * qq登录重定向地址
+     */
+    private String qqRedirectUrl;
 }

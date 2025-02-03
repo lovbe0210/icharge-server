@@ -123,6 +123,17 @@ public abstract class RedisKeyConstant {
     }
 
     /**
+     * @description: 获取验证码发送频率验证
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:23
+     */
+    public static String getCodeLockKey(String payload) {
+        return BASE_PROJECT + AUTH + "code-lock:" + payload;
+    }
+
+    /**
      * @description: 获取滑块验证码
      * @param: uniqueId
      * @return: svToken

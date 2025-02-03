@@ -8,13 +8,20 @@ import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
+import com.lovbe.icharge.entity.dto.OAuthLoginDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import me.zhyd.oauth.model.AuthCallback;
+import me.zhyd.oauth.request.AuthRequest;
+import me.zhyd.oauth.utils.AuthStateUtils;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 /**
  * @description: 用户信息相关控制层
@@ -48,26 +55,6 @@ public class UserController {
     @PostMapping("/getUser/loginPayload")
     public ResponseBean<LoginUser> getLoginUserByPayload(@RequestBody @Valid BaseRequest<AuthUserDTO> authUserDTO) {
         return ResponseBean.ok(userService.getLoginUserByPayload(authUserDTO.getData()));
-    }
-
-    /**
-     * @description: 密码重置
-     * @param: BaseRequest<ForgetPasswordDTO>
-     * @return: ResponseBean
-     * @author: lovbe0210
-     * @date: 2024/12/14 23:38
-     */
-    @PostMapping("/reset/password")
-    public ResponseBean resetUserPwd(@RequestBody @Validated BaseRequest<ForgetPasswordDTO> forgetPwdDto) {
-        ForgetPasswordDTO pwdDtoData = forgetPwdDto.getData();
-        boolean isMobile = CodeSceneEnum.sceneIsMobile(pwdDtoData.getScene());
-        if (isMobile) {
-            Assert.notNull(pwdDtoData.getMobile(), SysConstant.NOT_EMPTY_MOBILE);
-        }else {
-            Assert.notNull(pwdDtoData.getEmail(), SysConstant.NOT_EMPTY_EMAIL);
-        }
-        userService.resetUserPwd(forgetPwdDto.getData());
-        return ResponseBean.ok();
     }
 
     /**
@@ -118,5 +105,18 @@ public class UserController {
                                        @Validated UpdateUserDTO userDTO) {
         userService.updateUserInfo(userId, userDTO);
         return ResponseBean.ok();
+    }
+
+    @PostMapping("/oauth/render")
+    public void getOAuthRender(@RequestBody BaseRequest<OAuthLoginDTO> baseRequest,
+                                       HttpServletResponse response) throws IOException {
+        AuthRequest authRequest = userService.getAuthRequest();
+        response.sendRedirect(authRequest.authorize(AuthStateUtils.createState()));
+    }
+
+    @RequestMapping("/oauth/callback")
+    public Object login(AuthCallback callback) {
+        AuthRequest authRequest = userService.getAuthRequest();
+        return authRequest.login(callback);
     }
 }

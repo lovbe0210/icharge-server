@@ -44,7 +44,7 @@ public class SecurityServviceImpl implements SecurityService {
             String svToken = IdUtil.simpleUUID();
             // 保存滑块验证cookie
             String svTokenKey = RedisKeyConstant.getSvTokenKey(uniqueId, svScene, svToken);
-            RedisUtil.set(svTokenKey, svToken, RedisKeyConstant.EXPIRE_1_HOUR);
+            RedisUtil.set(svTokenKey, svToken, RedisKeyConstant.EXPIRE_2_HOUR);
             Map<String, Object> map = MapUtil.of(SysConstant.TN, svToken);
             return ResponseBean.ok(map);
         } catch (ServiceException e) {

@@ -7,6 +7,7 @@ import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
+import me.zhyd.oauth.request.AuthRequest;
 
 import java.util.List;
 
@@ -35,14 +36,6 @@ public interface UserService {
     LoginUser getLoginUserByPayload(AuthUserDTO authUserDTO);
 
     /**
-     * @description 重置账号密码
-     * @param[1] data
-     * @author lovbe0210
-     * @date 2024/9/16 15:21
-     */
-    void resetUserPwd(ForgetPasswordDTO data);
-
-    /** 
      * @description: 登陆用户获取用户信息
      * @param: Long
      * @return: ResponseBean
@@ -69,4 +62,13 @@ public interface UserService {
      * @date: 2024/12/14 23:48
      */
     List<UserInfoDo> getUserInfoList(BaseRequest<BatchUserRequestDTO> batchRequest);
+
+    /**
+     * @description: 获取三方登录地址
+     * @return: me.zhyd.oauth.request.AuthRequest
+     * @author: lovbe0210
+     * @date: 2025/2/3 13:09
+     */
+    AuthRequest getAuthRequest();
+
 }
