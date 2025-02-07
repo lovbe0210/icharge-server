@@ -334,6 +334,18 @@
         LEFT JOIN s_interaction_statistic sis ON tid.uid = sis.uid
     </select>
 
+    <!-- 获取个人主页公开专栏 -->
+    <select id="selectDomainPublicColumn" resultMap="recommendColumnVoMap">
+        SELECT c.*,
+        s.like_count, s.comment_count, s.collect_count, s.view_count
+        FROM c_column c
+        LEFT JOIN s_interaction_statistic s ON c.uid = s.uid
+        WHERE c.status = 'A'
+            AND c.user_id = #{data.userId}
+            AND c.is_public = 1
+        ORDER BY c.update_time DESC
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>

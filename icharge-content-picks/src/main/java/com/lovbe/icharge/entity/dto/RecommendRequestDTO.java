@@ -13,6 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RecommendRequestDTO {
     /**
+     * 用户id
+     */
+    private Long userId;
+    /**
      * 一级分类
      */
     private String firstCategory;

@@ -32,6 +32,7 @@ public interface ServiceErrorCodes {
     ErrorCode AUTH_EMPTY_LOGIN_TYPE = new ErrorCode(400, "登录方式不得为空");
     ErrorCode AUTH_FAILED = new ErrorCode(400, "登录失败，请稍后再试！");
     ErrorCode AUTH_ACCOUNT_STATUS_ERROR = new ErrorCode(400, "账号状态异常，请刷新页面重试");
+    ErrorCode AUTH_USER_STATUS_ERROR = new ErrorCode(400, "用户状态异常，请刷新页面重试");
 
     // ========== feign 远程调用相关 ==========
     ErrorCode FEIGN_FAILED_REQUEST = new ErrorCode(1005, "Feign接口请求失败");

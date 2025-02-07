@@ -56,7 +56,7 @@ public class UserInfoDo extends BaseEntity {
     /**
      * 主页自定义内容id
      */
-    private String contentId;
+    private Long contentId;
     /**
      * 成长值
      */

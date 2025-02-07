@@ -6,10 +6,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
-import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
-import com.lovbe.icharge.entity.dto.OAuthLoginDTO;
-import com.lovbe.icharge.entity.dto.UpdateUserDTO;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -70,6 +67,50 @@ public class UserController {
     }
 
     /**
+     * @description: 获取个人主页内容
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
+    @GetMapping("/dmcontent/{contentId}")
+    public ResponseBean getDomainContent(@PathVariable("contentId") Long contentId) {
+        return ResponseBean.ok(userService.getDomainContent(contentId));
+    }
+
+    /**
+     * @description: 获取个人主页内容
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
+    @PostMapping("/dmcontent/update")
+    public ResponseBean updateDomainContent(@RequestHeader(SysConstant.USERID)Long userId,
+                                            @RequestBody @Valid BaseRequest<DomainContentUpdateDTO> contentUpdateRequest) {
+        DomainContentUpdateDTO data = contentUpdateRequest.getData();
+        Assert.notNull(data.getContent(), "个人主页内容不得为空");
+        userService.updateDomainContent(data, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * @description: 获取个人主页内容
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
+    @PostMapping("/dmcontent/delete")
+    public ResponseBean deleteDomainContent(@RequestHeader(SysConstant.USERID)Long userId,
+                                            @RequestBody @Valid BaseRequest<DomainContentUpdateDTO> contentUpdateRequest) {
+        DomainContentUpdateDTO data = contentUpdateRequest.getData();
+        Assert.notNull(data.getContentId(), "个人主页内容id不得为空");
+        userService.deleteDomainContent(data, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
      * @description: 通过userId获取用户信息
      * @param: Long
      * @return: ResponseBean
@@ -89,7 +130,7 @@ public class UserController {
      * @date: 2024/12/14 23:39
      */
     @PostMapping("/ids")
-    public ResponseBean getUserInfoList(@RequestBody @Validated BaseRequest<BatchUserRequestDTO> batchRequest) {
+    public ResponseBean getUserInfoList(@RequestBody @Valid BaseRequest<BatchUserRequestDTO> batchRequest) {
         return ResponseBean.ok(userService.getUserInfoList(batchRequest));
     }
 
@@ -106,6 +147,8 @@ public class UserController {
         userService.updateUserInfo(userId, userDTO);
         return ResponseBean.ok();
     }
+
+
 
     @PostMapping("/oauth/render")
     public void getOAuthRender(@RequestBody BaseRequest<OAuthLoginDTO> baseRequest,

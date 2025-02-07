@@ -609,6 +609,20 @@ public class PublicContentServiceImpl implements PublicContentService {
         return new PageBean<>(hasMore, collect);
     }
 
+    @Override
+    public List<RecommendColumnVo> getDomainPublicColumn(RecommendRequestDTO data) {
+        List<RecommendColumnVo> publicColumn = publicContentDao.selectDomainPublicColumn(data);
+        if (!CollectionUtils.isEmpty(publicColumn)) {
+            for (RecommendColumnVo column : publicColumn) {
+                if (column.getUserInfo() != null) {
+                    column.setUserInfo(commonService.getCacheUser(column.getUserInfo().getUid()));
+                }
+            }
+            return publicColumn;
+        }
+        return List.of();
+    }
+
 
     /**
      * @description: 获取排行榜文章

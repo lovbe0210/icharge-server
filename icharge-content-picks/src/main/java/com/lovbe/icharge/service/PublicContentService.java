@@ -164,4 +164,13 @@ public interface PublicContentService {
      * @date: 2025/1/26 23:26
      */
     PageBean<RamblyJotVo> getPublicRamblyJot(BaseRequest<RequestListDTO> baseRequest, Long userId);
+
+    /**
+     * @description: 获取用户主页公开专栏
+     * @param: data
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.RecommendColumnVo>
+     * @author: lovbe0210
+     * @date: 2025/2/6 16:44
+     */
+    List<RecommendColumnVo> getDomainPublicColumn(RecommendRequestDTO data);
 }

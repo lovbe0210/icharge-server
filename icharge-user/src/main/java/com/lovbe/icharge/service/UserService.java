@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
+import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import me.zhyd.oauth.request.AuthRequest;
@@ -71,4 +72,30 @@ public interface UserService {
      */
     AuthRequest getAuthRequest();
 
+    /**
+     * @description: 个人主页内容修改
+     * @param: contentUpdateRequest
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/2/5 17:44
+     */
+    void updateDomainContent(DomainContentUpdateDTO contentUpdateRequest, Long userId);
+
+    /**
+     * @description: 获取个人主页内容
+     * @param: contentId
+     * @return: java.lang.Object
+     * @author: lovbe0210
+     * @date: 2025/2/5 17:59
+     */
+    Object getDomainContent(Long contentId);
+
+    /**
+     * @description: 个人主页内容删除
+     * @param: data
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/2/6 14:26
+     */
+    void deleteDomainContent(DomainContentUpdateDTO data, Long userId);
 }

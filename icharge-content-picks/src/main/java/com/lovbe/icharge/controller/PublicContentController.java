@@ -216,6 +216,14 @@ public class PublicContentController {
         return ResponseBean.ok(featuredArticle);
     }
 
+    @PostMapping("/column/domain")
+    public ResponseBean getDomainPublicColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest) {
+        RecommendRequestDTO data = baseRequest.getData();
+        Assert.notNull(data.getUserId(), "用户id不得为空");
+        List<RecommendColumnVo> publicColumnList = contentService.getDomainPublicColumn(data);
+        return ResponseBean.ok(publicColumnList);
+    }
+
     /**
      * description: 获取首页优秀创作者(排行榜前3）
      *

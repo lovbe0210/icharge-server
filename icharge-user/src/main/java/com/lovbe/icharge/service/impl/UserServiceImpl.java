@@ -5,6 +5,7 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
@@ -17,10 +18,12 @@ import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.config.ServiceProperties;
 import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
+import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
@@ -197,6 +200,43 @@ public class UserServiceImpl implements UserService {
                 .clientSecret(properties.getQqAppKey())
                 .redirectUri(properties.getQqRedirectUrl())
                 .build());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDomainContent(DomainContentUpdateDTO contentUpdateDTO, Long userId) {
+        // 获取个人信息
+        UserInfoDo userInfo = commonService.getCacheUser(userId);
+        if (!CommonStatusEnum.isNormal(userInfo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.AUTH_USER_STATUS_ERROR);
+        }
+        if (contentUpdateDTO.getContentId() == null) {
+            contentUpdateDTO.setContentId(YitIdHelper.nextId());
+            userMapper.update(new UpdateWrapper<UserInfoDo>()
+                    .eq("uid", userId)
+                    .set("content_id", contentUpdateDTO.getContentId()));
+        }
+        contentUpdateDTO.setContent(JsonUtils.toJsonString(contentUpdateDTO.getContent()));
+        userMapper.updateDomainContent(contentUpdateDTO);
+        String cacheUserKey = RedisKeyConstant.getCacheUserKey(userId);
+        RedisUtil.del(cacheUserKey);
+    }
+
+    @Override
+    public Object getDomainContent(Long contentId) {
+        Object content = userMapper.getDomainContent(contentId);
+        return content;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteDomainContent(DomainContentUpdateDTO data, Long userId) {
+        userMapper.deleteDomainContent(data.getContentId());
+        userMapper.update(new UpdateWrapper<UserInfoDo>()
+                .eq("uid", userId)
+                .set("content_id", null));
+        String cacheUserKey = RedisKeyConstant.getCacheUserKey(userId);
+        RedisUtil.del(cacheUserKey);
     }
 
     /**

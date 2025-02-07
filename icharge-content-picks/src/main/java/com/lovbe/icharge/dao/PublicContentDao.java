@@ -238,4 +238,13 @@ public interface PublicContentDao{
      * @date: 2025/1/26 23:43
      */
     List<RamblyJotDo> selectPublicEssayList(@Param("requestData") RequestListDTO requestData);
+
+    /**
+     * @description: 获取个人主页公开专栏
+     * @param: data
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.RecommendColumnVo>
+     * @author: lovbe0210
+     * @date: 2025/2/6 16:47
+     */
+    List<RecommendColumnVo> selectDomainPublicColumn(@Param("data") RecommendRequestDTO data);
 }

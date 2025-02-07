@@ -2,7 +2,9 @@ package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
-import org.apache.ibatis.annotations.Mapper;
+import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
+import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -14,4 +16,39 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface UserMapper extends BaseMapper<UserInfoDo> {
 
+    /**
+     * @description: 编辑个人主页内容
+     * @param: contentUpdateDTO
+     * @author: lovbe0210
+     * @date: 2025/2/5 18:01
+     */
+    @Insert(value = """
+                    INSERT INTO c_content(uid, content) VALUES (#{contentUpdateDTO.contentId}, #{contentUpdateDTO.content})
+                    ON DUPLICATE KEY UPDATE
+                    content = #{contentUpdateDTO.content};
+                    """)
+    void updateDomainContent(@Param("contentUpdateDTO") DomainContentUpdateDTO contentUpdateDTO);
+
+    /**
+     * @description: 获取个人主页内容
+     * @param: contentId
+     * @return: java.lang.Object
+     * @author: lovbe0210
+     * @date: 2025/2/5 18:01
+     */
+    @Select(value = """
+                    SELECT content FROM c_content WHERE uid = #{contentId} AND status = 'A';
+                    """)
+    Object getDomainContent(@Param("contentId") Long contentId);
+
+    /**
+     * @description: 删除个人主页内容
+     * @param: contentId
+     * @author: lovbe0210
+     * @date: 2025/2/6 14:31
+     */
+    @Update(value = """
+                    UPDATE c_content set status = 'D' WHERE uid = #{contentId};
+                    """)
+    void deleteDomainContent(@Param("contentId") Long contentId);
 }
