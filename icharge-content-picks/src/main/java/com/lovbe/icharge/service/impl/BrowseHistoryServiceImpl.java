@@ -39,6 +39,7 @@ public class BrowseHistoryServiceImpl implements BrowseHistoryService {
                     historyVo.setList(browseHistoryDTOS);
                     resultList.add(historyVo);
                 });
+        resultList.sort((o1, o2) -> o2.getHistoryDate().compareTo(o1.getHistoryDate()));
         return resultList;
-    }
+}
 }

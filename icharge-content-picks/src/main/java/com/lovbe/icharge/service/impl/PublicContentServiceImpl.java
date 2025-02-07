@@ -323,7 +323,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             // 阅读记录入库，判断是更新还是新增
             historyDo.setUserId(userId)
                     .setTargetId(targetId)
-                    .setTargetType(1)
+                    .setTargetType(SysConstant.TARGET_TYPE_ARTICLE)
                     .setUid(targetId + "_" + userId);
             int update = browseHistoryDao.atomicInsertOrUpdate(historyDo);
             if (update == 1) {
@@ -541,6 +541,21 @@ public class PublicContentServiceImpl implements PublicContentService {
         if ((userId == null || !Objects.equals(userId, ramblyJotDo.getUserId()))
                 && (ramblyJotDo.getIsPublic() == 0 || ramblyJotDo.getPublishStatus() != SysConstant.PUBLISH_SUCCESS)) {
             throw new ServiceException(ServiceErrorCodes.RAMBLY_JOT_NOT_EXIST);
+        }
+
+        if (userId != null) {
+            // 阅读记录入库，判断是更新还是新增
+            BrowseHistoryDo historyDo = new BrowseHistoryDo();
+            Date now = new Date();
+            historyDo.setStatus(CommonStatusEnum.NORMAL.getStatus())
+                    .setCreateTime(now)
+                    .setUpdateTime(now);
+            historyDo.setHistoryDate(now);
+            historyDo.setUserId(userId)
+                    .setTargetId(ramblyJotId)
+                    .setTargetType(SysConstant.TARGET_TYPE_ESSAY)
+                    .setUid(ramblyJotId + "_" + userId);
+            browseHistoryDao.atomicInsertOrUpdate(historyDo);
         }
 
         RamblyJotVo ramblyJotVo = new RamblyJotVo();

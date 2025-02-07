@@ -216,6 +216,13 @@ public class PublicContentController {
         return ResponseBean.ok(featuredArticle);
     }
 
+    /**
+     * @description: 获取个人主页公开专栏
+     * @param: baseRequest
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/7 22:22
+     */
     @PostMapping("/column/domain")
     public ResponseBean getDomainPublicColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest) {
         RecommendRequestDTO data = baseRequest.getData();
