@@ -54,8 +54,11 @@ public class GlobeExceptionHandler {
         BindingResult bindingResult = ex.getBindingResult();
         if (bindingResult != null && bindingResult.hasErrors()) {
             List<ObjectError> errors = bindingResult.getAllErrors();
-            for (ObjectError error : errors) {
-                errInfo.append(error.getDefaultMessage() + ";");
+            for (int i = 0; i < errors.size(); i++) {
+                errInfo.append(errors.get(i).getDefaultMessage());
+                if (errors.size() > 1 && i != errors.size() - 1) {
+                    errInfo.append(";");
+                }
             }
         }
         log.error(errInfo.toString(), ex);
