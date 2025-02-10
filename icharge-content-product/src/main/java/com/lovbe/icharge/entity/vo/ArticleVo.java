@@ -80,4 +80,8 @@ public class ArticleVo extends BaseEntity {
      * 发布状态 0未发布 1审核中 2审核失败 3已发布
      */
     private Integer publishStatus;
+    /**
+     * 正文字体大小
+     */
+    private Integer bodyFontSize;
 }

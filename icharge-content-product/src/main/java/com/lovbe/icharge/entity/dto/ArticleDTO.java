@@ -67,4 +67,10 @@ public class ArticleDTO {
      * 二级分类
      */
     private String secondCategory;
+    /**
+     * 正文字体大小
+     */
+    @Min(value = 12, message = "字体大小错误")
+    @Max(value = 24, message = "字体大小错误")
+    private Integer bodyFontSize;
 }

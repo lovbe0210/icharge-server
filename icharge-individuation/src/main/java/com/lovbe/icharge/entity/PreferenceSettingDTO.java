@@ -46,7 +46,7 @@ public class PreferenceSettingDTO {
     @Max(value = 24, message = "设置项状态错误")
     private Integer docStyleDefaultFont;
     /**
-     * 页面布局 1标宽模式 2超宽模式
+     * 页面布局 0标宽模式 1超宽模式
      */
     @Min(value = 0, message = "设置项状态错误")
     @Max(value = 1, message = "设置项状态错误")

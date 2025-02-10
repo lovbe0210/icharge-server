@@ -35,7 +35,7 @@ public class PreferenceSettingVo extends BaseEntity {
      */
     private int docStyleDefaultFont;
     /**
-     * 页面布局 1标宽模式 2超宽模式
+     * 页面布局 0标宽模式 1超宽模式
      */
     private int docStylePageSize;
     /**

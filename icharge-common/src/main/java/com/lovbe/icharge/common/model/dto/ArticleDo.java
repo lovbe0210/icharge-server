@@ -111,6 +111,10 @@ public class ArticleDo extends BaseEntity {
      */
     private Integer publishStatus;
     /**
+     * 正文字体大小
+     */
+    private Integer bodyFontSize;
+    /**
      * 点赞数
      */
     @TableField(exist = false)

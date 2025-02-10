@@ -1,8 +1,5 @@
 package com.lovbe.icharge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.lovbe.icharge.common.enums.CommonStatusEnum;
-import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.dao.PreferenceSettingDao;
@@ -11,7 +8,6 @@ import com.lovbe.icharge.entity.PreferenceSettingVo;
 import com.lovbe.icharge.service.PreferenceService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
@@ -44,7 +40,6 @@ public class PreferenceServiceImpl implements PreferenceService {
                 .setContentDefaultPublic(1)
                 .setEnableComment(1)
                 .setDocStyleDefaultFont(15)
-                .setDocStylePageSize(1)
                 .setDocThemeSync(1)
                 .setThemeColor("rgba(255,255,255,1)")
                 .setBackground("linear-gradient(45deg, #F4F5F7 0%, #F4F5F7 100%)");
