@@ -58,4 +58,7 @@ public class KafkaProperties {
      */
     @Value("${spring.application.name}")
     private String appName;
+
+    @Value("${spring.kafka.topics.action-content-publish}")
+    private String articlePublishTopic;
 }

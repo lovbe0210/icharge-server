@@ -3,6 +3,7 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.dao.CommonDao;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -150,6 +151,14 @@ public class ContentSocialServiceImpl implements ContentSocialService {
 
     @Override
     public ReplyCommentVo replyComment(ReplyCommentDTO replyCommentDTO, Long userId) {
+        // 判断当前内容是否开启了评论功能
+        Integer enableComment = replyCommentDao.selectEnableComment(replyCommentDTO);
+        if (enableComment == null && replyCommentDTO.getTargetType() == SysConstant.TARGET_TYPE_ARTICLE) {
+            throw new ServiceException(ServiceErrorCodes.COMMENT_NOT_ENABLE_FAILED);
+        } else if (enableComment != null && enableComment == 0) {
+            throw new ServiceException(ServiceErrorCodes.COMMENT_NOT_ENABLE_FAILED);
+        }
+
         // 业务参数校验
         Long replyUserId = replyCommentDTO.getReplyUserId();
         if (replyUserId != null) {

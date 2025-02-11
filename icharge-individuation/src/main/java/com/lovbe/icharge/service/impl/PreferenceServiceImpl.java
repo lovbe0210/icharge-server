@@ -4,7 +4,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.dao.PreferenceSettingDao;
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
-import com.lovbe.icharge.entity.PreferenceSettingVo;
+import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
 import com.lovbe.icharge.service.PreferenceService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,6 @@ public class PreferenceServiceImpl implements PreferenceService {
     @Override
     public PreferenceSettingVo getPreferenceSetting(Long userId) {
         PreferenceSettingVo settingVo = preferenceSettingDao.selectById(userId);
-        // TODO 暂时先通过获取时初始化，后续需要在创建用户时初始化
         if (settingVo == null) {
             initPreferenceSetting(userId);
             return preferenceSettingDao.selectById(userId);

@@ -26,6 +26,7 @@ import com.lovbe.icharge.entity.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
+import com.lovbe.icharge.service.feign.IndividuationService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.*;
 import java.util.function.Function;
@@ -60,6 +62,8 @@ public class ArticleServiceImpl implements ArticleService {
     private ColumnDao columnDao;
     @Resource
     private CommonService commonService;
+    @Resource
+    private IndividuationService inService;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.action-content-publish}")
     private String publishActionTopic;
@@ -78,6 +82,13 @@ public class ArticleServiceImpl implements ArticleService {
                 throw new ServiceException(ServiceErrorCodes.COLUMN_STATUS_ERROR);
             }
             articleDo.setIsPublic(columnDo.getIsPublic());
+        } else {
+            ResponseBean<PreferenceSettingVo> preferenceSetting = inService.getPreferenceSetting(userId);
+            if (preferenceSetting != null && preferenceSetting.isResult() && preferenceSetting.getData().getContentDefaultPublic() == 0) {
+                articleDo.setIsPublic(0);
+            } else {
+                articleDo.setIsPublic(1);
+            }
         }
         articleDo.setUid(YitIdHelper.nextId())
                 .setCreateTime(new Date())
@@ -213,6 +224,19 @@ public class ArticleServiceImpl implements ArticleService {
             articleDo.setCoverUrl(contentDTO.getCoverUrl());
         }
 
+        // 判断文章是否开启自动发布
+        if (articleDo.getIsPublic() == 1) {
+            Integer autoPublish = articleDao.selectEnableAutoPublish(articleDo.getUid());
+            if (autoPublish == null || autoPublish == 1) {
+                // 发送审核消息
+                commonService.sendMessage(appName, publishActionTopic,
+                        new ContentPublishDTO(articleDo.getUid(), SysConstant.TARGET_TYPE_ARTICLE, uid, updateTime)
+                );
+                articleDo.setPublishStatus(SysConstant.PUBLISH_AUDIT);
+            }
+        }
+
+        // 入库
         articleDo.setUpdateTime(updateTime);
         articleDo.setLatestContentId(uid)
                 .setWordsNum(contentDTO.getWordsNum())

@@ -108,6 +108,32 @@
         LIMIT #{commentDTO.offset}, #{commentDTO.limit}
     </select>
 
+    <!-- 判断能否发送评论 -->
+    <select id="selectEnableComment" resultType="java.lang.Integer">
+        SELECT
+            <choose>
+                <when test="replyCommentDTO.targetType == 1">
+                    IF(cc.auto_publish IS NOT NULL, cc.auto_publish, ipc.auto_publish)
+                </when>
+                <otherwise>
+                    ipc.auto_publish
+                </otherwise>
+            </choose>
+        FROM
+        <choose>
+            <when test="replyCommentDTO.targetType == 1">
+                c_article a
+                LEFT JOIN c_column cc ON a.column_id = cc.uid AND cc.status = 'A'
+            </when>
+            <otherwise>
+                c_essay a
+            </otherwise>
+        </choose>
+        LEFT JOIN i_personalize_config ipc ON a.user_id = ipc.uid
+        WHERE a.uid = #{replyCommentDTO.targetId}
+            AND a.status = 'A'
+    </select>
+
     <resultMap id="commentMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">
         <id column="uid" property="uid"/>
         <result column="target_id" property="targetId"/>

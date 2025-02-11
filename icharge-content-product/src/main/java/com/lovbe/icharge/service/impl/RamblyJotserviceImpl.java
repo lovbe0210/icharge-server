@@ -12,6 +12,7 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
@@ -21,6 +22,7 @@ import com.lovbe.icharge.entity.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.service.RamblyJotService;
+import com.lovbe.icharge.service.feign.IndividuationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +50,8 @@ public class RamblyJotserviceImpl implements RamblyJotService {
     private ContentDao contentDao;
     @Resource
     private CommonService commonService;
+    @Resource
+    private IndividuationService inService;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.action-essay-publish}")
     private String publishEssayTopic;
@@ -77,9 +81,14 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                 .setStatus(CommonStatusEnum.NORMAL.getStatus());
         contentDo.setContent(JSONUtil.toJsonStr(data.getContent()));
         contentDao.insert(contentDo);
+        ResponseBean<PreferenceSettingVo> preferenceSetting = inService.getPreferenceSetting(userId);
+        if (preferenceSetting != null && preferenceSetting.isResult() && preferenceSetting.getData().getContentDefaultPublic() == 0) {
+            ramblyJotDo.setIsPublic(0);
+        } else {
+            ramblyJotDo.setIsPublic(1);
+        }
         ramblyJotDo.setContentId(contentDo.getUid())
                 .setUserId(userId)
-                .setIsPublic(1)
                 .setPublishStatus(1)
                 .setTitle("灵感时刻-" + LocalDateTimeUtil.format(LocalDateTime.now(), SysConstant.NORMAL_TIME_FORMAT));
         ramblyJotDao.insertOrUpdate(ramblyJotDo);

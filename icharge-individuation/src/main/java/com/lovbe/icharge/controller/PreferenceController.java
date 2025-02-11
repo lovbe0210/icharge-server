@@ -4,7 +4,7 @@ import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
-import com.lovbe.icharge.entity.PreferenceSettingVo;
+import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
 import com.lovbe.icharge.service.PreferenceService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -23,7 +23,7 @@ public class PreferenceController {
     /**
      * @description: 获取偏好设置
      * @param: userId
-     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.entity.PreferenceSettingVo>
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.dto.PreferenceSettingVo>
      * @author: lovbe0210
      * @date: 2025/2/9 17:28
      */

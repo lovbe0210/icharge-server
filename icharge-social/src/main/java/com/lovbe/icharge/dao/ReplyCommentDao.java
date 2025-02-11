@@ -2,6 +2,7 @@ package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.entity.dto.ReplyCommentDTO;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
 import com.lovbe.icharge.entity.dto.TargetCommentDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -70,4 +71,13 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
      * @date: 2024/12/22 22:51
      */
     void deleteStatistic(@Param("uid") Long uid);
+
+    /**
+     * @description: 判断能否发送评论
+     * @param: replyCommentDTO
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2025/2/11 23:08
+     */
+    Integer selectEnableComment(@Param("replyCommentDTO") ReplyCommentDTO replyCommentDTO);
 }

@@ -41,4 +41,13 @@
                             AND update_time = #{publishDTO.publishTime}
                         )
     </update>
+
+    <!-- 获取能否自动发布文章 -->
+    <select id="selectEnableAutoPublish" resultType="java.lang.Integer">
+        SELECT IF(cc.auto_publish IS NOT NULL, cc.auto_publish, ipc.auto_publish)
+        FROM c_article ca
+        LEFT JOIN i_personalize_config ipc ON ca.user_id = ipc.uid
+        LEFT JOIN c_column cc ON ca.column_id = cc.uid AND cc.status = 'A'
+        WHERE ca.uid = #{uid} AND ca.status = 'A'
+    </select>
 </mapper>

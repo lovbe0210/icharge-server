@@ -1,7 +1,7 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
-import com.lovbe.icharge.entity.PreferenceSettingVo;
+import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
 
 /**
  * @Author: lovbe0210
@@ -12,7 +12,7 @@ public interface PreferenceService {
     /**
      * @description: 获取偏好设置
      * @param: userId
-     * @return: com.lovbe.icharge.entity.PreferenceSettingVo
+     * @return: com.lovbe.icharge.common.model.dto.PreferenceSettingVo
      * @author: lovbe0210
      * @date: 2025/2/9 17:09
      */

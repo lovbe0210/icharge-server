@@ -62,6 +62,7 @@ public interface ServiceErrorCodes {
     //========== 社交排行 ==========
     ErrorCode REPLY_PARENT_ID_NOT_NULL = new ErrorCode(400, "回复评论id不得为空");
     ErrorCode COMMENT_IMAGE_UPLOAD_FAILED = new ErrorCode(400, "评论图片上传失败，请稍后再试");
+    ErrorCode COMMENT_NOT_ENABLE_FAILED = new ErrorCode(400, "评论失败，已关闭评论功能");
     ErrorCode SIGN_IN_CONFIG_EXISTS = new ErrorCode(1_004_009_001, "签到天数规则已存在");
 
     //========== 签到配置 1-004-010-000 ==========

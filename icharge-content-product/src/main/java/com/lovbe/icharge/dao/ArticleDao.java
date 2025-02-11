@@ -58,4 +58,13 @@ public interface ArticleDao extends BaseMapper<ArticleDo> {
      */
     int updateByPublishContent(@Param("publishDTO") ContentPublishDTO publishDTO,
                                 @Param("publishStatus") int publishStatus);
+
+    /**
+     * @description: 获取能否自动发布文章
+     * @param: uid
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2025/2/11 23:55
+     */
+    Integer selectEnableAutoPublish(@Param("uid") Long uid);
 }
