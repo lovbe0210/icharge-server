@@ -5,9 +5,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableDiscoveryClient
 @EnableFeignClients
+@EnableTransactionManagement
 @SpringBootApplication
 @MapperScan({"com.lovbe.icharge.dao", "com.lovbe.icharge.common.dao"})
 public class IchargeUserApplication {

@@ -3,12 +3,15 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.entity.MusicInfoVo;
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
 import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
 import com.lovbe.icharge.service.PreferenceService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210

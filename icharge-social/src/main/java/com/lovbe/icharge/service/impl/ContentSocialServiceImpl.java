@@ -136,8 +136,8 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                                 if (deepReplyVo.getUserInfo() != null) {
                                     deepReplyVo.setUserInfo(commonService.getCacheUser(deepReplyVo.getUserInfo().getUid()));
                                 }
-                                if (replyCommentVo.getReplyUserInfo() != null) {
-                                    deepReplyVo.setReplyUserInfo(commonService.getCacheUser(replyCommentVo.getUserInfo().getUid()));
+                                if (deepReplyVo.getReplyUserInfo() != null) {
+                                    deepReplyVo.setReplyUserInfo(commonService.getCacheUser(deepReplyVo.getReplyUserInfo().getUid()));
                                 }
                                 replyCommentVo.setIfLike(likeTargets.contains(deepReply.getUid()) ? 1 : 0);
                                 return deepReplyVo;

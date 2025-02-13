@@ -1,7 +1,10 @@
 package com.lovbe.icharge.service;
 
+import com.lovbe.icharge.entity.MusicInfoVo;
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
 import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
+
+import java.util.List;
 
 /**
  * @Author: lovbe0210

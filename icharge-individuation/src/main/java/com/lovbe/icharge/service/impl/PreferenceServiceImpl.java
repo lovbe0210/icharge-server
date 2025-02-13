@@ -1,8 +1,12 @@
 package com.lovbe.icharge.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.util.JsonUtils;
+import com.lovbe.icharge.dao.MusicPlayDao;
 import com.lovbe.icharge.dao.PreferenceSettingDao;
+import com.lovbe.icharge.entity.MusicInfoVo;
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
 import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
 import com.lovbe.icharge.service.PreferenceService;
@@ -11,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @Author: lovbe0210
@@ -40,8 +46,20 @@ public class PreferenceServiceImpl implements PreferenceService {
                 .setEnableComment(1)
                 .setDocStyleDefaultFont(15)
                 .setDocThemeSync(1)
-                .setThemeColor("rgba(255,255,255,1)")
-                .setBackground("linear-gradient(45deg, #F4F5F7 0%, #F4F5F7 100%)");
+                .setCustomTheme("""
+                                {
+                                    "themeColor":"rgba(255,255,255,1)",
+                                    "fontColor":"#262626",
+                                    "titleColor":"#585A5A",
+                                    "backgroundImg":"linear-gradient(45deg, #F4F5F7 0%, #F4F5F7 100%)",
+                                    "borderColor":"rgba(0,0,0,0.08)",
+                                    "dropdownBackgroundColor":"#FFFFFF",
+                                    "dropdownItemHover":"#F8F8F8",
+                                    "onThemeBackgroundColor":"#FAFAFA",
+                                    "ramblyJotEditorBackgroundColor":"#F2F3F5",
+                                    "modalBackgroundColor":"#FFFFFF"
+                                }
+                                """);
         settingVo.setUid(userId);
         preferenceSettingDao.updateOrInsert(settingVo);
     }
@@ -74,11 +92,14 @@ public class PreferenceServiceImpl implements PreferenceService {
         if (data.getDocThemeSync() != null) {
             settingVo.setDocThemeSync(data.getDocThemeSync());
         }
-        if (StringUtils.hasLength(data.getThemeColor())) {
-            settingVo.setThemeColor(data.getThemeColor());
+        if (!Objects.isNull(data.getCustomTheme())) {
+            settingVo.setCustomTheme(JsonUtils.toJsonString(data.getCustomTheme()));
         }
-        if (StringUtils.hasLength(data.getBackground())) {
-            settingVo.setBackground(data.getBackground());
+        if (!Objects.isNull(data.getFlagContent())) {
+            settingVo.setFlagContent(JsonUtils.toJsonString(data.getFlagContent()));
+        }
+        if (!Objects.isNull(data.getMusicPlay())) {
+            settingVo.setMusicPlay(JsonUtils.toJsonString(data.getMusicPlay()));
         }
         preferenceSettingDao.updateById(settingVo);
     }

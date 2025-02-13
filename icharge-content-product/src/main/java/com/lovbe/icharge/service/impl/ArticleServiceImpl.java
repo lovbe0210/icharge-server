@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-@EnableTransactionManagement
 public class ArticleServiceImpl implements ArticleService {
     @Resource
     private ArticleDao articleDao;
@@ -233,14 +232,17 @@ public class ArticleServiceImpl implements ArticleService {
                         new ContentPublishDTO(articleDo.getUid(), SysConstant.TARGET_TYPE_ARTICLE, uid, updateTime)
                 );
                 articleDo.setPublishStatus(SysConstant.PUBLISH_AUDIT);
+            } else {
+                articleDo.setPublishStatus(SysConstant.PUBLISH_WAIT);
             }
+        } else {
+            articleDo.setPublishStatus(SysConstant.PUBLISH_WAIT);
         }
 
         // 入库
         articleDo.setUpdateTime(updateTime);
         articleDo.setLatestContentId(uid)
-                .setWordsNum(contentDTO.getWordsNum())
-                .setPublishStatus(0);
+                .setWordsNum(contentDTO.getWordsNum());
         articleDao.updateById(articleDo);
         map.put(SysConstant.CONTENT_ID, uid);
         return map;

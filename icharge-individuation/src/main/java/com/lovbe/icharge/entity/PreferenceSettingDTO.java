@@ -58,13 +58,17 @@ public class PreferenceSettingDTO {
     @Max(value = 1, message = "设置项状态错误")
     private Integer docThemeSync;
     /**
-     * 主题色
+     * 自定义主题（json）
      */
-    private String themeColor;
+    private Object customTheme;
     /**
-     * 背景色
+     * flag内容（json）
      */
-    private String background;
+    private Object flagContent;
+    /**
+     * 音乐播放相关（json）
+     */
+    private Object musicPlay;
 
 
 }

@@ -43,13 +43,15 @@ public class PreferenceSettingVo extends BaseEntity {
      */
     private int docThemeSync;
     /**
-     * 主题色
+     * 自定义主题（json）
      */
-    private String themeColor;
+    private String customTheme;
     /**
-     * 背景色
+     * flag内容（json）
      */
-    private String background;
-
-
+    private String flagContent;
+    /**
+     * 音乐播放相关（json）
+     */
+    private String musicPlay;
 }

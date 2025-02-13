@@ -65,6 +65,7 @@
                 rc.uid AS reply_uid,
                 rc.target_id AS reply_target_id,
                 rc.parent_id AS reply_parent_id,
+                rc.reply_user_id AS reply_reply_user_id,
                 cis.like_count AS reply_like_count,
                 rc.user_id AS reply_user_id,
                 rc.content AS reply_content,
@@ -113,10 +114,10 @@
         SELECT
             <choose>
                 <when test="replyCommentDTO.targetType == 1">
-                    IF(cc.auto_publish IS NOT NULL, cc.auto_publish, ipc.auto_publish)
+                    IF(cc.enable_comment IS NOT NULL, cc.enable_comment, ipc.enable_comment)
                 </when>
                 <otherwise>
-                    ipc.auto_publish
+                    ipc.enable_comment
                 </otherwise>
             </choose>
         FROM
@@ -148,6 +149,7 @@
         <collection column="reply_uid" property="replyCommentList" ofType="com.lovbe.icharge.entity.dto.ReplyCommentDo" notNullColumn="reply_uid">
             <id column="reply_uid" property="uid"/>
             <result column="reply_target_id" property="targetId"/>
+            <result column="reply_reply_user_id" property="replyUserInfo.uid"/>
             <result column="reply_like_count" property="likeCount"/>
             <result column="reply_user_id" property="userInfo.uid"/>
             <result column="reply_content" property="content"/>
