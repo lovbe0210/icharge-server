@@ -29,4 +29,22 @@ public interface MusicPlayService {
      * @date: 2025/2/14 0:00
      */
     void updateMusicPlayList(BaseRequest<List<MusicPlayDTO>> baseRequest, Long userId);
+
+    /**
+     * @description: 添加音乐
+     * @param: baseRequest
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/2/15 1:27
+     */
+    void addMusic2PlayList(BaseRequest<MusicPlayDTO> baseRequest, Long userId);
+
+    /**
+     * @description: 播放列表删除
+     * @param: baseRequest
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/2/15 1:33
+     */
+    void deleteMusicPlayList(BaseRequest<MusicPlayDTO> baseRequest, Long userId);
 }

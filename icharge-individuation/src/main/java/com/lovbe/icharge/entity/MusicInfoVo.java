@@ -3,6 +3,7 @@ package com.lovbe.icharge.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
  * @Author: lovbe0210
@@ -11,6 +12,7 @@ import lombok.Data;
  */
 @Data
 @TableName("i_music_playlist")
+@Accessors(chain = true)
 public class MusicInfoVo extends BaseEntity {
     /**
      * 外部平台音乐id
@@ -28,6 +30,14 @@ public class MusicInfoVo extends BaseEntity {
      * 音乐作者
      */
     private String author;
+    /**
+     * 歌曲时长
+     */
+    private int duration;
+    /**
+     * 音乐封面
+     */
+    private String musicCover;
     /**
      * 平台code 1网易云 2QQ音乐 3酷狗
      */

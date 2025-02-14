@@ -48,4 +48,32 @@ public class MusicPlayController {
         musicPlayService.updateMusicPlayList(baseRequest, userId);
         return ResponseBean.ok();
     }
+
+    /**
+     * @description: 添加音乐到播放列表
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/9 17:28
+     */
+    @PostMapping("/music/list/add")
+    public ResponseBean addMusic2PlayList(@RequestBody @Valid BaseRequest<MusicPlayDTO> baseRequest,
+                                          @RequestHeader(SysConstant.USERID) Long userId) {
+        musicPlayService.addMusic2PlayList(baseRequest, userId);
+        return ResponseBean.ok();
+    }
+
+    /**
+     * @description: 获取音乐播放列表
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/9 17:28
+     */
+    @PostMapping("/music/list/delete")
+    public ResponseBean deleteMusicPlayList(@RequestBody @Valid BaseRequest<MusicPlayDTO> baseRequest,
+                                            @RequestHeader(SysConstant.USERID) Long userId) {
+        musicPlayService.deleteMusicPlayList(baseRequest, userId);
+        return ResponseBean.ok();
+    }
 }

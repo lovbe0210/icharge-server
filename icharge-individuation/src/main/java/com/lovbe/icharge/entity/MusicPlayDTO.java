@@ -1,6 +1,7 @@
 package com.lovbe.icharge.entity;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -24,6 +25,15 @@ public class MusicPlayDTO {
      * 音乐作者
      */
     private String author;
+    /**
+     * 歌曲时长
+     */
+    @NotNull(message = "音乐时长不得为空")
+    private Integer duration;
+    /**
+     * 音乐封面
+     */
+    private String musicCover;
     /**
      * 平台code 1网易云 2QQ音乐 3酷狗
      */

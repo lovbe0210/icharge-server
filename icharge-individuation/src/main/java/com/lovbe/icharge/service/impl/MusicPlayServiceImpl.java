@@ -55,4 +55,33 @@ public class MusicPlayServiceImpl implements MusicPlayService {
                 .collect(Collectors.toList());
         musicPlayDao.insertOrUpdate(collect);
     }
+
+    @Override
+    public void addMusic2PlayList(BaseRequest<MusicPlayDTO> baseRequest, Long userId) {
+        MusicPlayDTO data = baseRequest.getData();
+        Long count = musicPlayDao.selectCount(new LambdaQueryWrapper<MusicInfoVo>()
+                .eq(MusicInfoVo::getUserId, userId)
+                .eq(MusicInfoVo::getMusicId, data.getMusicId())
+                .eq(MusicInfoVo::getPlatformCode, data.getPlatformCode()));
+        if (count != null && count > 0) {
+            return;
+        }
+        MusicInfoVo musicInfoVo = new MusicInfoVo()
+                .setUserId(userId);
+        BeanUtil.copyProperties(data, musicInfoVo);
+        musicInfoVo.setUid(YitIdHelper.nextId())
+                .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                .setCreateTime(new Date())
+                .setUpdateTime(new Date());
+        musicPlayDao.insertOrUpdate(musicInfoVo);
+    }
+
+    @Override
+    public void deleteMusicPlayList(BaseRequest<MusicPlayDTO> baseRequest, Long userId) {
+        MusicPlayDTO data = baseRequest.getData();
+        musicPlayDao.delete(new LambdaQueryWrapper<MusicInfoVo>()
+                .eq(MusicInfoVo::getUserId, userId)
+                .eq(MusicInfoVo::getMusicId, data.getMusicId())
+                .eq(MusicInfoVo::getPlatformCode, data.getPlatformCode()));
+    }
 }
