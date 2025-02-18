@@ -18,12 +18,15 @@ import io.minio.messages.ListPartsResult;
 import io.minio.messages.Part;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 
 /**
  * @description: 七牛云存储
@@ -48,11 +51,13 @@ public class MinioStorageService extends OssStorageService {
     @Override
     public String upload(InputStream inputStream, String path) {
         try {
+            Optional<MediaType> mediaType = MediaTypeFactory.getMediaType(path);
             this.client.putObject(PutObjectArgs.builder()
                     .bucket(this.bucketName)
                     .object(path)
                     .stream(inputStream, inputStream.available(), -1)
-                    .contentType("application/octet-stream").build());
+                    .contentType(mediaType.orElse(MediaType.APPLICATION_OCTET_STREAM).toString())
+                    .build());
         } catch (Exception e) {
             log.error("[文件上传]--minio上传文件失败，errorInfo：{}", e.toString());
         }
