@@ -47,6 +47,17 @@ public class WebSocketConfig implements WebSocketConfigurer {
                             }
                             """.formatted(SessionManager.getSessionCount());
                     session.sendMessage(new TextMessage(messageBody));
+                    Map<String, WebSocketSession> sessionMap = SessionManager.getSessionMap();
+                    for (Map.Entry<String, WebSocketSession> entry : sessionMap.entrySet()) {
+                        String userId = entry.getKey();
+                        WebSocketSession wsSession = entry.getValue();
+                        String replyBody = """
+                                {
+                                    "userId": %s
+                                }
+                                """.formatted(userId);
+                        wsSession.sendMessage(new TextMessage(replyBody));
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
