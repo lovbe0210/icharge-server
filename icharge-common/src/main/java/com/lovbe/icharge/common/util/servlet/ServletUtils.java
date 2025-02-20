@@ -25,6 +25,7 @@ import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 客户端工具类
@@ -195,19 +196,46 @@ public class ServletUtils {
      * @date 2024/8/16 0:41
      */
     public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginUser loginRespVo) {
-        Cookie accessToken = new Cookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken());
-        accessToken.setDomain(domain);
-        accessToken.setPath("/api/");
-        accessToken.setMaxAge(60 * 30);
-        accessToken.setSecure(true);
-        accessToken.setHttpOnly(true);
-        response.addCookie(accessToken);
-        Cookie loginUserId = new Cookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()));
-        loginUserId.setDomain(domain);
-        loginUserId.setPath("/");
-        loginUserId.setMaxAge(60 * 30);
-        loginUserId.setSecure(true);
-        loginUserId.setHttpOnly(true);
-        response.addCookie(loginUserId);
+        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), domain, "/socket"));
+        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), domain, "/api"));
+        response.addCookie(createCookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()), domain, "/"));
+        // TODO 上线后删除这个localhost
+        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), "localhost", "/socket"));
+        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), "localhost", "/api"));
+        response.addCookie(createCookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()), "localhost", "/"));
+    }
+
+    /**
+     * @description: 创建cookie
+     * @param: name
+     * @param: value
+     * @param: domain
+     * @param: path
+     * @return: jakarta.servlet.http.Cookie
+     * @author: lovbe0210
+     * @date: 2025/2/20 23:17
+     */
+    private static Cookie createCookie(String name, String value, String domain, String path) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setDomain(domain);
+        cookie.setPath(path);
+        cookie.setMaxAge(60 * 30);
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+        return cookie;
+    }
+
+    public static String getLoginToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null || cookies.length == 0) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            String name = cookie.getName();
+            if (Objects.equals(name, SysConstant.ACCESS_TOKEN)) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }
