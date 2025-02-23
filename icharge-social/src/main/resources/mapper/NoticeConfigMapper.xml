@@ -4,7 +4,7 @@
     <!-- 通过点赞操作获取用户消息设置 -->
     <select id="selectEnableSocialNotice" resultType="com.lovbe.icharge.entity.dto.EnableSocialDTO">
         SELECT a.user_id userId,
-               snc.like_notice_range enableSocial
+               snc.like_msg_accept enableSocial
         FROM <if test="likeData.targetType == 1">
                 c_article a
              </if>

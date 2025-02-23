@@ -6,6 +6,8 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.NoticeConfigDTO;
 import com.lovbe.icharge.entity.dto.NoticeConfigDo;
+import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
+import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.MessageNoticeService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 public class SocialNoticeController {
     @Resource
     private MessageNoticeService messageNoticeService;
+    @Resource
+    private ChatMessageService chatMessageService;
     /**
      * @description: 获取为未读消息统计
      * @param: userId
@@ -29,7 +33,8 @@ public class SocialNoticeController {
      */
     @GetMapping("/notice/unread/statistic")
     public ResponseBean getUnreadStatistic(@RequestHeader(SysConstant.USERID) Long userId) {
-       return ResponseBean.ok();
+        UnreadMsgStatisticVo unreadMsgStatistic = chatMessageService.getUnreadStatistic(userId);
+       return ResponseBean.ok(unreadMsgStatistic);
     }
 
     /**
