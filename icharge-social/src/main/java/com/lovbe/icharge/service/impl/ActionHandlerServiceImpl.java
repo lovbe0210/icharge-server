@@ -9,11 +9,14 @@ import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialFollowDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
+import com.lovbe.icharge.dao.SocialNoticeDao;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
+import com.lovbe.icharge.entity.dto.SocialNoticeDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.ActionHandlerService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -27,6 +30,7 @@ import java.util.stream.Collectors;
  * @Date: 2024/12/8 22:58
  * @Description: 社交行为处理逻辑，点赞、评论
  */
+@Slf4j
 @Service
 public class ActionHandlerServiceImpl implements ActionHandlerService {
     @Resource
@@ -35,11 +39,13 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private ReplyCommentDao replyCommentDao;
     @Resource
     private SocialFollowDao socialFollowDao;
+    @Resource
+    private SocialNoticeDao socialNoticeDao;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void handlerLikeAction(List<LikeActionDo> actionDoList) {
-        // 1. 获取数据库中收藏状态
+        // 1. 获取数据库中点赞状态
         List<LikeActionDo> likeActionList = socialLikeDao.selectListByAction(actionDoList);
         Map<String, LikeActionDo> actionMap = CollectionUtils.isEmpty(likeActionList) ? Collections.EMPTY_MAP :
                 likeActionList.stream().collect(Collectors.toMap(action -> action.getUserId() + "-" + action.getTargetId(),
@@ -60,7 +66,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
             if (list.size() == 1) {
                 handleSingleAction(list.get(0), actionDB, likeActionUpdateList, likeActionDeleteList, statisticAddList, statisticSubList, userIdSet, targetIdSet);
             } else {
-                handleMultipleActions(list, actionDB, likeActionDeleteList, likeActionUpdateList, statisticAddList, statisticSubList, userIdSet, targetIdSet);
+                handleMultipleActions(list, actionDB, likeActionUpdateList, likeActionDeleteList, statisticAddList, statisticSubList, userIdSet, targetIdSet);
             }
         });
 
@@ -73,9 +79,27 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         }
         if (likeActionUpdateList.size() > 0) {
             socialLikeDao.insertOrUpdate(likeActionUpdateList);
+            List<SocialNoticeDo> noticeList = likeActionUpdateList.stream()
+                    .filter(action -> action.getTargetUserId() != null && !Objects.equals(action.getTargetUserId(), action.getUserId()))
+                    .map(action -> {
+                        SocialNoticeDo noticeDo = new SocialNoticeDo()
+                                .setUserId(action.getTargetUserId())
+                                .setNoticeType(SysConstant.NOTICE_LIKE)
+                                .setTargetId(action.getTargetId())
+                                .setActionUserId(action.getUserId());
+                        noticeDo.setUid(action.getUid())
+                                .setCreateTime(action.getUpdateTime())
+                                .setUpdateTime(action.getUpdateTime())
+                                .setStatus(CommonStatusEnum.NORMAL.getStatus());
+                        return noticeDo;
+                    }).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(noticeList)) {
+                socialNoticeDao.insertOrUpdate(noticeList);
+            }
         }
         if (likeActionDeleteList.size() > 0) {
             socialLikeDao.deleteByIds(likeActionDeleteList);
+            socialNoticeDao.deleteByIds(likeActionDeleteList);
         }
 
         // 4. 将变动的userId和targetId存入redis，在定时任务中获取变化的userId和target对明细进行update操作
@@ -94,6 +118,8 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     public void handlerCommentAction(List<ReplyCommentDo> actionList) {
         // 评论明细入库
         replyCommentDao.insert(actionList);
+        // 通知明细
+        List<SocialNoticeDo> noticeList = new ArrayList<>();
         // 过滤出楼中楼回复对父级评论更新统计
         Map<Long, TargetStatisticDo> statisticMap = new HashMap<>();
         actionList.stream()
@@ -108,6 +134,22 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                     } else {
                         statisticDo.setCommentCount(statisticDo.getCommentCount() + 1);
                     }
+                    // targetUserId为null不通知,自己给自己评论不通知
+                    if (replyCommentDo.getTargetUserId() == null || Objects.equals(replyCommentDo.getUserId(), replyCommentDo.getTargetUserId())) {
+                        return;
+                    }
+                    SocialNoticeDo noticeDo = new SocialNoticeDo()
+                            .setUserId(replyCommentDo.getTargetUserId())
+                            .setNoticeType(replyCommentDo.getParentId() == null ? SysConstant.NOTICE_COMMENT : SysConstant.NOTICE_REPLY)
+                            .setTargetId(replyCommentDo.getTargetId())
+                            .setActionUserId(replyCommentDo.getUserId())
+                            .setCommentId(replyCommentDo.getParentId() == null ? replyCommentDo.getUid() : replyCommentDo.getParentId())
+                            .setReplyId(replyCommentDo.getParentId() == null ? null : replyCommentDo.getParentId());
+                    noticeDo.setUid(replyCommentDo.getUid())
+                            .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                            .setCreateTime(new Date())
+                            .setUpdateTime(noticeDo.getCreateTime());
+                    noticeList.add(noticeDo);
                 })
                 .filter(replyCommentDo -> replyCommentDo.getParentId() != null)
                 .collect(Collectors.groupingBy(ReplyCommentDo::getParentId))
@@ -126,6 +168,9 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 });
         if (statisticMap.size() > 0) {
             replyCommentDao.updateCommentCount(statisticMap.values());
+        }
+        if (noticeList.size() > 0) {
+            socialNoticeDao.insert(noticeList);
         }
     }
 
@@ -179,40 +224,40 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
      */
     private static void handleMultipleActions(List<LikeActionDo> list,
                                               LikeActionDo actionDB,
-                                              List<Long> likeActionDeleteList,
                                               List<LikeActionDo> likeActionUpdateList,
+                                              List<Long> likeActionDeleteList,
                                               List<LikeActionDo> statisticAddList,
                                               List<LikeActionDo> statisticSubList,
                                               Set<Long> userIdSet, Set<Long> targetIdSet) {
         LikeActionDo action = list.get(0);
-        int likeFlag = actionDB == null ? 0 : 1;
+//        int likeFlag = actionDB == null ? 0 : 1;
         list.sort((o1, o2) -> o1.getCreateTime().compareTo(o2.getCreateTime()));
-        for (LikeActionDo ad : list) {
-            if (ad.getAction() == 1 && likeFlag == 0) {
-                likeFlag++;
-            } else if (ad.getAction() == 0 && likeFlag == 1) {
-                likeFlag--;
-            }
-        }
-        if (likeFlag == 1 && list.get(list.size() - 1).getAction() == 1) {
+//        for (LikeActionDo ad : list) {
+//            if (ad.getAction() == 1 && likeFlag == 0) {
+//                likeFlag++;
+//            } else if (ad.getAction() == 0 && likeFlag == 1) {
+//                likeFlag--;
+//            }
+//        }
+        LikeActionDo lastAction = list.get(list.size() - 1);
+        if (lastAction.getAction() == 1) {
             // 获取最后一条消息的时间更新点赞时间
             if (actionDB != null) {
                 actionDB.setUpdateTime(list.get(list.size() - 1).getCreateTime());
-                likeActionDeleteList.add(actionDB.getUid());
-                statisticSubList.add(actionDB);
+                actionDB.setTargetUserId(lastAction.getTargetUserId());
+                likeActionUpdateList.add(actionDB);
             } else {
-                LikeActionDo likeAction = list.get(list.size() - 1);
-                likeAction.setUid(YitIdHelper.nextId())
-                        .setUpdateTime(likeAction.getCreateTime())
+                lastAction.setUid(YitIdHelper.nextId())
+                        .setUpdateTime(lastAction.getCreateTime())
                         .setStatus(CommonStatusEnum.NORMAL.getStatus());
-                likeActionUpdateList.add(likeAction);
-                statisticAddList.add(likeAction);
+                likeActionUpdateList.add(lastAction);
+                statisticAddList.add(lastAction);
                 userIdSet.add(action.getUserId());
                 if (action.getTargetType() < 4) {
                     targetIdSet.add(action.getTargetId());
                 }
             }
-        } else if (actionDB != null && likeFlag == 0 && list.get(list.size() - 1).getAction() == 0) {
+        } else if (actionDB != null && lastAction.getAction() == 0) {
             // 取消点赞
             likeActionDeleteList.add(actionDB.getUid());
             statisticSubList.add(actionDB);
@@ -246,6 +291,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
             if (action.getAction() == 1) {
                 // 更新点赞时间即可
                 actionDB.setUpdateTime(action.getCreateTime());
+                actionDB.setTargetUserId(action.getTargetUserId());
                 likeActionUpdateList.add(actionDB);
             } else {
                 // 取消点赞

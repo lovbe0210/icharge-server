@@ -1,0 +1,61 @@
+package com.lovbe.icharge.controller;
+
+import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.model.base.BaseEntity;
+import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.entity.dto.NoticeConfigDTO;
+import com.lovbe.icharge.entity.dto.NoticeConfigDo;
+import com.lovbe.icharge.service.MessageNoticeService;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * @Author: lovbe0210
+ * @Date: 2025/2/23 15:33
+ * @Description: 社交通知
+ */
+@RestController
+public class SocialNoticeController {
+    @Resource
+    private MessageNoticeService messageNoticeService;
+    /**
+     * @description: 获取为未读消息统计
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/23 15:36
+     */
+    @GetMapping("/notice/unread/statistic")
+    public ResponseBean getUnreadStatistic(@RequestHeader(SysConstant.USERID) Long userId) {
+       return ResponseBean.ok();
+    }
+
+    /**
+     * @description: 获取消息设置
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/23 15:36
+     */
+    @GetMapping("/notice/setting")
+    public ResponseBean getNoticeSetting(@RequestHeader(SysConstant.USERID) Long userId) {
+        NoticeConfigDo noticeConfig = messageNoticeService.getNoticeSetting(userId);
+        return ResponseBean.ok(noticeConfig);
+    }
+
+    /**
+     * @description: 消息设置改动
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/23 15:36
+     */
+    @PostMapping("/notice/setting/update")
+    public ResponseBean updateNoticeSetting(@RequestBody @Valid BaseRequest<NoticeConfigDTO> baseRequest,
+                                            @RequestHeader(SysConstant.USERID) Long userId) {
+        messageNoticeService.updateNoticeSetting(baseRequest.getData(), userId);
+        return ResponseBean.ok();
+    }
+}

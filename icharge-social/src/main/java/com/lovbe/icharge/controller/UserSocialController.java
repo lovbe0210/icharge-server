@@ -28,6 +28,14 @@ public class UserSocialController {
     @Resource
     private UserSocialService socialService;
 
+    /**
+     * @description: 用户关注操作
+     * @param: baseRequest
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/23 15:03
+     */
     @PostMapping("/user/action/follow")
     public ResponseBean userActionFollow(@RequestBody @Valid BaseRequest<TargetFollowDTO> baseRequest,
                                          @RequestHeader("userId") Long userId) {

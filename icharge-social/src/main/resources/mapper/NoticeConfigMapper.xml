@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.NoticeConfigDao">
+    <!-- 通过点赞操作获取用户消息设置 -->
+    <select id="selectEnableSocialNotice" resultType="com.lovbe.icharge.entity.dto.EnableSocialDTO">
+        SELECT a.user_id userId,
+               snc.like_notice_range enableSocial
+        FROM <if test="likeData.targetType == 1">
+                c_article a
+             </if>
+             <if test="likeData.targetType == 3">
+                 c_essay a
+             </if>
+             <if test="likeData.targetType == 4">
+                 s_comment a
+             </if>
+        LEFT JOIN s_notice_config snc ON a.user_id = snc.uid
+        WHERE a.uid = #{likeData.targetId}
+    </select>
+</mapper>

@@ -110,29 +110,49 @@
     </select>
 
     <!-- 判断能否发送评论 -->
-    <select id="selectEnableComment" resultType="java.lang.Integer">
+    <select id="selectEnableComment" resultType="com.lovbe.icharge.entity.dto.EnableSocialDTO">
         SELECT
+            a.user_id userId,
             <choose>
                 <when test="replyCommentDTO.targetType == 1">
-                    IF(cc.enable_comment IS NOT NULL, cc.enable_comment, ipc.enable_comment)
+                    IF(cc.enable_comment IS NOT NULL, cc.enable_comment, ipc.enable_comment) enableSocial
                 </when>
                 <otherwise>
-                    ipc.enable_comment
+                    ipc.enable_comment enableSocial
                 </otherwise>
             </choose>
         FROM
         <choose>
-            <when test="replyCommentDTO.targetType == 1">
+            <when test="replyCommentDTO.parentId != null">
+                s_comment a
+                <if test="replyCommentDTO.targetType == 1">
+                    INNER join c_article b ON b.uid = #{replyCommentDTO.targetId}
+                    AND b.status = 'A'
+                    LEFT JOIN c_column cc ON b.column_id = cc.uid AND cc.status = 'A'
+                </if>
+                <if test="replyCommentDTO.targetType == 3">
+                    INNER JOIN c_essay b ON b.uid = #{replyCommentDTO.targetId}
+                    AND b.status = 'A'
+                </if>
+                LEFT JOIN i_personalize_config ipc ON b.user_id = ipc.uid
+            </when>
+            <when test="replyCommentDTO.targetType == 1 and replyCommentDTO.parentId == null">
                 c_article a
                 LEFT JOIN c_column cc ON a.column_id = cc.uid AND cc.status = 'A'
+                LEFT JOIN i_personalize_config ipc ON a.user_id = ipc.uid
             </when>
             <otherwise>
                 c_essay a
+                LEFT JOIN i_personalize_config ipc ON a.user_id = ipc.uid
             </otherwise>
         </choose>
-        LEFT JOIN i_personalize_config ipc ON a.user_id = ipc.uid
-        WHERE a.uid = #{replyCommentDTO.targetId}
-            AND a.status = 'A'
+        WHERE a.status = 'A'
+            <if test="replyCommentDTO.parentId != null">
+                AND a.uid = #{replyCommentDTO.parentId}
+            </if>
+            <if test="replyCommentDTO.parentId == null">
+                AND a.uid = #{replyCommentDTO.targetId}
+            </if>
     </select>
 
     <resultMap id="commentMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">

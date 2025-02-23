@@ -3,7 +3,6 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
-import com.lovbe.icharge.common.dao.CommonDao;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -12,15 +11,19 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
+import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.dao.NoticeConfigDao;
 import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialLikeDao;
+import com.lovbe.icharge.dao.SocialNoticeDao;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ReplyCommentVo;
 import com.lovbe.icharge.service.ContentSocialService;
+import com.lovbe.icharge.service.UserSocialService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -57,13 +60,47 @@ public class ContentSocialServiceImpl implements ContentSocialService {
     private String appName;
 
     @Resource
+    private CommonService commonService;
+    @Resource
+    private UserSocialService userSocialService;
+    @Resource
     private SocialLikeDao socialLikeDao;
     @Resource
-    private CommonService commonService;
+    private SocialNoticeDao socialNoticeDao;
+    @Resource
+    private NoticeConfigDao noticeConfigDao;
 
     @Override
     public void contentLikeMark(ContentLikeDTO data, Long userId) {
-        LikeActionDo actionDo = new LikeActionDo(data.getTargetId(), data.getTargetType(), userId, data.getAction());
+        // 判断对方用户是否接收点赞通知
+        Long targetUserId = null;
+        if (data.getAction() == 1) {
+            EnableSocialDTO enableNotice = noticeConfigDao.selectEnableSocialNotice(userId, data);
+            if (enableNotice != null && enableNotice.getEnableSocial() == null) {
+                // 还未设置默认开启
+                targetUserId = enableNotice.getUserId();
+            } else if (enableNotice != null && enableNotice.getEnableSocial() == SysConstant.NOTICE_ALL_USER) {
+                // 所有人
+                targetUserId = enableNotice.getUserId();
+            } else if (enableNotice != null && enableNotice.getEnableSocial() == SysConstant.NOTICE_FOLLOW_USER) {
+                // 关注的人
+                long noticeUserId = enableNotice.getUserId();
+                RelationshipDo relationship = userSocialService.getRelationship(userId, noticeUserId);
+                if (relationship != null) {
+                    Long userIdSlave = relationship.getUserIdSlave();
+                    Long userIdMaster = relationship.getUserIdMaster();
+                    Integer mws = relationship.getMasterWatchSlave();
+                    Integer swm = relationship.getSlaveWatchMaster();
+                    if (Objects.equals(noticeUserId, userIdMaster) && mws == 1) {
+                        targetUserId = noticeUserId;
+                    }
+                    if (Objects.equals(noticeUserId, userIdSlave) && swm == 1) {
+                        targetUserId = noticeUserId;
+                    }
+                }
+            }
+        }
+        LikeActionDo actionDo = new LikeActionDo(data.getTargetId(), targetUserId, data.getTargetType(), userId, data.getAction());
         actionDo.setCreateTime(new Date());
         // redis同步操作
         String userLikesSetKey = RedisKeyConstant.getUserLikesSet(userId);
@@ -139,7 +176,7 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                                 if (deepReplyVo.getReplyUserInfo() != null) {
                                     deepReplyVo.setReplyUserInfo(commonService.getCacheUser(deepReplyVo.getReplyUserInfo().getUid()));
                                 }
-                                replyCommentVo.setIfLike(likeTargets.contains(deepReply.getUid()) ? 1 : 0);
+                                deepReplyVo.setIfLike(likeTargets.contains(deepReply.getUid()) ? 1 : 0);
                                 return deepReplyVo;
                             }).collect(Collectors.toList());
                     replyCommentVo.setReplyList(deepReplyList);
@@ -152,10 +189,11 @@ public class ContentSocialServiceImpl implements ContentSocialService {
     @Override
     public ReplyCommentVo replyComment(ReplyCommentDTO replyCommentDTO, Long userId) {
         // 判断当前内容是否开启了评论功能
-        Integer enableComment = replyCommentDao.selectEnableComment(replyCommentDTO);
-        if (enableComment == null && replyCommentDTO.getTargetType() == SysConstant.TARGET_TYPE_ARTICLE) {
-            throw new ServiceException(ServiceErrorCodes.COMMENT_NOT_ENABLE_FAILED);
-        } else if (enableComment != null && enableComment == 0) {
+        EnableSocialDTO enableSocial = replyCommentDao.selectEnableComment(replyCommentDTO);
+        if (enableSocial == null) {
+            throw new ServiceException(replyCommentDTO.getTargetType() == 1 ?
+                    ServiceErrorCodes.ARTICLE_NOT_EXIST : ServiceErrorCodes.RAMBLY_JOT_NOT_EXIST);
+        } else if (enableSocial.getEnableSocial() != null && enableSocial.getEnableSocial() == 0) {
             throw new ServiceException(ServiceErrorCodes.COMMENT_NOT_ENABLE_FAILED);
         }
 
@@ -165,6 +203,35 @@ public class ContentSocialServiceImpl implements ContentSocialService {
             Assert.notNull(replyCommentDTO.getParentId(), ServiceErrorCodes.REPLY_PARENT_ID_NOT_NULL.getMsg());
         }
         ReplyCommentDo replyCommentDo = new ReplyCommentDo();
+
+        // 判断对方用户是否接收评论回复通知
+        NoticeConfigDo noticeConfig = noticeConfigDao.selectOne(new LambdaQueryWrapper<NoticeConfigDo>()
+                .eq(NoticeConfigDo::getUid, enableSocial.getUserId()), false);
+        if (noticeConfig == null) {
+            // 还未设置默认开启
+            replyCommentDo.setTargetUserId(enableSocial.getUserId());
+        } else if (noticeConfig.getCommentMsgAccept() == SysConstant.NOTICE_ALL_USER) {
+            // 所有人
+            replyCommentDo.setTargetUserId(enableSocial.getUserId());
+        } else if (noticeConfig.getCommentMsgAccept() == SysConstant.NOTICE_FOLLOW_USER) {
+            // 关注的人
+            long noticeUserId = noticeConfig.getUid();
+            RelationshipDo relationship = userSocialService.getRelationship(userId, noticeUserId);
+            if (relationship != null) {
+                Long userIdSlave = relationship.getUserIdSlave();
+                Long userIdMaster = relationship.getUserIdMaster();
+                Integer mws = relationship.getMasterWatchSlave();
+                Integer swm = relationship.getSlaveWatchMaster();
+                if (Objects.equals(noticeUserId, userIdMaster) && mws == 1) {
+                    replyCommentDo.setTargetUserId(enableSocial.getUserId());
+                }
+                if (Objects.equals(noticeUserId, userIdSlave) && swm == 1) {
+                    replyCommentDo.setTargetUserId(enableSocial.getUserId());
+                }
+            }
+        }
+
+        replyCommentDo.setTargetUserId(enableSocial.getUserId());
         BeanUtils.copyProperties(replyCommentDTO, replyCommentDo);
         // 图片文件上传
         MultipartFile contentImgFile = replyCommentDTO.getContentImgFile();
@@ -251,5 +318,7 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         replyCommentDao.deleteById(uid);
         // 更新target统计表
         replyCommentDao.updateReplyCountBySub(replyCommentDo.getTargetId(), deleteCount);
+        // 删除通知表(由于commentId=noticeId,所以直接根据id删了就行)
+        socialNoticeDao.deleteById(uid);
     }
 }

@@ -22,6 +22,12 @@ public class LikeActionDo extends BaseEntity {
      */
     private Long targetId;
     /**
+     * 点赞对象用户id
+     */
+    @TableField(exist = false)
+    private Long targetUserId;
+
+    /**
      * 点赞对象类型  1文章 2专栏 3随笔 4评论
      */
     private Integer targetType;
@@ -40,4 +46,5 @@ public class LikeActionDo extends BaseEntity {
         this.targetType = targetType;
         this.userId = userId;
     }
+
 }

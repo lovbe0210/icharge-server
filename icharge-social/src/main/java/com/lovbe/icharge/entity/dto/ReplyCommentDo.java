@@ -28,6 +28,11 @@ public class ReplyCommentDo extends BaseEntity {
     @TableField(exist = false)
     private Integer targetType;
     /**
+     * 评论对象用户id
+     */
+    @TableField(exist = false)
+    private Long targetUserId;
+    /**
      * 父级评论id
      */
     private Long parentId;

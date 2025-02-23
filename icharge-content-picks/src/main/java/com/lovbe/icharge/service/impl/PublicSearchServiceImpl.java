@@ -48,7 +48,7 @@ public class PublicSearchServiceImpl implements PublicSearchService {
     @Override
     public SearchResultVo getGlobalSearchResult(GlobalSearchDTO data, Long userId) {
         SearchResultVo searchResult = new SearchResultVo();
-        // 通过elasticsearch进行搜索id然后去数据库查询明细
+        // 通过elasticsearch搜索文章信息
         getSearchArticleResult(data, searchResult);
         // 通过elasticsearch搜索专栏信息
         getSearchColumnResult(data, searchResult);
@@ -93,7 +93,7 @@ public class PublicSearchServiceImpl implements PublicSearchService {
             if (searchHits != null && searchHits.getTotalHits().value == 0) {
                 searchResult.setSearchUserCount(0)
                         .setSearchUserList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0){
+            } else if (searchHits != null && searchHits.getHits().length == 0) {
                 searchResult.setSearchUserCount(Math.toIntExact(searchHits.getTotalHits().value))
                         .setSearchUserList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
@@ -172,7 +172,7 @@ public class PublicSearchServiceImpl implements PublicSearchService {
             if (searchHits != null && searchHits.getTotalHits().value == 0) {
                 searchResult.setSearchColumnCount(0)
                         .setSearchColumnList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0){
+            } else if (searchHits != null && searchHits.getHits().length == 0) {
                 searchResult.setSearchColumnCount(Math.toIntExact(searchHits.getTotalHits().value))
                         .setSearchColumnList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
@@ -247,7 +247,7 @@ public class PublicSearchServiceImpl implements PublicSearchService {
         boolQuery.should(QueryBuilders.matchQuery(SysConstant.ES_FILED_CONTENT, data.getKeywords()).boost(0.6F));
         boolQuery.minimumShouldMatch(1);
         searchSourceBuilder.query(boolQuery);
-        // 只获取id字段
+        // 只获取id字段/标题/摘要
         searchSourceBuilder.fetchSource(new String[]{SysConstant.ES_FILED_UID, SysConstant.ES_FILED_TITLE, SysConstant.ES_FILED_SUMMARY}, null);
         // 设置高亮显示
         HighlightBuilder highlightBuilder = new HighlightBuilder();
@@ -268,7 +268,7 @@ public class PublicSearchServiceImpl implements PublicSearchService {
             if (searchHits != null && searchHits.getTotalHits().value == 0) {
                 searchResult.setSearchArticleCount(0)
                         .setSearchArticleList(List.of());
-            } else if (searchHits != null && searchHits.getHits().length == 0){
+            } else if (searchHits != null && searchHits.getHits().length == 0) {
                 searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
                         .setSearchArticleList(List.of());
             } else if (searchHits != null && searchHits.getHits().length != 0) {
@@ -297,26 +297,34 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                 // 获取文章详细信息
                 List<FeaturedArticleVo> articleVoList = publicContentDao.selectPublicArticleList(articleIds);
                 if (CollectionUtils.isEmpty(articleVoList)) {
-                    // 用户信息填充
-                    for (FeaturedArticleVo article : articleVoList) {
-                        article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
-                    }
                     searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
                             .setSearchArticleList(List.of());
                     return;
                 }
+                Map<Long, FeaturedArticleVo> articleVoMap = articleVoList.stream()
+                        .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity(), (a, b) -> b));
                 // 替换高亮字段
-                articleVoList.stream().forEach(article -> {
-                    FeaturedArticleVo highLightArticle = articleMap.get(article.getUid());
-                    if (highLightArticle != null && highLightArticle.getTitle() != null) {
-                        article.setTitle(highLightArticle.getTitle());
-                    }
-                    if (highLightArticle != null && highLightArticle.getSummary() != null) {
-                        article.setSummary(highLightArticle.getSummary());
-                    }
-                });
+                List<FeaturedArticleVo> collect = articleIds.stream()
+                        .map(id -> {
+                            FeaturedArticleVo article = articleVoMap.get(id);
+                            if (article == null) {
+                                return null;
+                            }
+                            // 用户信息填充
+                            article.setUserInfo(commonService.getCacheUser(article.getUserInfo().getUid()));
+                            FeaturedArticleVo highLightArticle = articleMap.get(article.getUid());
+                            if (highLightArticle != null && highLightArticle.getTitle() != null) {
+                                article.setTitle(highLightArticle.getTitle());
+                            }
+                            if (highLightArticle != null && highLightArticle.getSummary() != null) {
+                                article.setSummary(highLightArticle.getSummary());
+                            }
+                            return article;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
                 searchResult.setSearchArticleCount(Math.toIntExact(searchHits.getTotalHits().value))
-                        .setSearchArticleList(articleVoList);
+                        .setSearchArticleList(collect);
             }
         } catch (IOException e) {
             log.error("[获取搜索文章] --- 查询异常，errorInfo: {}", e.toString());

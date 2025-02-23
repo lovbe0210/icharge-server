@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.util.CollectionUtils;
@@ -30,7 +31,7 @@ import java.util.Map;
 /**
  * @Author: lovbe0210
  * @Date: 2025/2/16 13:25
- * @Description: MS
+ * @Description: webSocket相关配置
  */
 @Slf4j
 @Configuration
@@ -40,7 +41,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(messageHandler(), "/socket")
                 .addInterceptors(handshakeInterceptor())
-                .setAllowedOrigins("http://localhost", "www.10020210.xyz");
+                .setAllowedOrigins("http://localhost", "https://www.10020210.xyz");
     }
 
     @Bean
@@ -50,6 +51,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
             public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
                 HttpHeaders headers = request.getHeaders();
                 if (headers.isEmpty() || CollectionUtils.isEmpty(headers.get("cookie"))) {
+                    log.error("[ws连接握手] --- cookie获取失败，握手失败");
+                    response.setStatusCode(HttpStatusCode.valueOf(403));
                     return false;
                 }
                 String[] acToken = new String[1];
@@ -74,6 +77,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
                             }
                         });
                 if (acToken[0] == null) {
+                    log.error("[ws连接握手] --- cookie获取失败，握手失败");
+                    response.setStatusCode(HttpStatusCode.valueOf(403));
                     return false;
                 }
                 Object userId = RedisUtil.get(RedisKeyConstant.getAccessTokenKey(acToken[0]));
@@ -81,6 +86,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     headers.set(SysConstant.USERID, String.valueOf(userId));
                     return true;
                 }
+                log.error("[ws连接握手] --- 用户登录信息已过期，握手失败");
+                response.setStatusCode(HttpStatusCode.valueOf(403));
                 return false;
             }
 

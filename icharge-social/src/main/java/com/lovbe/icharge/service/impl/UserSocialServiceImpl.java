@@ -1,5 +1,9 @@
 package com.lovbe.icharge.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
@@ -8,8 +12,12 @@ import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.dao.NoticeConfigDao;
 import com.lovbe.icharge.dao.SocialFollowDao;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
+import com.lovbe.icharge.dao.SocialNoticeDao;
+import com.lovbe.icharge.entity.dto.NoticeConfigDo;
+import com.lovbe.icharge.entity.dto.SocialNoticeDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
@@ -18,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -32,6 +41,10 @@ import java.util.stream.Collectors;
 public class UserSocialServiceImpl implements UserSocialService {
     @Resource
     private SocialFollowDao followDao;
+    @Resource
+    private NoticeConfigDao noticeConfigDao;
+    @Resource
+    private SocialNoticeDao socialNoticeDao;
     @Resource
     private CommonService commonService;
     // 用户操作：关注/取消关注
@@ -57,7 +70,30 @@ public class UserSocialServiceImpl implements UserSocialService {
                     .setMasterWatchSlave(0);
         }
         followDao.updateRelationShip(relationship, Objects.equals(masterId, userId));
-        // 发送用户关注或取消关注的消息，及逆行异步统计关注和粉丝数
+        if (data.getAction() == 1) {
+            // 获取关注用户的消息通知设置
+            NoticeConfigDo noticeConfig = noticeConfigDao.selectOne(new LambdaQueryWrapper<NoticeConfigDo>()
+                    .eq(NoticeConfigDo::getUid, data.getTargetUser()), false);
+            if (noticeConfig == null || noticeConfig.getNewFollowerMsg() == 1) {
+                // 开启通知
+                SocialNoticeDo noticeDo = new SocialNoticeDo()
+                        .setUserId(data.getTargetUser())
+                        .setNoticeType(SysConstant.NOTICE_FOLLOW)
+                        .setTargetId(0L)
+                        .setActionUserId(data.getUserId());
+                noticeDo.setUid(YitIdHelper.nextId())
+                        .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                        .setCreateTime(new Date())
+                        .setUpdateTime(noticeDo.getCreateTime());
+                socialNoticeDao.insert(noticeDo);
+            }
+        } else {
+            socialNoticeDao.delete(new QueryWrapper<SocialNoticeDo>()
+                    .eq("user_id", data.getTargetUser())
+                    .eq("action_user_id", data.getUserId())
+                    .eq("notice_type", SysConstant.NOTICE_FOLLOW));
+        }
+        // 发送用户关注或取消关注的消息，进行异步统计关注和粉丝数
         data.setUserId(userId);
         commonService.sendMessage(appName, followTopic, data);
     }

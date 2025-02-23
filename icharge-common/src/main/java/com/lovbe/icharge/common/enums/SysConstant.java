@@ -99,6 +99,22 @@ public class SysConstant {
     public static final int PUBLISH_SUCCESS = 3;
 
     /**
+     * 通知类型 1评论 2回复 3点赞 4新增关注 0系统消息
+     */
+    public static final int NOTICE_COMMENT = 1;
+    public static final int NOTICE_REPLY = 2;
+    public static final int NOTICE_LIKE = 3;
+    public static final int NOTICE_FOLLOW = 4;
+    public static final int NOTICE_SYSTEM = 0;
+
+    /**
+     * 消息提醒人员范围 1 所有人 0关注的人 -1不接受任何消息提醒
+     */
+    public static final int NOTICE_FOLLOW_USER = 0;
+    public static final int NOTICE_ALL_USER = 1;
+    public static final int NOTICE_NONE_USER = -1;
+
+    /**
      * 分隔符
      */
     public static final String SEPARATOR = "_";
