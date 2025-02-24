@@ -3,9 +3,12 @@ package com.lovbe.icharge.controller;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.NoticeConfigDTO;
 import com.lovbe.icharge.entity.dto.NoticeConfigDo;
+import com.lovbe.icharge.entity.dto.SocialNoticeReqDTO;
+import com.lovbe.icharge.entity.vo.CommentNoticeVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
 import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.MessageNoticeService;
@@ -24,6 +27,7 @@ public class SocialNoticeController {
     private MessageNoticeService messageNoticeService;
     @Resource
     private ChatMessageService chatMessageService;
+
     /**
      * @description: 获取为未读消息统计
      * @param: userId
@@ -34,7 +38,7 @@ public class SocialNoticeController {
     @GetMapping("/notice/unread/statistic")
     public ResponseBean getUnreadStatistic(@RequestHeader(SysConstant.USERID) Long userId) {
         UnreadMsgStatisticVo unreadMsgStatistic = chatMessageService.getUnreadStatistic(userId);
-       return ResponseBean.ok(unreadMsgStatistic);
+        return ResponseBean.ok(unreadMsgStatistic);
     }
 
     /**
@@ -62,5 +66,19 @@ public class SocialNoticeController {
                                             @RequestHeader(SysConstant.USERID) Long userId) {
         messageNoticeService.updateNoticeSetting(baseRequest.getData(), userId);
         return ResponseBean.ok();
+    }
+
+    /**
+     * @description: 获取评论回复通知
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/23 15:36
+     */
+    @PostMapping("/notice/comments")
+    public ResponseBean getCommentNotice(@RequestBody @Valid BaseRequest<SocialNoticeReqDTO> baseRequest,
+                                         @RequestHeader(SysConstant.USERID) Long userId) {
+        PageBean<CommentNoticeVo> commentNotices = messageNoticeService.getCommentNotice(baseRequest.getData(), userId);
+        return ResponseBean.ok(commentNotices);
     }
 }

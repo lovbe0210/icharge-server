@@ -1,6 +1,5 @@
-package com.lovbe.icharge.entity.vo;
+package com.lovbe.icharge.common.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;

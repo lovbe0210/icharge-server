@@ -61,7 +61,7 @@ public class PreferenceServiceImpl implements PreferenceService {
                                 }
                                 """);
         settingVo.setUid(userId);
-        preferenceSettingDao.updateOrInsert(settingVo);
+        preferenceSettingDao.insert(settingVo);
     }
 
     @Override

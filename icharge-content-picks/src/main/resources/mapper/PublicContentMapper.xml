@@ -328,7 +328,7 @@
                     AND publish_status = 3
                     AND `status` = 'A'
                 ORDER BY create_time DESC
-                LIMIT 0, 20
+                LIMIT #{requestData.offset}, #{requestData.limit}
             ) tid
         INNER JOIN c_essay ce ON tid.uid = ce.uid
         LEFT JOIN s_interaction_statistic sis ON tid.uid = sis.uid
@@ -344,6 +344,18 @@
             AND c.user_id = #{data.userId}
             AND c.is_public = 1
         ORDER BY c.update_time DESC
+    </select>
+
+    <!-- 通过id查找随笔列表 -->
+    <select id="getRamblyjotListByIds" resultType="com.lovbe.icharge.common.model.dto.RamblyJotDo">
+        SELECT
+            ce.*,
+            ce.preview_img preview_img_str
+        FROM c_essay ce
+        where uid in
+        <foreach collection="data" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">

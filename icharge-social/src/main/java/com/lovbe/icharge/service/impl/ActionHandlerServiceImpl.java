@@ -135,7 +135,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                         statisticDo.setCommentCount(statisticDo.getCommentCount() + 1);
                     }
                     // targetUserId为null不通知,自己给自己评论不通知
-                    if (replyCommentDo.getTargetUserId() == null || Objects.equals(replyCommentDo.getUserId(), replyCommentDo.getTargetUserId())) {
+                    if (replyCommentDo.getTargetUserId() == null) {
                         return;
                     }
                     SocialNoticeDo noticeDo = new SocialNoticeDo()
@@ -144,7 +144,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                             .setTargetId(replyCommentDo.getTargetId())
                             .setActionUserId(replyCommentDo.getUserId())
                             .setCommentId(replyCommentDo.getParentId() == null ? replyCommentDo.getUid() : replyCommentDo.getParentId())
-                            .setReplyId(replyCommentDo.getParentId() == null ? null : replyCommentDo.getParentId());
+                            .setReplyId(replyCommentDo.getParentId() == null ? null : replyCommentDo.getUid());
                     noticeDo.setUid(replyCommentDo.getUid())
                             .setStatus(CommonStatusEnum.NORMAL.getStatus())
                             .setCreateTime(new Date())

@@ -12,4 +12,22 @@
         WHERE user_id = #{userId}
           AND read_status = 0
     </select>
+    <select id="selectCommentListCount" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+        SELECT
+            sn.uid,
+            sn.action_user_id actionUserId,
+            sn.read_status readStatus,
+            sn.target_id targetId,
+            sc.target_type targetType,
+            sn.create_time createTime,
+            sn.uid commentId,
+            IF(sc.content_img_url IS NULL, sc.content, CONCAT( sc.content, '[图片]' )) commentContent,
+            sn.reply_id replyId
+        FROM s_notices sn
+        INNER JOIN s_comment sc ON sn.uid = sc.uid
+        WHERE sn.user_id = #{userId}
+          AND sn.notice_type = 1
+        ORDER BY sn.create_time DESC
+        LIMIT #{data.offset}, #{data.limit}
+    </select>
 </mapper>

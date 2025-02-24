@@ -6,6 +6,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
@@ -56,6 +57,20 @@ public class PublicContentController {
     }
 
     /**
+     * description: 通过id批量获取文章列表
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/article/ids")
+    public ResponseBean<List<PublicArticleVo>> getArticleListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
+                                                             @RequestHeader(value = SysConstant.USERID) Long userId) {
+        return ResponseBean.ok(contentService.getArticleListByIds(baseRequest.getData(), userId));
+    }
+
+    /**
      * @description: 获取公开随笔列表
      * @param: baseRequest
      * @param: userId
@@ -81,6 +96,20 @@ public class PublicContentController {
     public ResponseBean<RamblyJotVo> getRamblyJotInfo(@PathVariable("ramblyJotId") Long ramblyJotId,
                                                       @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getRamblyJotInfo(userId, ramblyJotId));
+    }
+
+    /**
+     * description: 通过id批量获取随笔列表
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/ramblyjot/ids")
+    public ResponseBean<List<RamblyJotVo>> getRamblyjotListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
+                                                             @RequestHeader(value = SysConstant.USERID) Long userId) {
+        return ResponseBean.ok(contentService.getRamblyjotListByIds(baseRequest.getData(), userId));
     }
 
     /**

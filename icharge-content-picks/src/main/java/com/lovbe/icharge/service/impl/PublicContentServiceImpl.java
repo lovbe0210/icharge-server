@@ -15,6 +15,7 @@ import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import com.lovbe.icharge.common.service.CommonService;
@@ -28,7 +29,6 @@ import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.PublicContentDao;
 import com.lovbe.icharge.entity.dto.BrowseHistoryDo;
 import com.lovbe.icharge.entity.dto.CollectDo;
-import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
@@ -45,8 +45,6 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -636,6 +634,41 @@ public class PublicContentServiceImpl implements PublicContentService {
             return publicColumn;
         }
         return List.of();
+    }
+
+    @Override
+    public List<PublicArticleVo> getArticleListByIds(List<Long> data, Long userId) {
+        if (CollectionUtils.isEmpty(data)) {
+            return List.of();
+        }
+        List<ArticleDo> articleList = publicContentDao.selectArticleList(data);
+        if (CollectionUtils.isEmpty(articleList)) {
+            return List.of();
+        }
+        List<PublicArticleVo> collect = articleList.stream()
+                .map(article -> {
+                    PublicArticleVo articleVo = new PublicArticleVo();
+                    BeanUtil.copyProperties(article, articleVo);
+                    return articleVo;
+                })
+                .collect(Collectors.toList());
+        return collect;
+    }
+
+    @Override
+    public List<RamblyJotVo> getRamblyjotListByIds(List<Long> data, Long userId) {
+        if (CollectionUtils.isEmpty(data)) {
+            return List.of();
+        }
+        List<RamblyJotDo> ramblyJotList = publicContentDao.getRamblyjotListByIds(data);
+        List<RamblyJotVo> collect = ramblyJotList.stream()
+                .map(ramblyJotDo -> {
+                    RamblyJotVo ramblyJotVo = new RamblyJotVo();
+                    BeanUtil.copyProperties(ramblyJotDo, ramblyJotVo);
+                    return ramblyJotVo;
+                })
+                .collect(Collectors.toList());
+        return collect;
     }
 
 

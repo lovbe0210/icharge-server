@@ -24,6 +24,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
@@ -54,8 +55,10 @@ public class UserSocialServiceImpl implements UserSocialService {
     private String appName;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void userActionFollow(BaseRequest<TargetFollowDTO> baseRequest, Long userId) {
         TargetFollowDTO data = baseRequest.getData();
+        data.setUserId(userId);
         Long masterId = Math.max(data.getTargetUser(), userId);
         Long slaveId = Math.min(data.getTargetUser(), userId);
         RelationshipDo relationship = new RelationshipDo()
@@ -80,7 +83,7 @@ public class UserSocialServiceImpl implements UserSocialService {
                         .setUserId(data.getTargetUser())
                         .setNoticeType(SysConstant.NOTICE_FOLLOW)
                         .setTargetId(0L)
-                        .setActionUserId(data.getUserId());
+                        .setActionUserId(userId);
                 noticeDo.setUid(YitIdHelper.nextId())
                         .setStatus(CommonStatusEnum.NORMAL.getStatus())
                         .setCreateTime(new Date())
@@ -90,11 +93,10 @@ public class UserSocialServiceImpl implements UserSocialService {
         } else {
             socialNoticeDao.delete(new QueryWrapper<SocialNoticeDo>()
                     .eq("user_id", data.getTargetUser())
-                    .eq("action_user_id", data.getUserId())
+                    .eq("action_user_id", userId)
                     .eq("notice_type", SysConstant.NOTICE_FOLLOW));
         }
         // 发送用户关注或取消关注的消息，进行异步统计关注和粉丝数
-        data.setUserId(userId);
         commonService.sendMessage(appName, followTopic, data);
     }
 

@@ -9,7 +9,7 @@ import com.lovbe.icharge.entity.dto.CollectRequestDTO;
 import com.lovbe.icharge.entity.dto.CollectTagsDTO;
 import com.lovbe.icharge.entity.dto.CollectTargetDTO;
 import com.lovbe.icharge.entity.vo.CollectVo;
-import com.lovbe.icharge.entity.vo.PublicArticleVo;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.service.CollectService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;

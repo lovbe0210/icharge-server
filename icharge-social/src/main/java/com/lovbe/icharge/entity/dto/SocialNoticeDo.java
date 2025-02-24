@@ -1,5 +1,6 @@
 package com.lovbe.icharge.entity.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
@@ -27,6 +28,11 @@ public class SocialNoticeDo extends BaseEntity {
      */
     private Long targetId;
     /**
+     * 评论点赞对象类型 1文章 2专栏 3随笔
+     */
+    @TableField(exist = false)
+    private Integer targetType;
+    /**
      * 动作人，如果是系统通知则为0
      */
     private Long actionUserId;
@@ -35,12 +41,17 @@ public class SocialNoticeDo extends BaseEntity {
      */
     private Long commentId;
     /**
+     * 评论内容
+     */
+    @TableField(exist = false)
+    private String  commentContent;
+    /**
      * 回复id 当type=2时不为空，
      */
     private Long replyId;
     /**
      * 阅读状态 0未读 1已读
      */
-    private int read_status;
+    private int readStatus;
 
 }

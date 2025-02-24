@@ -25,7 +25,6 @@ public class ReplyCommentDo extends BaseEntity {
     /**
      * 评论对象类型 1文章 2专栏 3随笔 4评论
      */
-    @TableField(exist = false)
     private Integer targetType;
     /**
      * 评论对象用户id

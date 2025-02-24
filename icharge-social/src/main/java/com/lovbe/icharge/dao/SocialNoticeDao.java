@@ -25,4 +25,14 @@ public interface SocialNoticeDao extends BaseMapper<SocialNoticeDo> {
      * @date: 2025/2/24 0:21
      */
     UnreadMsgStatisticVo selectUnreadStatistic(@Param("userId") Long userId);
+
+    /**
+     * @description: 获取评论通知列表
+     * @param: data
+     * @param: userId
+     * @return: java.util.List<com.lovbe.icharge.entity.dto.SocialNoticeDo>
+     * @author: lovbe0210
+     * @date: 2025/2/24 16:43
+     */
+    List<SocialNoticeDo> selectCommentListCount(@Param("data") SocialNoticeReqDTO data, @Param("userId") Long userId);
 }

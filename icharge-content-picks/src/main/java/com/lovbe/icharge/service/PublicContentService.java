@@ -4,6 +4,7 @@ package com.lovbe.icharge.service;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
@@ -173,4 +174,24 @@ public interface PublicContentService {
      * @date: 2025/2/6 16:44
      */
     List<RecommendColumnVo> getDomainPublicColumn(RecommendRequestDTO data);
+
+    /**
+     * @description: 通过id批量获取文章列表
+     * @param: data
+     * @param: userId
+     * @return: java.util.List<com.lovbe.icharge.common.model.vo.PublicArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/2/24 17:30
+     */
+    List<PublicArticleVo> getArticleListByIds(List<Long> data, Long userId);
+
+    /**
+     * @description: 通过id批量获取随笔列表
+     * @param: data
+     * @param: userId
+     * @return: java.util.List<com.lovbe.icharge.common.model.vo.RamblyJotVo>
+     * @author: lovbe0210
+     * @date: 2025/2/24 20:24
+     */
+    List<RamblyJotVo> getRamblyjotListByIds(List<Long> data, Long userId);
 }

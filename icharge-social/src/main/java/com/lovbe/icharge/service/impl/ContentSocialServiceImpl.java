@@ -204,34 +204,36 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         }
         ReplyCommentDo replyCommentDo = new ReplyCommentDo();
 
-        // 判断对方用户是否接收评论回复通知
-        NoticeConfigDo noticeConfig = noticeConfigDao.selectOne(new LambdaQueryWrapper<NoticeConfigDo>()
-                .eq(NoticeConfigDo::getUid, enableSocial.getUserId()), false);
-        if (noticeConfig == null) {
-            // 还未设置默认开启
-            replyCommentDo.setTargetUserId(enableSocial.getUserId());
-        } else if (noticeConfig.getCommentMsgAccept() == SysConstant.NOTICE_ALL_USER) {
-            // 所有人
-            replyCommentDo.setTargetUserId(enableSocial.getUserId());
-        } else if (noticeConfig.getCommentMsgAccept() == SysConstant.NOTICE_FOLLOW_USER) {
-            // 关注的人
-            long noticeUserId = noticeConfig.getUid();
-            RelationshipDo relationship = userSocialService.getRelationship(userId, noticeUserId);
-            if (relationship != null) {
-                Long userIdSlave = relationship.getUserIdSlave();
-                Long userIdMaster = relationship.getUserIdMaster();
-                Integer mws = relationship.getMasterWatchSlave();
-                Integer swm = relationship.getSlaveWatchMaster();
-                if (Objects.equals(noticeUserId, userIdMaster) && mws == 1) {
-                    replyCommentDo.setTargetUserId(enableSocial.getUserId());
-                }
-                if (Objects.equals(noticeUserId, userIdSlave) && swm == 1) {
-                    replyCommentDo.setTargetUserId(enableSocial.getUserId());
+        // 这里取用户时如果评论回复中包含replyUserId则对回复@的人通知，否则对parentId的userId进行通知
+        Long noticeUserId = replyCommentDTO.getReplyUserId() == null ? enableSocial.getUserId() : replyCommentDTO.getReplyUserId();
+        // 判断对方用户是否接收评论回复通知，自己对自己评论回复，不通知
+        if (!Objects.equals(noticeUserId, userId)) {
+            NoticeConfigDo noticeConfig = noticeConfigDao.selectOne(new LambdaQueryWrapper<NoticeConfigDo>()
+                    .eq(NoticeConfigDo::getUid, noticeUserId), false);
+            if (noticeConfig == null) {
+                // 还未设置默认开启
+                replyCommentDo.setTargetUserId(noticeUserId);
+            } else if (noticeConfig.getCommentMsgAccept() == SysConstant.NOTICE_ALL_USER) {
+                // 所有人
+                replyCommentDo.setTargetUserId(noticeUserId);
+            } else if (noticeConfig.getCommentMsgAccept() == SysConstant.NOTICE_FOLLOW_USER) {
+                // 关注的人
+                RelationshipDo relationship = userSocialService.getRelationship(userId, noticeUserId);
+                if (relationship != null) {
+                    Long userIdSlave = relationship.getUserIdSlave();
+                    Long userIdMaster = relationship.getUserIdMaster();
+                    Integer mws = relationship.getMasterWatchSlave();
+                    Integer swm = relationship.getSlaveWatchMaster();
+                    if (Objects.equals(noticeUserId, userIdMaster) && mws == 1) {
+                        replyCommentDo.setTargetUserId(enableSocial.getUserId());
+                    }
+                    if (Objects.equals(noticeUserId, userIdSlave) && swm == 1) {
+                        replyCommentDo.setTargetUserId(enableSocial.getUserId());
+                    }
                 }
             }
         }
 
-        replyCommentDo.setTargetUserId(enableSocial.getUserId());
         BeanUtils.copyProperties(replyCommentDTO, replyCommentDo);
         // 图片文件上传
         MultipartFile contentImgFile = replyCommentDTO.getContentImgFile();
