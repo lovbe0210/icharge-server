@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
+import java.util.Collection;
 import java.util.List;
 
 @FeignClient(name = "content-picks", fallback = ContentPickServiceFallback.class)
@@ -26,7 +27,7 @@ public interface ContentPickService {
      * @date: 2024/9/16 11:56
      */
     @PostMapping("/api/cps/ramblyjot/ids")
-    ResponseBean<List<RamblyJotVo>> getRamblyjotListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
+    ResponseBean<List<RamblyJotVo>> getRamblyjotListByIds(@RequestBody BaseRequest<Collection<Long>> baseRequest,
                                                     @RequestHeader(value = SysConstant.USERID) Long userId);
 
     /**
@@ -38,6 +39,6 @@ public interface ContentPickService {
      * @date: 2024/9/16 11:56
      */
     @PostMapping("/api/cps/article/ids")
-    ResponseBean<List<PublicArticleVo>> getArticleListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
-                                                      @RequestHeader(value = SysConstant.USERID) Long userId);
+    ResponseBean<List<PublicArticleVo>> getArticleListByIds(@RequestBody BaseRequest<Collection<Long>> baseRequest,
+                                                                  @RequestHeader(value = SysConstant.USERID) Long userId);
 }

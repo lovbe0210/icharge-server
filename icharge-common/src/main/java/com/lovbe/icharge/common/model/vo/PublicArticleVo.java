@@ -1,5 +1,6 @@
 package com.lovbe.icharge.common.model.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
@@ -34,6 +35,14 @@ public class PublicArticleVo extends BaseEntity {
      */
     private Long userId;
     /**
+     * 个人主页
+     */
+    private String domain;
+    /**
+     * 用户名
+     */
+    private String username;
+    /**
      * 字数
      */
     private int wordsNum;
@@ -45,6 +54,10 @@ public class PublicArticleVo extends BaseEntity {
      * 专栏名称
      */
     private String columnName;
+    /**
+     * 专栏地址
+     */
+    private String columnUri;
     /**
      * 文章摘要
      */

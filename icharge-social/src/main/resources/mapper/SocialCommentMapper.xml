@@ -155,6 +155,28 @@
             </if>
     </select>
 
+    <!-- 通过id获取评论回复相关信息 -->
+    <select id="selectCommentReplyListByIds" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+        SELECT
+            sc.uid,
+            sc.target_type targetType,
+            sc.target_id targetId,
+            IFNULL(scc.uid, sc.uid ) commentId,
+            IF( scc.uid IS NULL, sc.content, scc.content ) commentContent,
+            IF( scc.uid IS NULL, NULL, sc.uid ) replyId,
+            IF( scc.uid IS NULL, NULL, sc.content ) replyContent,
+            sc.create_time createTime
+        FROM s_comment sc
+        LEFT JOIN s_comment scc ON sc.parent_id IS NOT NULL
+            AND sc.parent_id = scc.uid
+            AND scc.`status` = 'A'
+        WHERE sc.uid IN
+            <foreach collection="idList" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+          AND sc.`status` = 'A'
+    </select>
+
     <resultMap id="commentMap" type="com.lovbe.icharge.entity.dto.ReplyCommentDo">
         <id column="uid" property="uid"/>
         <result column="target_id" property="targetId"/>

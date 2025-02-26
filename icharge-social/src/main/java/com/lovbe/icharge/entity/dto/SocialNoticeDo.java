@@ -50,6 +50,11 @@ public class SocialNoticeDo extends BaseEntity {
      */
     private Long replyId;
     /**
+     * 回复内容
+     */
+    @TableField(exist = false)
+    private String replyContent;
+    /**
      * 阅读状态 0未读 1已读
      */
     private int readStatus;

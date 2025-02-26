@@ -100,6 +100,10 @@ public class ContentSocialServiceImpl implements ContentSocialService {
                 }
             }
         }
+        // 自己赞自己也不通知
+        if (targetUserId != null && Objects.equals(targetUserId, userId)) {
+            targetUserId = null;
+        }
         LikeActionDo actionDo = new LikeActionDo(data.getTargetId(), targetUserId, data.getTargetType(), userId, data.getAction());
         actionDo.setCreateTime(new Date());
         // redis同步操作

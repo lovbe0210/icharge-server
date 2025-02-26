@@ -15,6 +15,7 @@
     <select id="selectCommentListCount" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
         SELECT
             sn.uid,
+            sn.notice_type noticeType,
             sn.action_user_id actionUserId,
             sn.read_status readStatus,
             sn.target_id targetId,
@@ -27,6 +28,25 @@
         INNER JOIN s_comment sc ON sn.uid = sc.uid
         WHERE sn.user_id = #{userId}
           AND sn.notice_type = 1
+        ORDER BY sn.create_time DESC
+        LIMIT #{data.offset}, #{data.limit}
+    </select>
+
+    <!-- 获取点赞通知列表 -->
+    <select id="selectLikeListCount" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+        SELECT
+            sn.uid,
+            sn.notice_type noticeType,
+            sn.action_user_id actionUserId,
+            sn.read_status readStatus,
+            sli.target_id targetId,
+            sli.target_type targetType,
+            sn.create_time createTime
+        FROM s_notices sn
+        INNER JOIN s_like_item sli ON sn.uid = sli.uid
+        WHERE
+            sn.user_id = #{userId}
+          AND sn.notice_type = 3
         ORDER BY sn.create_time DESC
         LIMIT #{data.offset}, #{data.limit}
     </select>

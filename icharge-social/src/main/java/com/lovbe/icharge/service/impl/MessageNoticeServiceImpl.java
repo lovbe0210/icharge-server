@@ -16,6 +16,7 @@ import com.lovbe.icharge.dao.ReplyCommentDao;
 import com.lovbe.icharge.dao.SocialNoticeDao;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.CommentNoticeVo;
+import com.lovbe.icharge.entity.vo.LikeNoticeVo;
 import com.lovbe.icharge.service.MessageNoticeService;
 import com.lovbe.icharge.service.feign.ContentPickService;
 import jakarta.annotation.Resource;
@@ -91,7 +92,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
     @Override
     public PageBean<CommentNoticeVo> getCommentNotice(SocialNoticeReqDTO data, Long userId) {
         Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
-                .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_COMMENT)
+                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_COMMENT, SysConstant.NOTICE_REPLY)
                 .eq(SocialNoticeDo::getUserId, userId)
                 .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
                 .orderByDesc(SocialNoticeDo::getCreateTime));
@@ -111,7 +112,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                     switch (type) {
                         case SysConstant.TARGET_TYPE_ARTICLE -> {
                             // 文章类型
-                            ResponseBean<List<PublicArticleVo>> articleList= cpsService.getArticleListByIds(new BaseRequest<>(new ArrayList<>(idList)), userId);
+                            ResponseBean<List<PublicArticleVo>> articleList = cpsService.getArticleListByIds(new BaseRequest<>(idList), userId);
                             if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
                                 articleVoMap.putAll(articleList.getData().stream()
                                         .collect(Collectors.toMap(PublicArticleVo::getUid, Function.identity())));
@@ -119,7 +120,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                         }
                         case SysConstant.TARGET_TYPE_ESSAY -> {
                             // 随笔类型
-                            ResponseBean<List<RamblyJotVo>> listByIds = cpsService.getRamblyjotListByIds(new BaseRequest<>(new ArrayList<>(idList)), userId);
+                            ResponseBean<List<RamblyJotVo>> listByIds = cpsService.getRamblyjotListByIds(new BaseRequest<>(idList), userId);
                             if (listByIds.isResult() && !CollectionUtils.isEmpty(listByIds.getData())) {
                                 ramblyJotVoMap.putAll(listByIds.getData().stream()
                                         .collect(Collectors.toMap(RamblyJotVo::getUid, Function.identity())));
@@ -148,6 +149,100 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                         commentNotice.setReplyContent(replyComment.getContent());
                     }
                     return commentNotice;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageBean<>(Math.toIntExact(count), collect);
+    }
+
+    @Override
+    public PageBean<LikeNoticeVo> getLikesNotice(SocialNoticeReqDTO data, Long userId) {
+        Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
+                .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_LIKE)
+                .eq(SocialNoticeDo::getUserId, userId)
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
+                .orderByDesc(SocialNoticeDo::getCreateTime));
+        if (count == null || count == 0) {
+            return new PageBean<>(0, List.of());
+        }
+        List<SocialNoticeDo> socialNoticeList = socialNoticeDao.selectLikeListCount(data, userId);
+        if (CollectionUtils.isEmpty(socialNoticeList)) {
+            return new PageBean<>(Math.toIntExact(count), List.of());
+        }
+        Map<Long, PublicArticleVo> articleVoMap = new HashMap<>();
+        Map<Long, RamblyJotVo> ramblyJotVoMap = new HashMap<>();
+        Map<Long, SocialNoticeDo> commentDoMap = new HashMap<>();
+        Set<Long> articleIds = new HashSet<>();
+        Set<Long> ramblyJotIds = new HashSet<>();
+        Map<Integer, Set<Long>> collectMap = socialNoticeList.stream()
+                .collect(Collectors.groupingBy(SocialNoticeDo::getTargetType,
+                        Collectors.mapping(SocialNoticeDo::getTargetId, Collectors.toSet())));
+        // 由于点赞里面可能包含评论，而评论的对象又可能是文章或随笔，因此这里先取评论的类型
+        // 评论类型
+        Set<Long> commentIds = collectMap.get(SysConstant.TARGET_TYPE_COMMENT);
+        if (!CollectionUtils.isEmpty(commentIds)) {
+            List<SocialNoticeDo> socialNotices = replyCommentDao.selectCommentReplyListByIds(commentIds);
+            for (SocialNoticeDo socialNotice : socialNotices) {
+                commentDoMap.put(socialNotice.getUid(), socialNotice);
+                if (Objects.equals(socialNotice.getTargetType(), SysConstant.TARGET_TYPE_ARTICLE)) {
+                    articleIds.add(socialNotice.getTargetId());
+                    continue;
+                }
+                if (Objects.equals(socialNotice.getTargetType(), SysConstant.TARGET_TYPE_ESSAY)) {
+                    ramblyJotIds.add(socialNotice.getTargetId());
+                }
+            }
+        }
+        // 文章类型
+        articleIds.addAll(collectMap.get(SysConstant.TARGET_TYPE_ARTICLE));
+        if (!CollectionUtils.isEmpty(articleIds)) {
+            ResponseBean<List<PublicArticleVo>> articleList = cpsService.getArticleListByIds(new BaseRequest<>(articleIds), userId);
+            if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
+                articleVoMap.putAll(articleList.getData().stream()
+                        .collect(Collectors.toMap(PublicArticleVo::getUid, Function.identity())));
+            }
+        }
+        // 随笔类型
+        ramblyJotIds.addAll(collectMap.get(SysConstant.TARGET_TYPE_ESSAY));
+        ResponseBean<List<RamblyJotVo>> listByIds = cpsService.getRamblyjotListByIds(new BaseRequest<>(ramblyJotIds), userId);
+        if (listByIds.isResult() && !CollectionUtils.isEmpty(listByIds.getData())) {
+            ramblyJotVoMap.putAll(listByIds.getData().stream()
+                    .collect(Collectors.toMap(RamblyJotVo::getUid, Function.identity())));
+        }
+
+        // 组装文章、随笔和评论信息
+        List<LikeNoticeVo> collect = socialNoticeList.stream()
+                .map(socialNotice -> {
+                    LikeNoticeVo likeNotice = new LikeNoticeVo();
+                    BeanUtil.copyProperties(socialNotice, likeNotice);
+                    likeNotice.setActionUserInfo(commonService.getCacheUser(socialNotice.getActionUserId()));
+                    if (Objects.equals(socialNotice.getTargetType(), SysConstant.TARGET_TYPE_ARTICLE)) {
+                        likeNotice.setArticleInfo(articleVoMap.get(socialNotice.getTargetId()));
+                        return likeNotice;
+                    }
+                    if (Objects.equals(socialNotice.getTargetType(), SysConstant.TARGET_TYPE_ESSAY)) {
+                        likeNotice.setRamblyJot(ramblyJotVoMap.get(socialNotice.getTargetId()));
+                        return likeNotice;
+                    }
+                    // 如果是评论补全评论信息
+                    if (Objects.equals(socialNotice.getTargetType(), SysConstant.TARGET_TYPE_COMMENT)) {
+                        SocialNoticeDo noticeDo = commentDoMap.get(socialNotice.getTargetId());
+                        if (noticeDo == null) {
+                            return null;
+                        }
+                        likeNotice.setCommentId(noticeDo.getCommentId())
+                                .setCommentContent(noticeDo.getCommentContent())
+                                .setReplyId(noticeDo.getReplyId())
+                                .setReplyContent(noticeDo.getReplyContent());
+                        // 补全评论的target信息
+                        if (Objects.equals(noticeDo.getNoticeType(), SysConstant.TARGET_TYPE_ARTICLE)) {
+                            likeNotice.setArticleInfo(articleVoMap.get(noticeDo.getTargetId()));
+                        }
+                        if (Objects.equals(noticeDo.getNoticeType(), SysConstant.TARGET_TYPE_ESSAY)) {
+                            likeNotice.setRamblyJot(ramblyJotVoMap.get(noticeDo.getTargetId()));
+                        }
+                    }
+                    return likeNotice;
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());

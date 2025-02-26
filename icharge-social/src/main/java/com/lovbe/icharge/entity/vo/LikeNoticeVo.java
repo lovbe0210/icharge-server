@@ -11,11 +11,11 @@ import java.util.Date;
 /**
  * @Author: lovbe0210
  * @Date: 2025/2/24 13:13
- * @Description: 评论回复通知
+ * @Description: 点赞消息通知
  */
 @Data
 @Accessors(chain = true)
-public class CommentNoticeVo {
+public class LikeNoticeVo {
     private Long uid;
     /**
      * 通知类型 1评论 2回复 3点赞 4新增关注 0系统消息
@@ -30,7 +30,7 @@ public class CommentNoticeVo {
      */
     private Integer readStatus;
     /**
-     * 评论回复对象类型 1文章 2专栏 3随笔
+     * 点赞对象类型 1文章 2专栏 3随笔 4评论/回复
      */
     private Integer targetType;
     /**

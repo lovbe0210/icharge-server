@@ -2,15 +2,14 @@ package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
-import com.lovbe.icharge.entity.dto.EnableSocialDTO;
-import com.lovbe.icharge.entity.dto.ReplyCommentDTO;
-import com.lovbe.icharge.entity.dto.ReplyCommentDo;
-import com.lovbe.icharge.entity.dto.TargetCommentDTO;
+import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.vo.LikeNoticeVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @Author: lovbe0210
@@ -81,4 +80,13 @@ public interface ReplyCommentDao extends BaseMapper<ReplyCommentDo> {
      * @date: 2025/2/11 23:08
      */
     EnableSocialDTO selectEnableComment(@Param("replyCommentDTO") ReplyCommentDTO replyCommentDTO);
+
+    /**
+     * @description: 通过id获取评论回复相关信息
+     * @param: idList
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.LikeNoticeVo>
+     * @author: lovbe0210
+     * @date: 2025/2/25 20:58
+     */
+    List<SocialNoticeDo> selectCommentReplyListByIds(@Param("idList") Set<Long> idList);
 }

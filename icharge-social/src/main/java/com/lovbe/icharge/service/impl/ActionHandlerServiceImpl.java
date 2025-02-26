@@ -80,7 +80,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         if (likeActionUpdateList.size() > 0) {
             socialLikeDao.insertOrUpdate(likeActionUpdateList);
             List<SocialNoticeDo> noticeList = likeActionUpdateList.stream()
-                    .filter(action -> action.getTargetUserId() != null && !Objects.equals(action.getTargetUserId(), action.getUserId()))
+                    .filter(action -> action.getTargetUserId() != null)
                     .map(action -> {
                         SocialNoticeDo noticeDo = new SocialNoticeDo()
                                 .setUserId(action.getTargetUserId())

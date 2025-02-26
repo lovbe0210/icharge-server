@@ -9,6 +9,7 @@ import com.lovbe.icharge.entity.dto.NoticeConfigDTO;
 import com.lovbe.icharge.entity.dto.NoticeConfigDo;
 import com.lovbe.icharge.entity.dto.SocialNoticeReqDTO;
 import com.lovbe.icharge.entity.vo.CommentNoticeVo;
+import com.lovbe.icharge.entity.vo.LikeNoticeVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
 import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.MessageNoticeService;
@@ -80,5 +81,19 @@ public class SocialNoticeController {
                                          @RequestHeader(SysConstant.USERID) Long userId) {
         PageBean<CommentNoticeVo> commentNotices = messageNoticeService.getCommentNotice(baseRequest.getData(), userId);
         return ResponseBean.ok(commentNotices);
+    }
+
+    /**
+     * @description: 获取点赞消息通知
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/2/23 15:36
+     */
+    @PostMapping("/notice/likes")
+    public ResponseBean getLikesNotice(@RequestBody @Valid BaseRequest<SocialNoticeReqDTO> baseRequest,
+                                       @RequestHeader(SysConstant.USERID) Long userId) {
+        PageBean<LikeNoticeVo> likeNotices = messageNoticeService.getLikesNotice(baseRequest.getData(), userId);
+        return ResponseBean.ok(likeNotices);
     }
 }
