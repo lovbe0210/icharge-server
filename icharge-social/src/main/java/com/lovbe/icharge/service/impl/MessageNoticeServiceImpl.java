@@ -3,6 +3,8 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
@@ -17,6 +19,7 @@ import com.lovbe.icharge.dao.SocialNoticeDao;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.CommentNoticeVo;
 import com.lovbe.icharge.entity.vo.LikeNoticeVo;
+import com.lovbe.icharge.entity.vo.SocialNoticeVo;
 import com.lovbe.icharge.service.MessageNoticeService;
 import com.lovbe.icharge.service.feign.ContentPickService;
 import jakarta.annotation.Resource;
@@ -94,8 +97,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
         Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
                 .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_COMMENT, SysConstant.NOTICE_REPLY)
                 .eq(SocialNoticeDo::getUserId, userId)
-                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
-                .orderByDesc(SocialNoticeDo::getCreateTime));
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus()));
         if (count == null || count == 0) {
             return new PageBean<>(0, List.of());
         }
@@ -160,8 +162,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
         Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
                 .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_LIKE)
                 .eq(SocialNoticeDo::getUserId, userId)
-                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
-                .orderByDesc(SocialNoticeDo::getCreateTime));
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus()));
         if (count == null || count == 0) {
             return new PageBean<>(0, List.of());
         }
@@ -194,7 +195,10 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
             }
         }
         // 文章类型
-        articleIds.addAll(collectMap.get(SysConstant.TARGET_TYPE_ARTICLE));
+        Set<Long> aIds = collectMap.get(SysConstant.TARGET_TYPE_ARTICLE);
+        if (!CollectionUtils.isEmpty(aIds)) {
+            articleIds.addAll(aIds);
+        }
         if (!CollectionUtils.isEmpty(articleIds)) {
             ResponseBean<List<PublicArticleVo>> articleList = cpsService.getArticleListByIds(new BaseRequest<>(articleIds), userId);
             if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
@@ -203,7 +207,10 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
             }
         }
         // 随笔类型
-        ramblyJotIds.addAll(collectMap.get(SysConstant.TARGET_TYPE_ESSAY));
+        Set<Long> eIds = collectMap.get(SysConstant.TARGET_TYPE_ESSAY);
+        if (CollectionUtils.isEmpty(eIds)) {
+            ramblyJotIds.addAll(eIds);
+        }
         ResponseBean<List<RamblyJotVo>> listByIds = cpsService.getRamblyjotListByIds(new BaseRequest<>(ramblyJotIds), userId);
         if (listByIds.isResult() && !CollectionUtils.isEmpty(listByIds.getData())) {
             ramblyJotVoMap.putAll(listByIds.getData().stream()
@@ -245,6 +252,27 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                     return likeNotice;
                 })
                 .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return new PageBean<>(Math.toIntExact(count), collect);
+    }
+
+    @Override
+    public PageBean<SocialNoticeVo> getFollowsNotice(SocialNoticeReqDTO data, Long userId) {
+        Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
+                .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_FOLLOW)
+                .eq(SocialNoticeDo::getUserId, userId)
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus()));
+        if (count == null || count == 0) {
+            return new PageBean<>(0, List.of());
+        }
+        List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(data, userId, SysConstant.NOTICE_FOLLOW);
+        List<SocialNoticeVo> collect = noticeDoList.stream()
+                .map(record -> {
+                    SocialNoticeVo noticeVo = new SocialNoticeVo();
+                    BeanUtil.copyProperties(record, noticeVo);
+                    noticeVo.setActionUserInfo(commonService.getCacheUser(record.getActionUserId()));
+                    return noticeVo;
+                })
                 .collect(Collectors.toList());
         return new PageBean<>(Math.toIntExact(count), collect);
     }
