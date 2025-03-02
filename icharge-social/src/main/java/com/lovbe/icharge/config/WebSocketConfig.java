@@ -2,9 +2,11 @@ package com.lovbe.icharge.config;
 
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.util.JsonUtils;
+import com.lovbe.icharge.common.util.SpringContextUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.entity.dto.WsMessageDTO;
+import com.lovbe.icharge.service.ChatMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -105,13 +107,31 @@ public class WebSocketConfig implements WebSocketConfigurer {
             protected void handleTextMessage(WebSocketSession session, TextMessage message) {
                 String payload = message.getPayload();
                 try {
+                    if (log.isDebugEnabled()) {
+                        log.debug("[ws消息处理] --- 接收到消息：{}", payload);
+                    }
                     WsMessageDTO wsMessageDTO = JsonUtils.parseObject(payload, WsMessageDTO.class);
                     if (wsMessageDTO == null) {
                         return;
                     }
                     switch (wsMessageDTO.getType()) {
-                        case 0 -> {
-                            WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(0, "pong");
+                        case SysConstant.MSG_TYPE_HEATER_BEAR -> {
+                            // 心跳消息
+                            wsMessageDTO.setData("pong");
+                            String string = JsonUtils.toJsonString(wsMessageDTO);
+                            session.sendMessage(new TextMessage(string));
+                        }
+                        default -> {
+                            // 单连接消息,直接返回callback内容
+                            HttpHeaders headers = session.getHandshakeHeaders();
+                            String first = headers.getFirst(SysConstant.USERID);
+                            Long userId = Long.valueOf(first);
+                            wsMessageDTO.setUserId(userId);
+                            ChatMessageService messageService = SpringContextUtils.getBean(ChatMessageService.class);
+                            WsMessageDTO<Object> messageDTO = messageService.scheduleCallback(wsMessageDTO);
+                            if (messageDTO == null) {
+                                return;
+                            }
                             String string = JsonUtils.toJsonString(messageDTO);
                             session.sendMessage(new TextMessage(string));
                         }

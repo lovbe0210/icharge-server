@@ -21,10 +21,19 @@ public class WsMessageDTO<T> {
      */
     private int type;
     /**
+     * 前端回调方法
+     */
+    private String callback;
+    /**
      * 查询参数
      */
     @JsonIgnore
     private Map<String, Object> param;
+    /**
+     * 当前用户id
+     */
+    @JsonIgnore
+    private Long userId;
     /**
      * 数据结果
      */
@@ -33,5 +42,11 @@ public class WsMessageDTO<T> {
     public WsMessageDTO(int type, T t) {
         this.type = type;
         this.data = t;
+    }
+
+    public WsMessageDTO(Long userId, int type, String callback) {
+        this.userId = userId;
+        this.type = type;
+        this.callback = callback;
     }
 }

@@ -63,10 +63,9 @@ public interface ServiceErrorCodes {
     ErrorCode REPLY_PARENT_ID_NOT_NULL = new ErrorCode(400, "回复评论id不得为空");
     ErrorCode COMMENT_IMAGE_UPLOAD_FAILED = new ErrorCode(400, "评论图片上传失败，请稍后再试");
     ErrorCode COMMENT_NOT_ENABLE_FAILED = new ErrorCode(400, "评论失败，已关闭评论功能");
-    ErrorCode SIGN_IN_CONFIG_EXISTS = new ErrorCode(1_004_009_001, "签到天数规则已存在");
 
-    //========== 签到配置 1-004-010-000 ==========
-    ErrorCode SIGN_IN_RECORD_TODAY_EXISTS = new ErrorCode(1_004_010_000, "今日已签到，请勿重复签到");
+    //========== 聊天消息 ==========
+    ErrorCode CHAT_MESSAGE_BAD_REQUEST = new ErrorCode(400, "消息服务请求异常，非法参数");
 
     //========== 用户等级 1-004-011-000 ==========
     ErrorCode LEVEL_NOT_EXISTS = new ErrorCode(1_004_011_000, "用户等级不存在");

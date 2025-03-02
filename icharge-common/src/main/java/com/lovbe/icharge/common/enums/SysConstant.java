@@ -171,4 +171,17 @@ public class SysConstant {
      * 标签json字段-内容
      */
     public static final String TAG_FIELD_CONTENT = "content";
+
+    /**
+     * ws消息中前端回调方法
+     */
+    public static final String GET_SESSION_LIST = "getSessionList";
+    /**
+     * 消息类型 0心跳 1会话相关 2消息相关
+     */
+    public static final int MSG_TYPE_HEATER_BEAR = 0;
+    public static final int MSG_TYPE_SESSION = 1;
+    public static final int MSG_TYPE_MESSAGE = 2;
+
+
 }

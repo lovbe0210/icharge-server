@@ -1,9 +1,17 @@
 package com.lovbe.icharge.config;
 
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.util.JsonUtils;
+import com.lovbe.icharge.common.util.SpringContextUtils;
+import com.lovbe.icharge.entity.dto.WsMessageDTO;
+import com.lovbe.icharge.service.ChatMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
@@ -46,7 +54,7 @@ public class SessionManager {
     }
 
     /**
-     * @description: 指定用户会话关闭
+     * @description: 关闭用户的所有会话
      * @param: userId
      * @param: closeStatus
      * @author: lovbe0210
@@ -71,6 +79,14 @@ public class SessionManager {
     }
 
 
+    /**
+     * @description: 关闭单个用户的单个连接
+     * @param: userId
+     * @param: sessionId
+     * @param: closeStatus
+     * @author: lovbe0210
+     * @date: 2025/3/2 18:47
+     */
     public static void closeExpiredSession(String userId, String sessionId, CloseStatus closeStatus) {
         List<WebSocketSession> sessionList = sessions.get(userId);
         if (CollectionUtils.isEmpty(sessionList)) {
@@ -116,5 +132,30 @@ public class SessionManager {
      */
     public static List<WebSocketSession> getSessionList(String userId) {
         return sessions.get(userId);
+    }
+
+    /**
+     * @description: 发送消息
+     * @param: wsMessageDTO
+     * @author: lovbe0210
+     * @date: 2025/3/2 18:57
+     */
+    public static void sendMessage(WsMessageDTO wsMessageDTO) {
+        if (wsMessageDTO == null || wsMessageDTO.getUserId() == null) {
+            log.error("[发送ws消息] --- 消息发送失败，消息体为null|userId为null");
+            return;
+        }
+        List<WebSocketSession> sessionList = sessions.get(String.valueOf(wsMessageDTO.getUserId()));
+        if (CollectionUtils.isEmpty(sessionList)) {
+            return;
+        }
+        sessionList.forEach(session -> {
+            try {
+                String string = JsonUtils.toJsonString(wsMessageDTO);
+                session.sendMessage(new TextMessage(string));
+            } catch (IOException e) {
+                log.error("[发送ws消息] --- 消息发送失败，errorInfo: {}", e.toString());
+            }
+        });
     }
 }

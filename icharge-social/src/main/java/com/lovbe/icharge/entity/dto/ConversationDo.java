@@ -2,9 +2,11 @@ package com.lovbe.icharge.entity.dto;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 
@@ -15,6 +17,7 @@ import java.util.Date;
  */
 @Data
 @TableName("s_conversation")
+@Accessors(chain = true)
 public class ConversationDo extends BaseEntity {
     /**
      * 所属用户id
@@ -44,6 +47,10 @@ public class ConversationDo extends BaseEntity {
      * 未读数
      */
     private int unreadCount;
+    /**
+     * 最后一条消息id
+     */
+    private Long lastMsgId;
     /**
      * 未读统计时间
      */
