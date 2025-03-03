@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @Author: lovbe0210
@@ -17,7 +18,7 @@ public class ChatMessageLogDo extends BaseEntity {
     /**
      * 客户端Id
      */
-    private Long clientMsgId;
+    private String clientMsgId;
     /**
      * 发送者id 如果是系统提醒则为0
      */
@@ -41,7 +42,7 @@ public class ChatMessageLogDo extends BaseEntity {
     /**
      * 消息体，有前端定义前端解析
      */
-    private String content;
+    private Object content;
     /**
      * 发送时间
      */

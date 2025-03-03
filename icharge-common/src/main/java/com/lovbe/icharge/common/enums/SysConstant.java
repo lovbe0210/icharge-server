@@ -176,6 +176,7 @@ public class SysConstant {
      * ws消息中前端回调方法
      */
     public static final String GET_SESSION_LIST = "getSessionList";
+    public static final String SEND_MESSAGE = "sendMessage";
     /**
      * 消息类型 0心跳 1会话相关 2消息相关
      */

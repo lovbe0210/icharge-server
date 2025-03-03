@@ -1,8 +1,10 @@
 package com.lovbe.icharge.config;
 
+import cn.hutool.core.codec.Base64;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.SpringContextUtils;
 import com.lovbe.icharge.entity.dto.WsMessageDTO;
@@ -152,7 +154,8 @@ public class SessionManager {
         sessionList.forEach(session -> {
             try {
                 String string = JsonUtils.toJsonString(wsMessageDTO);
-                session.sendMessage(new TextMessage(string));
+                String msgBody = CommonUtils.bitwiseInvert(Base64.encode(string));
+                session.sendMessage(new TextMessage(msgBody));
             } catch (IOException e) {
                 log.error("[发送ws消息] --- 消息发送失败，errorInfo: {}", e.toString());
             }

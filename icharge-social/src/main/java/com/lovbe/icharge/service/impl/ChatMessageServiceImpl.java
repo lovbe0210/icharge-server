@@ -1,12 +1,15 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.codec.Base64;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.config.SessionManager;
 import com.lovbe.icharge.dao.ChatMessageLogDao;
 import com.lovbe.icharge.dao.ConversationDao;
@@ -137,12 +140,25 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         if (!StringUtils.hasText(callback)) {
             return null;
         }
-        switch (callback) {
-            case SysConstant.GET_SESSION_LIST -> {
-                List<MessageSessionVo> sessionList = this.getSessionList(wsMessageDTO.getUserId());
-                wsMessageDTO.setData(sessionList);
-                return wsMessageDTO;
+        try {
+            switch (callback) {
+                case SysConstant.GET_SESSION_LIST -> {
+                    List<MessageSessionVo> sessionList = this.getSessionList(wsMessageDTO.getUserId());
+                    String jsonString = JsonUtils.toJsonString(sessionList);
+                    String msgBody = CommonUtils.bitwiseInvert(Base64.encode(jsonString));
+                    wsMessageDTO.setData(msgBody);
+                    return wsMessageDTO;
+                }
+                case SysConstant.SEND_MESSAGE -> {
+                    Object data = wsMessageDTO.getData();
+                    String decoded = Base64.decodeStr(CommonUtils.bitwiseInvert((String) data));
+                    ChatMessageLogDo chatMessageLogDo = JsonUtils.parseObject(decoded, ChatMessageLogDo.class);
+
+                    log.error(chatMessageLogDo.toString());
+                }
             }
+        } catch (Exception e) {
+            log.error("[[ws消息回执] --- 消息解析/组装失败，errorInfo: {}", e.toString());
         }
         return null;
     }
