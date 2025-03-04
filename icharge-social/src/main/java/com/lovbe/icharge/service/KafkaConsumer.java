@@ -3,6 +3,7 @@ package com.lovbe.icharge.service;
 import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.util.JsonUtils;
+import com.lovbe.icharge.entity.dto.ChatMessageLogDo;
 import com.lovbe.icharge.entity.dto.LikeActionDo;
 import com.lovbe.icharge.entity.dto.ReplyCommentDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@RefreshScope
 public class KafkaConsumer {
     @Resource
     private ActionHandlerService actionHandler;
@@ -182,6 +182,59 @@ public class KafkaConsumer {
             actionHandler.handlerFollowAction(collect);
         } catch (Exception e) {
             log.error("[关注消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+        } finally {
+            ack.acknowledge();
+        }
+    }
+
+    /**
+     * 关注/取消关注消息消费
+     *
+     * @param consumerRecords
+     * @param ack
+     */
+    @KafkaListener(topics = "${spring.kafka.topics.chat-send-message}",
+            containerFactory = "kafkaListenerContainerFactory", groupId = "action-chat")
+    public void listenActionChat(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
+        if (consumerRecords.isEmpty()) {
+            return;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("received msgSize: " + consumerRecords.size());
+        }
+        try {
+            List<ChatMessageLogDo> collect = consumerRecords.parallelStream()
+                    .map(consumerRecord -> {
+                        String data = String.valueOf(consumerRecord.value());
+                        KafkaMessage kafkaMsg = JsonUtils.parseObject(data, KafkaMessage.class);
+                        if (log.isDebugEnabled()) {
+                            log.debug("received msg: " + data);
+                        }
+                        Object msgData = kafkaMsg.getData();
+                        if (msgData == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体内容为空", data);
+                            return null;
+                        }
+                        ChatMessageLogDo chatLogDo = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), ChatMessageLogDo.class);
+                        // 参数校验
+                        if (chatLogDo.getClientMsgId() == null ||
+                                chatLogDo.getSendId() == null ||
+                                chatLogDo.getRecvId() == null ||
+                                chatLogDo.getContentType() == null ||
+                                chatLogDo.getContent() == null) {
+                            log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);
+                            return null;
+                        }
+                        return chatLogDo;
+                    })
+                    .filter(actionDo -> actionDo != null)
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(collect)) {
+                return;
+            }
+            actionHandler.handlerChatLog(collect);
+        } catch (Exception e) {
+            log.error("[聊天消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

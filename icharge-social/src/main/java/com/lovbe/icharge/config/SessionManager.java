@@ -147,15 +147,24 @@ public class SessionManager {
             log.error("[发送ws消息] --- 消息发送失败，消息体为null|userId为null");
             return;
         }
+        if (wsMessageDTO.getCallback() == null) {
+            log.error("[发送ws消息] --- 消息发送失败，callback为null");
+            return;
+        }
         List<WebSocketSession> sessionList = sessions.get(String.valueOf(wsMessageDTO.getUserId()));
         if (CollectionUtils.isEmpty(sessionList)) {
             return;
         }
         sessionList.forEach(session -> {
             try {
-                String string = JsonUtils.toJsonString(wsMessageDTO);
+                // 加密data部位
+                String string = JsonUtils.toJsonString(wsMessageDTO.getData());
                 String msgBody = CommonUtils.bitwiseInvert(Base64.encode(string));
-                session.sendMessage(new TextMessage(msgBody));
+                wsMessageDTO.setData(msgBody);
+                session.sendMessage(new TextMessage(JsonUtils.toJsonString(wsMessageDTO)));
+                if (log.isDebugEnabled()) {
+                    log.debug("[发送ws消息] --- message: {}", string);
+                }
             } catch (IOException e) {
                 log.error("[发送ws消息] --- 消息发送失败，errorInfo: {}", e.toString());
             }

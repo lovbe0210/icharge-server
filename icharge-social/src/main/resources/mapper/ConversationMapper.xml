@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lovbe.icharge.dao.ConversationDao">
+    <!-- 批量获取会话列表 -->
+    <select id="selectListByChatMsg" resultType="com.lovbe.icharge.entity.dto.ConversationDo">
+        SELECT *
+        FROM s_conversation
+        WHERE
+        <foreach collection="chatMessageLogs" item="cvsUser" separator="OR">
+            (owner_user_id = #{cvsUser.sendId} AND target_user_id = #{cvsUser.recvId})
+        OR  (owner_user_id = #{cvsUser.recvId} AND target_user_id = #{cvsUser.sendId})
+        </foreach>
+    </select>
+</mapper>

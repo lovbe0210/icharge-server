@@ -134,8 +134,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
                             if (messageDTO == null) {
                                 return;
                             }
-                            String string = JsonUtils.toJsonString(messageDTO);
-                            session.sendMessage(new TextMessage(string));
+                            // 加密data部位
+                            String string = JsonUtils.toJsonString(messageDTO.getData());
+                            String msgBody = CommonUtils.bitwiseInvert(Base64.encode(string));
+                            messageDTO.setData(msgBody);
+                            session.sendMessage(new TextMessage(JsonUtils.toJsonString(messageDTO)));
                         }
                     }
                 } catch (Exception e) {

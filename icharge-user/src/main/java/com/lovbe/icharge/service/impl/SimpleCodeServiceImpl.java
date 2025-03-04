@@ -118,7 +118,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         if (!StringUtils.hasLength(codeExpire)) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
         }
-        String[] split = codeExpire.split("_");
+        String[] split = codeExpire.split(SysConstant.SEPARATOR);
         Long expire = Long.valueOf(split[1]);
         if (System.currentTimeMillis() > expire) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);
@@ -131,7 +131,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
 
         // 更新验证码使用状态
         split[0] = "1";
-        String newExpire = StringUtils.arrayToDelimitedString(split, "_");
+        String newExpire = StringUtils.arrayToDelimitedString(split, SysConstant.SEPARATOR);
         RedisUtil.hset(codeControlKey, reqDTO.getCode(), newExpire);
         // TODO 记录日志
     }
@@ -235,11 +235,11 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
 
                 // 三次之后的频率限制以30分钟为基数，然后取幂次结果
                 Object recentExpireValue = codeExpireMap.values().stream().sorted((ev1, ev2) -> {
-                    String et1 = ((String) ev1).split("_")[1];
-                    String et2 = ((String) ev2).split("_")[1];
+                    String et1 = ((String) ev1).split(SysConstant.SEPARATOR)[1];
+                    String et2 = ((String) ev2).split(SysConstant.SEPARATOR)[1];
                     return Math.toIntExact(Long.valueOf(et2) - Long.valueOf(et1));
                 }).collect(Collectors.toList()).get(0);
-                String[] split = ((String) recentExpireValue).split("_");
+                String[] split = ((String) recentExpireValue).split(SysConstant.SEPARATOR);
                 int multiple = Integer.valueOf(split[2]);
                 // 这里需要减去之前加的过期时间10分钟
                 long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000 - RedisKeyConstant.EXPIRE_10_MIN * 1000;
@@ -247,7 +247,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                     recordVerifyCodeLog(codeReqDTO.getUserId(), payload, GlobalErrorCodes.TOO_MANY_REQUESTS.getMsg());
                     throw new ServiceException(GlobalErrorCodes.TOO_MANY_REQUESTS);
                 }
-                String expireValue = "0_" + (System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000) + "_" + (1 << multiple++);
+                String expireValue = "0_" + (System.currentTimeMillis() + RedisKeyConstant.EXPIRE_10_MIN * 1000) + SysConstant.SEPARATOR + (1 << multiple++);
                 RedisUtil.hset(codeControlKey, code, expireValue, RedisKeyConstant.EXPIRE_1_HOUR * (multiple));
                 recordVerifyCodeLog(codeReqDTO.getUserId(), payload, "success");
                 return code;

@@ -1,22 +1,21 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
-import com.lovbe.icharge.dao.ReplyCommentDao;
-import com.lovbe.icharge.dao.SocialFollowDao;
-import com.lovbe.icharge.dao.SocialLikeDao;
-import com.lovbe.icharge.dao.SocialNoticeDao;
-import com.lovbe.icharge.entity.dto.LikeActionDo;
-import com.lovbe.icharge.entity.dto.ReplyCommentDo;
-import com.lovbe.icharge.entity.dto.SocialNoticeDo;
-import com.lovbe.icharge.entity.dto.TargetFollowDTO;
+import com.lovbe.icharge.config.SessionManager;
+import com.lovbe.icharge.dao.*;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.service.ActionHandlerService;
+import com.lovbe.icharge.service.ChatMessageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -41,6 +40,14 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private SocialFollowDao socialFollowDao;
     @Resource
     private SocialNoticeDao socialNoticeDao;
+    @Resource
+    private ChatMessageLogDao messageLogDao;
+    @Resource
+    private ConversationDao conversationDao;
+    @Resource
+    private NoticeConfigDao noticeConfigDao;
+    @Resource
+    private ChatMessageService messageService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -208,6 +215,172 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 });
         // 更新统计表
         socialFollowDao.updateFollowCount(statisticMap.values());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handlerChatLog(List<ChatMessageLogDo> collect) {
+        HashSet<Long> recvIds = new HashSet<>();
+        // 获取sendId和recvId对应的会话
+        Map<String, List<ChatMessageLogDo>> chatMessageMap = collect.stream()
+                .peek(chatLog -> recvIds.add(chatLog.getRecvId()))
+                .collect(Collectors.groupingBy(chatLog ->
+                        Math.max(chatLog.getSendId(), chatLog.getRecvId()) +
+                                SysConstant.SEPARATOR + Math.min(chatLog.getSendId(), chatLog.getRecvId())));
+        List<ChatMessageLogDo> conversationUsers = chatMessageMap.values().stream()
+                .map(list -> list.get(0))
+                .collect(Collectors.toList());
+        List<ConversationDo> conversationList = conversationDao.selectListByChatMsg(conversationUsers);
+        Map<String, ConversationDo> conversationMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(conversationList)) {
+            conversationList.forEach(cs -> conversationMap.put(cs.getOwnerUserId() + SysConstant.SEPARATOR + cs.getTargetUserId(), cs));
+        }
+
+        // 获取消息通知设置
+        List<NoticeConfigDo> configList = noticeConfigDao.selectBatchIds(recvIds);
+        Map<Long, NoticeConfigDo> configMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(configList)) {
+            configList.forEach(config -> configMap.put(config.getUid(), config));
+        }
+
+        // 遍历每个会话进行会话创建和消息推送
+        Iterator<ChatMessageLogDo> iterator = collect.iterator();
+        while (iterator.hasNext()) {
+            ChatMessageLogDo chatLog = iterator.next();
+            String sendCvsId = chatLog.getSendId() + SysConstant.SEPARATOR + chatLog.getRecvId();
+            String recCvsId = chatLog.getRecvId() + SysConstant.SEPARATOR + chatLog.getSendId();
+            ConversationDo sendConversation = conversationMap.get(sendCvsId);
+            ConversationDo recConversation = conversationMap.get(recCvsId);
+
+            // 发送人消息确认
+            if (sendConversation != null && CommonStatusEnum.isNormal(sendConversation.getStatus())) {
+                // 进行推送，首先判断自己能否发出消息
+                boolean success = sendUserMsgConfirm(sendConversation, recConversation, configMap, chatLog);
+                if (!success) {
+                    // 发送失败，直接不用再给对方发送通知了
+                    iterator.remove();
+                    continue;
+                }
+            }
+
+            // 接收人消息通知
+            if (configMap.get(chatLog.getRecvId()) != null && configMap.get(chatLog.getRecvId()).getEnableChatMessage() == 0) {
+                // 对方不接收私聊消息
+                continue;
+            }
+            if (recConversation != null && recConversation.getIsShield() == 1) {
+                // 该用户已被对方屏蔽
+                continue;
+            }
+            recvUserMsgNotice(recConversation, chatLog, conversationMap, recCvsId);
+        }
+
+        // 消息入库
+        if (collect.size() > 0) {
+            messageLogDao.insertOrUpdate(collect);
+        }
+
+        // 会话更新通知
+        Collection<ConversationDo> conversations = conversationMap.values().stream()
+                .filter(c -> CommonStatusEnum.isNormal(c.getStatus()))
+                .peek(c -> {
+                    WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(c.getOwnerUserId(),
+                            SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST);
+                    SessionManager.sendMessage(messageService.scheduleCallback(messageDTO));
+                })
+                .collect(Collectors.toList());
+        // 会话入库
+        conversationDao.insertOrUpdate(conversations);
+    }
+
+    /**
+     * @description: 接收人消息通知
+     * @param: recConversation
+     * @param: chatLog
+     * @param: conversationMap
+     * @param: recCvsId
+     * @author: lovbe0210
+     * @date: 2025/3/5 0:37
+     */
+    private static void recvUserMsgNotice(ConversationDo recConversation, ChatMessageLogDo chatLog, Map<String, ConversationDo> conversationMap, String recCvsId) {
+        if (recConversation == null) {
+            recConversation = new ConversationDo()
+                    .setOwnerUserId(chatLog.getRecvId())
+                    .setTargetUserId(chatLog.getSendId());
+            recConversation.setUid(YitIdHelper.nextId())
+                    .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                    .setCreateTime(new Date())
+                    .setUpdateTime(recConversation.getCreateTime());
+            conversationMap.put(recCvsId, recConversation);
+        } else if (!CommonStatusEnum.isNormal(recConversation.getStatus())) {
+            // 已删除会话，需要指定最小记录id
+            recConversation.setMinChatLogSeq(chatLog.getUid())
+                    .setUnreadCount(0)
+                    .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                    .setCreateTime(new Date())
+                    .setUpdateTime(recConversation.getCreateTime());
+        }
+        // 设置最后一条消息
+        recConversation.setLastMsgId(chatLog.getUid());
+        // 判断是否会话免打扰
+        if (recConversation.getIsNotDisturb() == 1) {
+            return;
+        }
+        // 设置未读数和最后一条消息
+        recConversation.setUnreadCount(recConversation.getUnreadCount() + 1);
+        // 发送消息通知
+        MessageConfirmDTO confirmDTO = new MessageConfirmDTO()
+                .setConversationId(recConversation.getUid())
+                .setSendSuccess(1);
+        WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
+                SysConstant.MSG_TYPE_MESSAGE, SysConstant.RECV_MESSAGE, chatLog.getRecvId(), confirmDTO);
+        SessionManager.sendMessage(wsMessageDTO);
+    }
+
+    /**
+     * @description: 发送人消息确认
+     * @param: sendConversation
+     * @param: recConversation
+     * @param: iterator
+     * @param: configMap
+     * @param: chatLog
+     * @author: lovbe0210
+     * @date: 2025/3/4 23:47
+     */
+    private static boolean sendUserMsgConfirm(ConversationDo sendConversation, ConversationDo recConversation, Map<Long, NoticeConfigDo> configMap, ChatMessageLogDo chatLog) {
+        boolean success = false;
+        MessageConfirmDTO confirmDTO = null;
+        if (sendConversation.getIsShield() == 1) {
+            // 消息发送失败，需要先解除屏蔽
+            confirmDTO = new MessageConfirmDTO()
+                    .setConversationId(sendConversation.getUid())
+                    .setSendSuccess(0)
+                    .setErrorReason("(>﹏<>)对方已经被你屏蔽啦");
+        } else if (recConversation != null && recConversation.getIsShield() == 1) {
+            // 消息发送失败，已被对方屏蔽，但是这里不加提示语
+            confirmDTO = new MessageConfirmDTO()
+                    .setConversationId(sendConversation.getUid())
+                    .setSendSuccess(0);
+        } else if (configMap.get(chatLog.getRecvId()) != null && configMap.get(chatLog.getRecvId()).getEnableChatMessage() == 0) {
+            // 消息发送失败，对方已设置不允许别人发起私信消息
+            confirmDTO = new MessageConfirmDTO()
+                    .setConversationId(sendConversation.getUid())
+                    .setSendSuccess(0)
+                    .setErrorReason("对方已设置不允许发起私信消息");
+        } else {
+            // 消息发送成功
+            confirmDTO = new MessageConfirmDTO()
+                    .setConversationId(sendConversation.getUid())
+                    .setSendSuccess(1);
+            sendConversation.setLastMsgId(chatLog.getUid());
+            success = true;
+        }
+        BeanUtil.copyProperties(chatLog, confirmDTO);
+        WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
+                SysConstant.MSG_TYPE_MESSAGE, SysConstant.MESSAGE_CONFIRM, chatLog.getSendId(), confirmDTO);
+        SessionManager.sendMessage(wsMessageDTO);
+        return success;
+
     }
 
     /**

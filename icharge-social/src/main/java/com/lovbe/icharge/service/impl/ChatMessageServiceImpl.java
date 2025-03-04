@@ -25,6 +25,7 @@ import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -52,6 +53,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private CommonService commonService;
     @Resource
     private UserSocialService socialService;
+
+    @Value("${spring.kafka.topics.chat-send-message}")
+    private String sendMessageTopic;
+    @Value("${spring.application.name}")
+    private String appName;
 
     @Override
     public UnreadMsgStatisticVo getUnreadStatistic(Long userId) {
@@ -144,17 +150,20 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             switch (callback) {
                 case SysConstant.GET_SESSION_LIST -> {
                     List<MessageSessionVo> sessionList = this.getSessionList(wsMessageDTO.getUserId());
-                    String jsonString = JsonUtils.toJsonString(sessionList);
-                    String msgBody = CommonUtils.bitwiseInvert(Base64.encode(jsonString));
-                    wsMessageDTO.setData(msgBody);
+                    wsMessageDTO.setData(sessionList);
                     return wsMessageDTO;
                 }
                 case SysConstant.SEND_MESSAGE -> {
                     Object data = wsMessageDTO.getData();
                     String decoded = Base64.decodeStr(CommonUtils.bitwiseInvert((String) data));
                     ChatMessageLogDo chatMessageLogDo = JsonUtils.parseObject(decoded, ChatMessageLogDo.class);
-
-                    log.error(chatMessageLogDo.toString());
+                    chatMessageLogDo.setUid(YitIdHelper.nextId())
+                            .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                            .setCreateTime(new Date())
+                            .setUpdateTime(chatMessageLogDo.getCreateTime());
+                    chatMessageLogDo.setReadStatus(0)
+                            .setSendTime(chatMessageLogDo.getCreateTime());
+                    commonService.sendMessage(appName, sendMessageTopic, chatMessageLogDo);
                 }
             }
         } catch (Exception e) {

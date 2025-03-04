@@ -3,6 +3,7 @@ package com.lovbe.icharge.entity.dto;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import java.util.Objects;
  * @Description: 聊天会话
  */
 @Data
+@Accessors(chain = true)
 @TableName("s_chat_logs")
 public class ChatMessageLogDo extends BaseEntity {
     /**

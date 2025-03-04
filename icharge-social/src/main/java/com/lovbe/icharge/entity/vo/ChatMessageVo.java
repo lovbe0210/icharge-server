@@ -18,7 +18,7 @@ public class ChatMessageVo {
     /**
      * 客户端Id
      */
-    private Long clientMsgId;
+    private String clientMsgId;
     /**
      * 发送者id 如果是系统提醒则为0
      */

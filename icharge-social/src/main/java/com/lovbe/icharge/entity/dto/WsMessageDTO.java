@@ -49,4 +49,11 @@ public class WsMessageDTO<T> {
         this.type = type;
         this.callback = callback;
     }
+
+    public WsMessageDTO(int type, String callback, Long userId, T data) {
+        this.type = type;
+        this.callback = callback;
+        this.userId = userId;
+        this.data = data;
+    }
 }

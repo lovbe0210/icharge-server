@@ -322,7 +322,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             historyDo.setUserId(userId)
                     .setTargetId(targetId)
                     .setTargetType(SysConstant.TARGET_TYPE_ARTICLE)
-                    .setUid(targetId + "_" + userId);
+                    .setUid(targetId + SysConstant.SEPARATOR + userId);
             int update = browseHistoryDao.atomicInsertOrUpdate(historyDo);
             if (update == 1) {
                 // 新增时统计阅读量
@@ -552,7 +552,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             historyDo.setUserId(userId)
                     .setTargetId(ramblyJotId)
                     .setTargetType(SysConstant.TARGET_TYPE_ESSAY)
-                    .setUid(ramblyJotId + "_" + userId);
+                    .setUid(ramblyJotId + SysConstant.SEPARATOR + userId);
             browseHistoryDao.atomicInsertOrUpdate(historyDo);
         }
 
