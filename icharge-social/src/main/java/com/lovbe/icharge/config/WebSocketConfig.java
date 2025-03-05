@@ -110,7 +110,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 String payload = message.getPayload();
                 try {
                     if (log.isDebugEnabled()) {
-                        log.debug("[ws消息处理] --- 接收到消息：{}", payload);
+//                        log.debug("[ws消息处理] --- 接收到消息：{}", payload);
                     }
                     WsMessageDTO wsMessageDTO = JsonUtils.parseObject(payload, WsMessageDTO.class);
                     if (wsMessageDTO == null) {

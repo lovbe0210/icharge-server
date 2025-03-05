@@ -153,6 +153,12 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     wsMessageDTO.setData(sessionList);
                     return wsMessageDTO;
                 }
+
+                case SysConstant.GET_CHAT_LOGS -> {
+                    Map map = wsMessageDTO.getParam();
+
+                }
+
                 case SysConstant.SEND_MESSAGE -> {
                     Object data = wsMessageDTO.getData();
                     String decoded = Base64.decodeStr(CommonUtils.bitwiseInvert((String) data));
@@ -214,7 +220,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         conversationDao.insertOrUpdate(conversationDo);
         // 发送通知会话列表更新了
         WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(userId, SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST);
-        SessionManager.sendMessage(scheduleCallback(messageDTO));
+        WsMessageDTO<Object> wsMessageDTO = scheduleCallback(messageDTO);
+        SessionManager.sendMessage(wsMessageDTO);
         return conversationDo.getUid();
     }
 }

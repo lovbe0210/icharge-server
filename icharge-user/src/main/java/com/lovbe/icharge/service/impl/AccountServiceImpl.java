@@ -117,7 +117,7 @@ public class AccountServiceImpl implements AccountService {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_ERROR);
         }
         // 中间的为过期时间
-        String[] split = ((String) codeExpire).split(SysConstant.SEPATOR);
+        String[] split = ((String) codeExpire).split(SysConstant.SEPARATOR);
         Long expire = Long.valueOf(split[1]);
         if (System.currentTimeMillis() > expire) {
             throw new ServiceException(ServiceErrorCodes.AUTH_CODE_EXPIRED);

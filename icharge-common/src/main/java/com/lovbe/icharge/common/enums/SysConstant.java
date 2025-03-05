@@ -179,6 +179,7 @@ public class SysConstant {
     public static final String SEND_MESSAGE = "sendMessage";
     public static final String MESSAGE_CONFIRM = "messageConfirm";
     public static final String RECV_MESSAGE = "recvMessage";
+    public static final String GET_CHAT_LOGS = "getChatLogs";
     /**
      * 消息类型 0心跳 1会话相关 2消息相关
      */

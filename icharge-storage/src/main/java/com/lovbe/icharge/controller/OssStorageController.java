@@ -67,7 +67,7 @@ public class OssStorageController {
             }
             // 获取文件名
             String fileName = extractFileName(response);
-            String path = uploadDTO.getPathPrefix() + "/" + YitIdHelper.nextId() + SysConstant.SEPATOR + fileName;
+            String path = uploadDTO.getPathPrefix() + "/" + YitIdHelper.nextId() + SysConstant.SEPARATOR + fileName;
             String upload = storageService.upload(inputStream, path);
             return ResponseBean.ok(upload);
         } catch (Exception e) {

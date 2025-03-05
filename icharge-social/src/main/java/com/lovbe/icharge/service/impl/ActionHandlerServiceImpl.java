@@ -6,6 +6,7 @@ import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.config.SessionManager;
@@ -281,16 +282,21 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         }
 
         // 会话更新通知
+        List<WsMessageDTO> wsMessageDTOList = new ArrayList<>();
         Collection<ConversationDo> conversations = conversationMap.values().stream()
                 .filter(c -> CommonStatusEnum.isNormal(c.getStatus()))
                 .peek(c -> {
                     WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(c.getOwnerUserId(),
                             SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST);
-                    SessionManager.sendMessage(messageService.scheduleCallback(messageDTO));
+                    wsMessageDTOList.add(messageDTO);
                 })
                 .collect(Collectors.toList());
         // 会话入库
         conversationDao.insertOrUpdate(conversations);
+        if (CollectionUtils.isEmpty(wsMessageDTOList)) {
+            return;
+        }
+        wsMessageDTOList.forEach(wsMessage -> SessionManager.sendMessage(messageService.scheduleCallback(wsMessage)));
     }
 
     /**
@@ -332,6 +338,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         MessageConfirmDTO confirmDTO = new MessageConfirmDTO()
                 .setConversationId(recConversation.getUid())
                 .setSendSuccess(1);
+        BeanUtil.copyProperties(chatLog, confirmDTO);
         WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
                 SysConstant.MSG_TYPE_MESSAGE, SysConstant.RECV_MESSAGE, chatLog.getRecvId(), confirmDTO);
         SessionManager.sendMessage(wsMessageDTO);

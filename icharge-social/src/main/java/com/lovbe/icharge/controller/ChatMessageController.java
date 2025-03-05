@@ -1,8 +1,11 @@
 package com.lovbe.icharge.controller;
 
+import cn.hutool.core.codec.Base64;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.ConversationDTO;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.service.ChatMessageService;
@@ -31,7 +34,9 @@ public class ChatMessageController {
     @GetMapping("/chat/session/list")
     public ResponseBean<MessageSessionVo> getSessionList(@RequestHeader(SysConstant.USERID) Long userId) {
         List<MessageSessionVo> sessionList = chatMessageService.getSessionList(userId);
-        return ResponseBean.ok(sessionList);
+        String jsonString = JsonUtils.toJsonString(sessionList);
+        String encodeStr = CommonUtils.bitwiseInvert(Base64.encode(jsonString));
+        return ResponseBean.ok(encodeStr);
     }
 
     /**

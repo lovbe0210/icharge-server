@@ -155,16 +155,14 @@ public class SessionManager {
         if (CollectionUtils.isEmpty(sessionList)) {
             return;
         }
+        // 加密data部位
+        String string = JsonUtils.toJsonString(wsMessageDTO.getData());
+        String msgBody = CommonUtils.bitwiseInvert(Base64.encode(string));
+        wsMessageDTO.setData(msgBody);
+        TextMessage textMessage = new TextMessage(JsonUtils.toJsonString(wsMessageDTO));
         sessionList.forEach(session -> {
             try {
-                // 加密data部位
-                String string = JsonUtils.toJsonString(wsMessageDTO.getData());
-                String msgBody = CommonUtils.bitwiseInvert(Base64.encode(string));
-                wsMessageDTO.setData(msgBody);
-                session.sendMessage(new TextMessage(JsonUtils.toJsonString(wsMessageDTO)));
-                if (log.isDebugEnabled()) {
-                    log.debug("[发送ws消息] --- message: {}", string);
-                }
+                session.sendMessage(textMessage);
             } catch (IOException e) {
                 log.error("[发送ws消息] --- 消息发送失败，errorInfo: {}", e.toString());
             }
