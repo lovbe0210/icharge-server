@@ -10,11 +10,11 @@ import lombok.experimental.Accessors;
  */
 @Data
 @Accessors(chain = true)
-public class MessageConfirmDTO extends ChatMessageLogDo{
+public class MessageConfirmVo extends ChatMessageLogDo{
     /**
      * 会话id
      */
-    private Long conversationId;
+    private Long sessionId;
     /**
      * 发送状态是否成功 0否1是
      */

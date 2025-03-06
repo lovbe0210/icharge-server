@@ -126,6 +126,24 @@ public class SessionManager {
     }
 
     /**
+     * @description: 判断用户是否在线
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2025/2/20 0:06
+     */
+    public static boolean isOnline(WsMessageDTO wsMessage) {
+        if (wsMessage == null || wsMessage.getUserId() == null) {
+            return false;
+        }
+        List<WebSocketSession> sessionList = sessions.get(String.valueOf(wsMessage.getUserId()));
+        return !CollectionUtils.isEmpty(sessionList);
+    }
+    public static boolean isOnline(Long userId) {
+        List<WebSocketSession> sessionList = sessions.get(String.valueOf(userId));
+        return !CollectionUtils.isEmpty(sessionList);
+    }
+
+    /**
      * @return List<WebSocketSession>
      * @description: 获取当前登录用户的所有会话
      * @param: session

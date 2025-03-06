@@ -27,7 +27,7 @@ public class WsMessageDTO<T> {
     /**
      * 查询参数
      */
-    @JsonIgnore
+//    @JsonIgnore
     private Map<String, Object> param;
     /**
      * 当前用户id

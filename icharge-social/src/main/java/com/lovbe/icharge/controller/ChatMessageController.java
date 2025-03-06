@@ -52,4 +52,20 @@ public class ChatMessageController {
         Long sessionId = chatMessageService.startMessageSession(baseRequest.getData(), userId);
         return ResponseBean.ok(sessionId);
     }
+
+    /**
+     * @description: 发起消息会话
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.entity.vo.MessageSessionVo>
+     * @author: lovbe0210
+     * @date: 2025/2/28 15:42
+     */
+    @PostMapping("/chat/session/update")
+    public ResponseBean<Long> updateMessageSession(@RequestBody BaseRequest<ConversationDTO> baseRequest,
+                                                   @RequestHeader(SysConstant.USERID) Long userId) {
+        Long sessionId = chatMessageService.startMessageSession(baseRequest.getData(), userId);
+        return ResponseBean.ok(sessionId);
+    }
+
+
 }

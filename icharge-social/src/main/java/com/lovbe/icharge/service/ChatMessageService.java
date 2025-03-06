@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.entity.dto.ConversationDTO;
+import com.lovbe.icharge.entity.dto.MessageConfirmVo;
 import com.lovbe.icharge.entity.dto.WsMessageDTO;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
@@ -49,4 +50,14 @@ public interface ChatMessageService {
      * @date: 2025/3/1 23:26
      */
     Long startMessageSession(ConversationDTO data, Long userId);
+
+    /**
+     * @description: 获取聊天记录
+     * @param: userId
+     * @param: sessionId
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.ChatMessageVo>
+     * @author: lovbe0210
+     * @date: 2025/3/6 15:07
+     */
+    List<MessageConfirmVo> getChatLogList(Long userId, Long sessionId, int offset, int limit);
 }

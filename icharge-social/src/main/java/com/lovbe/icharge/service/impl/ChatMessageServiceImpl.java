@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
@@ -14,11 +15,7 @@ import com.lovbe.icharge.config.SessionManager;
 import com.lovbe.icharge.dao.ChatMessageLogDao;
 import com.lovbe.icharge.dao.ConversationDao;
 import com.lovbe.icharge.dao.SocialNoticeDao;
-import com.lovbe.icharge.entity.dto.ChatMessageLogDo;
-import com.lovbe.icharge.entity.dto.ConversationDTO;
-import com.lovbe.icharge.entity.dto.ConversationDo;
-import com.lovbe.icharge.entity.dto.WsMessageDTO;
-import com.lovbe.icharge.entity.vo.ChatMessageVo;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
 import com.lovbe.icharge.service.ChatMessageService;
@@ -108,7 +105,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                         MessageSessionVo sessionVo = new MessageSessionVo();
                         BeanUtil.copyProperties(conversation, sessionVo);
 
-                        sessionVo.setSessionId(conversation.getUid())
+                        sessionVo.setUid(conversation.getUid())
                                 .setOwnerUserId(conversation.getOwnerUserId())
                                 .setSessionUserInfo(commonService.getCacheUser(conversation.getTargetUserId()))
                                 .setSessionTime(conversation.getCreateTime());
@@ -116,9 +113,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                         if (messageLog == null) {
                             return sessionVo;
                         }
-                        ChatMessageVo messageVo = new ChatMessageVo();
+                        MessageConfirmVo messageVo = new MessageConfirmVo();
                         BeanUtil.copyProperties(messageLog, messageVo);
-                        messageVo.setServerMsgId(messageLog.getUid());
                         sessionVo.setLastMsg(messageVo)
                                 .setSessionTime(messageLog.getSendTime());
                         return sessionVo;
@@ -133,6 +129,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                         }
                     })
                     .collect(Collectors.toList());
+            for (MessageSessionVo sessionVo : sessionList) {
+                log.error(sessionVo.getUid() + sessionVo.getSessionUserInfo().getUsername());
+            }
             return sessionList;
         } catch (Exception e) {
             log.error("[消息会话] --- 获取消息会话列表，errorInfo: {}", e.toString());
@@ -155,8 +154,18 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 }
 
                 case SysConstant.GET_CHAT_LOGS -> {
-                    Map map = wsMessageDTO.getParam();
-
+                    Map param = wsMessageDTO.getParam();
+                    Long sessionId = MapUtil.getLong(param, SysConstant.SESSION_ID);
+                    if (sessionId == null) {
+                        log.error("[ws获取聊天记录] --- sessionId is null return null");
+                        return null;
+                    }
+                    int offset = MapUtil.getInt(param, SysConstant.OFFSET, 0);
+                    int limit = MapUtil.getInt(param, SysConstant.LIMIT, 20);
+                    List<MessageConfirmVo> chatLogList = this.getChatLogList(wsMessageDTO.getUserId(), sessionId, offset, limit);
+                    Map<String, Object> chatLogObject = Map.of(SysConstant.SESSION_ID, sessionId, SysConstant.LIST, chatLogList);
+                    wsMessageDTO.setData(chatLogObject);
+                    return wsMessageDTO;
                 }
 
                 case SysConstant.SEND_MESSAGE -> {
@@ -195,13 +204,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 conversationDo.setIsOneWay(1);
             } else if ((Objects.equals(relationship.getUserIdMaster(), data.getTargetUserId())
                     && Objects.equals(relationship.getMasterWatchSlave(), 0))
-            || (Objects.equals(relationship.getUserIdSlave(), data.getTargetUserId())
+                    || (Objects.equals(relationship.getUserIdSlave(), data.getTargetUserId())
                     && Objects.equals(relationship.getMasterWatchSlave(), 0))) {
                 conversationDo.setIsOneWay(1);
             }
             conversationDo.setUid(YitIdHelper.nextId())
                     .setStatus(CommonStatusEnum.NORMAL.getStatus());
-        } else if (CommonStatusEnum.isNormal(conversationDo.getStatus())) {
+        } else if (!CommonStatusEnum.isNormal(conversationDo.getStatus())) {
             // 判断会话状态，如果是已删除会话，则需要设置最小会话记录id
             ChatMessageLogDo messageLogDo = messageLogDao.selectOne(new LambdaQueryWrapper<ChatMessageLogDo>()
                     .eq(ChatMessageLogDo::getSendId, userId)
@@ -216,12 +225,44 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             }
         }
         // 更新创建时间，将会话排到前面
-        conversationDo.setCreateTime(new Date()).setUpdateTime(conversationDo.getCreateTime());;
+        conversationDo.setCreateTime(new Date()).setUpdateTime(conversationDo.getCreateTime());
         conversationDao.insertOrUpdate(conversationDo);
-        // 发送通知会话列表更新了
-        WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(userId, SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST);
-        WsMessageDTO<Object> wsMessageDTO = scheduleCallback(messageDTO);
-        SessionManager.sendMessage(wsMessageDTO);
         return conversationDo.getUid();
+    }
+
+    public List<MessageConfirmVo> getChatLogList(Long userId, Long sessionId, int offset, int limit) {
+        ConversationDo conversation = conversationDao.selectById(sessionId);
+        // 会话状态校验
+        if (conversation == null || !CommonStatusEnum.isNormal(conversation.getStatus())) {
+            log.error("[获取聊天记录] --- 会话已被删除或不存在，无法获取聊天记录");
+            return List.of();
+        }
+        // 会话权限校验
+        if (!Objects.equals(userId, conversation.getOwnerUserId())) {
+            log.error("[获取聊天记录] --- 当前用户和会话所属人不符，获取失败");
+            return List.of();
+        }
+        List<ChatMessageLogDo> chatLogList = messageLogDao.selectList(new LambdaQueryWrapper<ChatMessageLogDo>()
+                .eq(ChatMessageLogDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .ge(conversation.getMinChatLogSeq() != null, ChatMessageLogDo::getUid, conversation.getMinChatLogSeq())
+                .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId).eq(ChatMessageLogDo::getRecvId, conversation.getTargetUserId())
+                        .or(wp -> wp.eq(ChatMessageLogDo::getSendId, conversation.getTargetUserId()).eq(ChatMessageLogDo::getRecvId, userId))
+                )
+                .orderByDesc(ChatMessageLogDo::getSendTime)
+                .last(" limit " + offset + "," + limit)
+        );
+        if (CollectionUtils.isEmpty(chatLogList)) {
+            return List.of();
+        }
+        List<MessageConfirmVo> messageVoList = chatLogList.stream()
+                .map(chatLog -> {
+                    MessageConfirmVo messageVo = new MessageConfirmVo();
+                    BeanUtil.copyProperties(chatLog, messageVo);
+                    messageVo.setSessionId(sessionId);
+                    messageVo.setSendSuccess(1);
+                    return messageVo;
+                })
+                .collect(Collectors.toList());
+        return messageVoList;
     }
 }

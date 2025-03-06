@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
 import java.util.function.Function;
@@ -284,7 +285,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         // 会话更新通知
         List<WsMessageDTO> wsMessageDTOList = new ArrayList<>();
         Collection<ConversationDo> conversations = conversationMap.values().stream()
-                .filter(c -> CommonStatusEnum.isNormal(c.getStatus()))
+                .filter(c -> CommonStatusEnum.isNormal(c.getStatus()) && c.getIsNotDisturb() == 0)
                 .peek(c -> {
                     WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(c.getOwnerUserId(),
                             SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST);
@@ -296,7 +297,12 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         if (CollectionUtils.isEmpty(wsMessageDTOList)) {
             return;
         }
-        wsMessageDTOList.forEach(wsMessage -> SessionManager.sendMessage(messageService.scheduleCallback(wsMessage)));
+        wsMessageDTOList.forEach(wsMessage -> {
+            if (!SessionManager.isOnline(wsMessage)) {
+                return;
+            }
+            SessionManager.sendMessage(messageService.scheduleCallback(wsMessage));
+        });
     }
 
     /**
@@ -328,20 +334,23 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         }
         // 设置最后一条消息
         recConversation.setLastMsgId(chatLog.getUid());
+        // 发送消息通知
+        if (SessionManager.isOnline(chatLog.getRecvId())) {
+            MessageConfirmVo messageVo = new MessageConfirmVo()
+                    .setSessionId(recConversation.getUid())
+                    .setSendSuccess(1);
+            BeanUtil.copyProperties(chatLog, messageVo);
+            WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
+                    SysConstant.MSG_TYPE_MESSAGE, SysConstant.RECV_MESSAGE, chatLog.getRecvId(), messageVo);
+            SessionManager.sendMessage(wsMessageDTO);
+        }
         // 判断是否会话免打扰
         if (recConversation.getIsNotDisturb() == 1) {
             return;
         }
-        // 设置未读数和最后一条消息
+        // 设置未读数
         recConversation.setUnreadCount(recConversation.getUnreadCount() + 1);
-        // 发送消息通知
-        MessageConfirmDTO confirmDTO = new MessageConfirmDTO()
-                .setConversationId(recConversation.getUid())
-                .setSendSuccess(1);
-        BeanUtil.copyProperties(chatLog, confirmDTO);
-        WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
-                SysConstant.MSG_TYPE_MESSAGE, SysConstant.RECV_MESSAGE, chatLog.getRecvId(), confirmDTO);
-        SessionManager.sendMessage(wsMessageDTO);
+
     }
 
     /**
@@ -356,36 +365,39 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
      */
     private static boolean sendUserMsgConfirm(ConversationDo sendConversation, ConversationDo recConversation, Map<Long, NoticeConfigDo> configMap, ChatMessageLogDo chatLog) {
         boolean success = false;
-        MessageConfirmDTO confirmDTO = null;
+        MessageConfirmVo confirmVo = null;
         if (sendConversation.getIsShield() == 1) {
             // 消息发送失败，需要先解除屏蔽
-            confirmDTO = new MessageConfirmDTO()
-                    .setConversationId(sendConversation.getUid())
+            confirmVo = new MessageConfirmVo()
+                    .setSessionId(sendConversation.getUid())
                     .setSendSuccess(0)
-                    .setErrorReason("(>﹏<>)对方已经被你屏蔽啦");
+                    .setErrorReason("发送失败，对方已被你屏蔽");
         } else if (recConversation != null && recConversation.getIsShield() == 1) {
             // 消息发送失败，已被对方屏蔽，但是这里不加提示语
-            confirmDTO = new MessageConfirmDTO()
-                    .setConversationId(sendConversation.getUid())
-                    .setSendSuccess(0);
+            confirmVo = new MessageConfirmVo()
+                    .setSessionId(sendConversation.getUid())
+                    .setSendSuccess(0)
+                    .setErrorReason("因对方隐私设置，暂无法发送聊天消息");
         } else if (configMap.get(chatLog.getRecvId()) != null && configMap.get(chatLog.getRecvId()).getEnableChatMessage() == 0) {
             // 消息发送失败，对方已设置不允许别人发起私信消息
-            confirmDTO = new MessageConfirmDTO()
-                    .setConversationId(sendConversation.getUid())
+            confirmVo = new MessageConfirmVo()
+                    .setSessionId(sendConversation.getUid())
                     .setSendSuccess(0)
-                    .setErrorReason("对方已设置不允许发起私信消息");
+                    .setErrorReason("对方已设置不允许发送私信消息");
         } else {
             // 消息发送成功
-            confirmDTO = new MessageConfirmDTO()
-                    .setConversationId(sendConversation.getUid())
+            confirmVo = new MessageConfirmVo()
+                    .setSessionId(sendConversation.getUid())
                     .setSendSuccess(1);
             sendConversation.setLastMsgId(chatLog.getUid());
             success = true;
         }
-        BeanUtil.copyProperties(chatLog, confirmDTO);
-        WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
-                SysConstant.MSG_TYPE_MESSAGE, SysConstant.MESSAGE_CONFIRM, chatLog.getSendId(), confirmDTO);
-        SessionManager.sendMessage(wsMessageDTO);
+        BeanUtil.copyProperties(chatLog, confirmVo);
+        if (SessionManager.isOnline(chatLog.getSendId())) {
+            WsMessageDTO<Object> wsMessageDTO = new WsMessageDTO<>(
+                    SysConstant.MSG_TYPE_MESSAGE, SysConstant.MESSAGE_CONFIRM, chatLog.getSendId(), confirmVo);
+            SessionManager.sendMessage(wsMessageDTO);
+        }
         return success;
 
     }
@@ -410,15 +422,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                                               List<LikeActionDo> statisticSubList,
                                               Set<Long> userIdSet, Set<Long> targetIdSet) {
         LikeActionDo action = list.get(0);
-//        int likeFlag = actionDB == null ? 0 : 1;
         list.sort((o1, o2) -> o1.getCreateTime().compareTo(o2.getCreateTime()));
-//        for (LikeActionDo ad : list) {
-//            if (ad.getAction() == 1 && likeFlag == 0) {
-//                likeFlag++;
-//            } else if (ad.getAction() == 0 && likeFlag == 1) {
-//                likeFlag--;
-//            }
-//        }
         LikeActionDo lastAction = list.get(list.size() - 1);
         if (lastAction.getAction() == 1) {
             // 获取最后一条消息的时间更新点赞时间

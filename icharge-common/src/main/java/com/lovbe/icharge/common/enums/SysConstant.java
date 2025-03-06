@@ -171,6 +171,9 @@ public class SysConstant {
      * 标签json字段-内容
      */
     public static final String TAG_FIELD_CONTENT = "content";
+    public static final String SESSION_ID = "sessionId";
+    public static final String OFFSET = "offset";
+    public static final String LIMIT = "limit";
 
     /**
      * ws消息中前端回调方法

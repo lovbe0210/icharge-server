@@ -1,6 +1,7 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.entity.dto.MessageConfirmVo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -17,7 +18,7 @@ public class MessageSessionVo {
     /**
      * 会话id
      */
-    private Long sessionId;
+    private Long uid;
     /**
      * 所属用户id
      */
@@ -53,5 +54,5 @@ public class MessageSessionVo {
     /**
      * 最后一条消息
      */
-    private ChatMessageVo lastMsg;
+    private MessageConfirmVo lastMsg;
 }
