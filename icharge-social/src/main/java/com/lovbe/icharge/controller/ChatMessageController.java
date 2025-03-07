@@ -7,9 +7,11 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.ConversationDTO;
+import com.lovbe.icharge.entity.dto.ConversationUpdateDTO;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.service.ChatMessageService;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,25 +49,39 @@ public class ChatMessageController {
      * @date: 2025/2/28 15:42
      */
     @PostMapping("/chat/session/new")
-    public ResponseBean<Long> startMessageSession(@RequestBody BaseRequest<ConversationDTO> baseRequest,
+    public ResponseBean<Long> startMessageSession(@RequestBody @Valid BaseRequest<ConversationDTO> baseRequest,
                                                               @RequestHeader(SysConstant.USERID) Long userId) {
         Long sessionId = chatMessageService.startMessageSession(baseRequest.getData(), userId);
         return ResponseBean.ok(sessionId);
     }
 
     /**
-     * @description: 发起消息会话
+     * @description: 会话状态更新
      * @param: userId
      * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.entity.vo.MessageSessionVo>
      * @author: lovbe0210
      * @date: 2025/2/28 15:42
      */
     @PostMapping("/chat/session/update")
-    public ResponseBean<Long> updateMessageSession(@RequestBody BaseRequest<ConversationDTO> baseRequest,
+    public ResponseBean<Long> updateMessageSession(@RequestBody BaseRequest<ConversationUpdateDTO> baseRequest,
                                                    @RequestHeader(SysConstant.USERID) Long userId) {
-        Long sessionId = chatMessageService.startMessageSession(baseRequest.getData(), userId);
-        return ResponseBean.ok(sessionId);
+        chatMessageService.updateMessageSession(baseRequest.getData(), userId);
+        return ResponseBean.ok();
     }
 
+
+    /**
+     * @description: 会话删除
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.entity.vo.MessageSessionVo>
+     * @author: lovbe0210
+     * @date: 2025/2/28 15:42
+     */
+    @PostMapping("/chat/session/delete")
+    public ResponseBean<Long> deleteMessageSession(@RequestBody BaseRequest<ConversationUpdateDTO> baseRequest,
+                                                   @RequestHeader(SysConstant.USERID) Long userId) {
+        chatMessageService.deleteMessageSession(baseRequest.getData(), userId);
+        return ResponseBean.ok();
+    }
 
 }

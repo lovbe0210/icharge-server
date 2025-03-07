@@ -4,9 +4,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
@@ -22,7 +26,9 @@ import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.web.servlet.error.DefaultErrorViewResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -129,9 +135,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                         }
                     })
                     .collect(Collectors.toList());
-            for (MessageSessionVo sessionVo : sessionList) {
-                log.error(sessionVo.getUid() + sessionVo.getSessionUserInfo().getUsername());
-            }
             return sessionList;
         } catch (Exception e) {
             log.error("[消息会话] --- 获取消息会话列表，errorInfo: {}", e.toString());
@@ -208,16 +211,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     && Objects.equals(relationship.getMasterWatchSlave(), 0))) {
                 conversationDo.setIsOneWay(1);
             }
-            conversationDo.setUid(YitIdHelper.nextId())
-                    .setStatus(CommonStatusEnum.NORMAL.getStatus());
+            conversationDo.setUid(YitIdHelper.nextId());
         } else if (!CommonStatusEnum.isNormal(conversationDo.getStatus())) {
             // 判断会话状态，如果是已删除会话，则需要设置最小会话记录id
             ChatMessageLogDo messageLogDo = messageLogDao.selectOne(new LambdaQueryWrapper<ChatMessageLogDo>()
-                    .eq(ChatMessageLogDo::getSendId, userId)
-                    .eq(ChatMessageLogDo::getRecvId, data.getTargetUserId())
-                    .or()
-                    .eq(ChatMessageLogDo::getRecvId, userId)
-                    .eq(ChatMessageLogDo::getSendId, data.getTargetUserId())
+                    .eq(ChatMessageLogDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                    .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId).eq(ChatMessageLogDo::getRecvId, data.getTargetUserId())
+                            .or(wp -> wp.eq(ChatMessageLogDo::getSendId, data.getTargetUserId()).eq(ChatMessageLogDo::getRecvId, userId))
+                    )
                     .orderByDesc(ChatMessageLogDo::getSendTime)
                     .last("limit 1"));
             if (messageLogDo != null) {
@@ -225,7 +226,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             }
         }
         // 更新创建时间，将会话排到前面
-        conversationDo.setCreateTime(new Date()).setUpdateTime(conversationDo.getCreateTime());
+        conversationDo.setCreateTime(new Date())
+                .setUpdateTime(conversationDo.getCreateTime())
+                .setStatus(CommonStatusEnum.NORMAL.getStatus());
         conversationDao.insertOrUpdate(conversationDo);
         return conversationDo.getUid();
     }
@@ -244,7 +247,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         }
         List<ChatMessageLogDo> chatLogList = messageLogDao.selectList(new LambdaQueryWrapper<ChatMessageLogDo>()
                 .eq(ChatMessageLogDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
-                .ge(conversation.getMinChatLogSeq() != null, ChatMessageLogDo::getUid, conversation.getMinChatLogSeq())
+                .gt(conversation.getMinChatLogSeq() != null, ChatMessageLogDo::getUid, conversation.getMinChatLogSeq())
                 .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId).eq(ChatMessageLogDo::getRecvId, conversation.getTargetUserId())
                         .or(wp -> wp.eq(ChatMessageLogDo::getSendId, conversation.getTargetUserId()).eq(ChatMessageLogDo::getRecvId, userId))
                 )
@@ -264,5 +267,55 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 })
                 .collect(Collectors.toList());
         return messageVoList;
+    }
+
+    @Override
+    public void updateMessageSession(ConversationUpdateDTO data, Long userId) {
+        ConversationDo conversationDo = conversationDao.selectById(data.getSessionId());
+        if (conversationDo == null || !CommonStatusEnum.isNormal(conversationDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.CHAT_CONVERSATION_NOT_EXIST);
+        }
+        if (!Objects.equals(conversationDo.getOwnerUserId(), userId)) {
+            throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
+        }
+        if (data.getIsNotDisturb() != null) {
+            conversationDo.setIsNotDisturb(data.getIsNotDisturb());
+        }
+        if (data.getIsPinned() != null) {
+            conversationDo.setIsPinned(data.getIsPinned());
+        }
+        if (data.getIsShield() != null) {
+            conversationDo.setIsShield(data.getIsShield());
+        }
+        if (data.getUnreadCount() != null) {
+            conversationDo.setUnreadCount(data.getUnreadCount());
+        }
+        conversationDao.updateById(conversationDo);
+        // 如果是置顶会话需要更新会话列表
+        if (data.getIsPinned() != null && SessionManager.isOnline(userId)) {
+            List<MessageSessionVo> sessionList = this.getSessionList(userId);
+            WsMessageDTO<List<MessageSessionVo>> wsMessageDTO = new WsMessageDTO<>(
+                    SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST, null, userId, sessionList);
+            SessionManager.sendMessage(wsMessageDTO);
+        }
+    }
+
+    @Override
+    public void deleteMessageSession(ConversationUpdateDTO data, Long userId) {
+        ConversationDo conversationDo = conversationDao.selectById(data.getSessionId());
+        if (conversationDo == null || !CommonStatusEnum.isNormal(conversationDo.getStatus())) {
+           return;
+        }
+        if (!Objects.equals(conversationDo.getOwnerUserId(), userId)) {
+            throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
+        }
+        conversationDo.setLastMsgId(null)
+                .setUnreadCount(0)
+                .setStatus(CommonStatusEnum.DELETE.getStatus());
+        conversationDao.update(new UpdateWrapper<ConversationDo>()
+                .eq(SysConstant.ES_FILED_UID, conversationDo.getUid())
+                .set("status", "D")
+                .set("last_msg_id", null)
+                .set("unread_count", 0));
     }
 }

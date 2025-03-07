@@ -1,10 +1,13 @@
 package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.entity.dto.ConversationDTO;
+import com.lovbe.icharge.entity.dto.ConversationUpdateDTO;
 import com.lovbe.icharge.entity.dto.MessageConfirmVo;
 import com.lovbe.icharge.entity.dto.WsMessageDTO;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -60,4 +63,22 @@ public interface ChatMessageService {
      * @date: 2025/3/6 15:07
      */
     List<MessageConfirmVo> getChatLogList(Long userId, Long sessionId, int offset, int limit);
+
+    /**
+     * @description: 会话状态更新
+     * @param: data
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/3/7 22:27
+     */
+    void updateMessageSession(ConversationUpdateDTO data, Long userId);
+
+    /**
+     * @description: 会话删除
+     * @param: data
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/3/7 23:11
+     */
+    void deleteMessageSession(ConversationUpdateDTO data, Long userId);
 }

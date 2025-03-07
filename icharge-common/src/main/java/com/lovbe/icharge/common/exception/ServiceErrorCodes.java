@@ -66,6 +66,7 @@ public interface ServiceErrorCodes {
 
     //========== 聊天消息 ==========
     ErrorCode CHAT_MESSAGE_BAD_REQUEST = new ErrorCode(400, "消息服务请求异常，非法参数");
+    ErrorCode CHAT_CONVERSATION_NOT_EXIST = new ErrorCode(400, "聊天会话不存在，请刷新页面重试");
 
     //========== 用户等级 1-004-011-000 ==========
     ErrorCode LEVEL_NOT_EXISTS = new ErrorCode(1_004_011_000, "用户等级不存在");
