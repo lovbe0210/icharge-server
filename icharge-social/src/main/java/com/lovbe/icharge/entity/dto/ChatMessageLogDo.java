@@ -53,4 +53,12 @@ public class ChatMessageLogDo extends BaseEntity {
      * 阅读状态
      */
     private Integer readStatus;
+    /**
+     * 发送人删除
+     */
+    private Integer sendUserDelete;
+    /**
+     * 接收人删除
+     */
+    private Integer recvUserDelete;
 }

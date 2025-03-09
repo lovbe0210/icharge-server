@@ -20,16 +20,16 @@ import com.lovbe.icharge.dao.ChatMessageLogDao;
 import com.lovbe.icharge.dao.ConversationDao;
 import com.lovbe.icharge.dao.SocialNoticeDao;
 import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.vo.MessageActionVo;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
 import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.servlet.error.DefaultErrorViewResolver;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -110,7 +110,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     .map(conversation -> {
                         MessageSessionVo sessionVo = new MessageSessionVo();
                         BeanUtil.copyProperties(conversation, sessionVo);
-
                         sessionVo.setUid(conversation.getUid())
                                 .setOwnerUserId(conversation.getOwnerUserId())
                                 .setSessionUserInfo(commonService.getCacheUser(conversation.getTargetUserId()))
@@ -121,6 +120,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                         }
                         MessageConfirmVo messageVo = new MessageConfirmVo();
                         BeanUtil.copyProperties(messageLog, messageVo);
+                        if (Objects.equals(SysConstant.MESSAGE_ROLLBACK, messageVo.getContentType())) {
+                            messageVo.setContent("撤回了一条消息");
+                        }
                         sessionVo.setLastMsg(messageVo)
                                 .setSessionTime(messageLog.getSendTime());
                         return sessionVo;
@@ -146,6 +148,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     public WsMessageDTO<Object> scheduleCallback(WsMessageDTO wsMessageDTO) {
         String callback = wsMessageDTO.getCallback();
         if (!StringUtils.hasText(callback)) {
+            log.error("[ws回调消息处理] --- callback is null return null");
+            return null;
+        }
+        if (wsMessageDTO.getUserId() == null) {
+            log.error("[ws回调消息处理] --- userId is null return null");
             return null;
         }
         try {
@@ -155,7 +162,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     wsMessageDTO.setData(sessionList);
                     return wsMessageDTO;
                 }
-
                 case SysConstant.GET_CHAT_LOGS -> {
                     Map param = wsMessageDTO.getParam();
                     Long sessionId = MapUtil.getLong(param, SysConstant.SESSION_ID);
@@ -170,7 +176,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     wsMessageDTO.setData(chatLogObject);
                     return wsMessageDTO;
                 }
-
                 case SysConstant.SEND_MESSAGE -> {
                     Object data = wsMessageDTO.getData();
                     String decoded = Base64.decodeStr(CommonUtils.bitwiseInvert((String) data));
@@ -182,6 +187,31 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     chatMessageLogDo.setReadStatus(0)
                             .setSendTime(chatMessageLogDo.getCreateTime());
                     commonService.sendMessage(appName, sendMessageTopic, chatMessageLogDo);
+                    return null;
+                }
+                case SysConstant.DELETE_MESSAGE -> {
+                    Long messageId = (Long) wsMessageDTO.getData();
+                    if (messageId == null) {
+                        log.error("[ws删除消息] --- messageId is null");
+                    } else {
+                        this.deleteMessageLog(messageId, wsMessageDTO.getUserId());
+                    }
+                    return null;
+                }
+
+                case SysConstant.ROLLBACK_MESSAGE -> {
+                    Long messageId = (Long) wsMessageDTO.getData();
+                    if (messageId == null) {
+                        log.error("[ws撤回消息] --- messageId is null");
+                    } else {
+                        MessageActionVo messageAction = this.rollbackMessageLog(messageId, wsMessageDTO.getUserId());
+                        // 成功时回调所有连接，失败时只回调当前连接
+                        if (messageAction != null && !messageAction.isResult()) {
+                            wsMessageDTO.setData(messageAction);
+                            return wsMessageDTO;
+                        }
+                    }
+                    return null;
                 }
             }
         } catch (Exception e) {
@@ -245,11 +275,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             log.error("[获取聊天记录] --- 当前用户和会话所属人不符，获取失败");
             return List.of();
         }
+        if (conversation.getUnreadCount() > 0) {
+            // 更新已读数
+            conversationDao.update(new UpdateWrapper<ConversationDo>()
+                    .eq(SysConstant.ES_FILED_UID, conversation.getUid())
+                    .set("unread_count", 0));
+        }
         List<ChatMessageLogDo> chatLogList = messageLogDao.selectList(new LambdaQueryWrapper<ChatMessageLogDo>()
                 .eq(ChatMessageLogDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
                 .gt(conversation.getMinChatLogSeq() != null, ChatMessageLogDo::getUid, conversation.getMinChatLogSeq())
-                .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId).eq(ChatMessageLogDo::getRecvId, conversation.getTargetUserId())
-                        .or(wp -> wp.eq(ChatMessageLogDo::getSendId, conversation.getTargetUserId()).eq(ChatMessageLogDo::getRecvId, userId))
+                .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId)
+                        .eq(ChatMessageLogDo::getRecvId, conversation.getTargetUserId())
+                        .eq(ChatMessageLogDo::getSendUserDelete, 0)
+                        .or(wp -> wp.eq(ChatMessageLogDo::getSendId, conversation.getTargetUserId())
+                                .eq(ChatMessageLogDo::getRecvId, userId)
+                                .eq(ChatMessageLogDo::getRecvUserDelete, 0))
                 )
                 .orderByDesc(ChatMessageLogDo::getSendTime)
                 .last(" limit " + offset + "," + limit)
@@ -263,6 +303,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                     BeanUtil.copyProperties(chatLog, messageVo);
                     messageVo.setSessionId(sessionId);
                     messageVo.setSendSuccess(1);
+                    if (Objects.equals(SysConstant.MESSAGE_ROLLBACK, messageVo.getContentType())) {
+                        messageVo.setContent("撤回了一条消息");
+                    }
                     return messageVo;
                 })
                 .collect(Collectors.toList());
@@ -304,7 +347,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     public void deleteMessageSession(ConversationUpdateDTO data, Long userId) {
         ConversationDo conversationDo = conversationDao.selectById(data.getSessionId());
         if (conversationDo == null || !CommonStatusEnum.isNormal(conversationDo.getStatus())) {
-           return;
+            return;
         }
         if (!Objects.equals(conversationDo.getOwnerUserId(), userId)) {
             throw new ServiceException(GlobalErrorCodes.BAD_REQUEST);
@@ -317,5 +360,105 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .set("status", "D")
                 .set("last_msg_id", null)
                 .set("unread_count", 0));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MessageActionVo deleteMessageLog(Long messageId, Long userId) {
+        MessageActionVo messageActionVo = new MessageActionVo().setMessageId(messageId).setResult(true);
+        ChatMessageLogDo messageLogDo = messageLogDao.selectById(messageId);
+        if (messageLogDo == null || CommonStatusEnum.isDelete(messageLogDo.getStatus())) {
+            // 消息删除通知
+            SessionManager.sendMessage(new WsMessageDTO(SysConstant.MSG_TYPE_MESSAGE, SysConstant.DELETE_MESSAGE, null,
+                    userId, messageActionVo));
+            return messageActionVo;
+        }
+        Long sendId = messageLogDo.getSendId();
+        Long recvId = messageLogDo.getRecvId();
+        messageLogDao.update(new UpdateWrapper<ChatMessageLogDo>()
+                .eq(SysConstant.ES_FILED_UID, messageId)
+                .set(Objects.equals(userId, sendId), "send_user_delete", 1)
+                .set(Objects.equals(userId, recvId), "recv_user_delete", 1));
+        Long targetSessionUser = Objects.equals(sendId, userId) ? recvId : sendId;
+        ConversationDo conversationDo = conversationDao.selectOne(new LambdaQueryWrapper<ConversationDo>()
+                .eq(ConversationDo::getOwnerUserId, userId)
+                .eq(ConversationDo::getTargetUserId, targetSessionUser)
+                .eq(ConversationDo::getLastMsgId, messageId)
+                .eq(ConversationDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+        if (conversationDo != null) {
+            // 获取最后一条消息设置为lastMsgId
+            ChatMessageLogDo lastMsg = messageLogDao.selectOne(new LambdaQueryWrapper<ChatMessageLogDo>()
+                    .eq(ChatMessageLogDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                    .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId)
+                                     .eq(ChatMessageLogDo::getRecvId, targetSessionUser)
+                                     .eq(ChatMessageLogDo::getSendUserDelete, 0)
+                            .or(wp -> wp.eq(ChatMessageLogDo::getSendId, targetSessionUser)
+                                    .eq(ChatMessageLogDo::getRecvId, userId)
+                                    .eq(ChatMessageLogDo::getRecvUserDelete, 0))
+                    )
+                    .orderByDesc(ChatMessageLogDo::getSendTime)
+                    .last(" limit 1"));
+            if (lastMsg != null) {
+                conversationDao.update(new UpdateWrapper<ConversationDo>()
+                        .eq(SysConstant.ES_FILED_UID, conversationDo.getUid())
+                        .set("last_msg_id", lastMsg.getUid()));
+                // 会话更新通知
+                if (SessionManager.isOnline(userId)) {
+                    List<MessageSessionVo> sessionList = this.getSessionList(userId);
+                    SessionManager.sendMessage(new WsMessageDTO(SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST, null,
+                            userId, sessionList));
+                }
+            }
+        }
+        // 消息删除通知
+        SessionManager.sendMessage(new WsMessageDTO(SysConstant.MSG_TYPE_MESSAGE, SysConstant.DELETE_MESSAGE, null,
+                userId, messageActionVo));
+        return messageActionVo;
+    }
+
+    @Override
+    public MessageActionVo rollbackMessageLog(Long messageId, Long userId) {
+        ChatMessageLogDo messageLogDo = messageLogDao.selectById(messageId);
+        if (messageLogDo == null || CommonStatusEnum.isDelete(messageLogDo.getStatus())) {
+            return new MessageActionVo().setMessageId(messageId)
+                    .setResult(false)
+                    .setReason("消息不存在或已被删除");
+        }
+        if (!Objects.equals(userId, messageLogDo.getSendId())) {
+            return new MessageActionVo().setMessageId(messageId)
+                    .setResult(false)
+                    .setReason("只能撤回自己发送的消息");
+        }
+        Date sendTime = messageLogDo.getSendTime();
+        if (sendTime == null || (System.currentTimeMillis() - sendTime.getTime() > 60 * 2 * 1000)) {
+            return new MessageActionVo().setMessageId(messageId)
+                    .setResult(false)
+                    .setReason("只能撤回两分钟内发的消息");
+        }
+        messageLogDao.update(new UpdateWrapper<ChatMessageLogDo>()
+                .eq(SysConstant.ES_FILED_UID, messageId)
+                .set("content_type", SysConstant.MESSAGE_ROLLBACK));
+        // 消息撤回通知
+        MessageActionVo messageActionVo = new MessageActionVo().setMessageId(messageId).setResult(true);
+        SessionManager.sendMessage(new WsMessageDTO(SysConstant.MSG_TYPE_MESSAGE, SysConstant.ROLLBACK_MESSAGE, null,
+                userId, messageActionVo));
+        SessionManager.sendMessage(new WsMessageDTO(SysConstant.MSG_TYPE_MESSAGE, SysConstant.ROLLBACK_MESSAGE, null,
+                messageLogDo.getRecvId(), messageActionVo));
+        // 判断是否是会话的最后一条
+        List<ConversationDo> conversationList = conversationDao.selectList(new LambdaQueryWrapper<ConversationDo>()
+                .eq(ConversationDo::getLastMsgId, messageLogDo.getUid())
+                .eq(ConversationDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .and(wrap -> wrap.eq(ConversationDo::getOwnerUserId, userId).eq(ConversationDo::getTargetUserId, messageLogDo.getRecvId())
+                        .or(wp -> wp.eq(ConversationDo::getOwnerUserId, messageLogDo.getRecvId()).eq(ConversationDo::getTargetUserId, userId))
+                ));
+        if (!CollectionUtils.isEmpty(conversationList)) {
+            for (ConversationDo conversationDo : conversationList) {
+                List<MessageSessionVo> sessionList = this.getSessionList(conversationDo.getOwnerUserId());
+                SessionManager.sendMessage(new WsMessageDTO(SysConstant.MSG_TYPE_SESSION, SysConstant.GET_SESSION_LIST, null,
+                        conversationDo.getOwnerUserId(), sessionList));
+            }
+        }
+        return new MessageActionVo().setMessageId(messageId)
+                .setResult(true);
     }
 }

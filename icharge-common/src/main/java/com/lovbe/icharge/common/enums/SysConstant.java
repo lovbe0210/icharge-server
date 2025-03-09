@@ -180,9 +180,17 @@ public class SysConstant {
      */
     public static final String GET_SESSION_LIST = "getSessionList";
     public static final String SEND_MESSAGE = "sendMessage";
+    public static final String DELETE_MESSAGE = "deleteMessage";
+    public static final String ROLLBACK_MESSAGE = "rollbackMessage";
     public static final String MESSAGE_CONFIRM = "messageConfirm";
     public static final String RECV_MESSAGE = "recvMessage";
     public static final String GET_CHAT_LOGS = "getChatLogs";
+
+    /**
+     * 聊天消息类型
+     */
+    public static final int MESSAGE_ROLLBACK = 111;
+
     /**
      * 消息类型 0心跳 1会话相关 2消息相关
      */

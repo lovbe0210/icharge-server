@@ -23,7 +23,6 @@ import java.util.Map;
 @EnableKafka
 @ConditionalOnProperty(value = "spring.kafka.produce-enable", havingValue = "true")
 public class KafkaProduceConfig {
-    @Bean
     public Map<String, Object> producerConfigs(KafkaProperties kafkaProperties) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getServers());
@@ -42,7 +41,7 @@ public class KafkaProduceConfig {
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, kafkaProperties.getBatchSize());
         //有的时刻消息比较少,过了很久,比如2s也没有凑够16KB,这样延时就很大,所以需要一个参数. 再设置一个时间,到了这个时间,
         //即使数据没达到16KB,也将这个批次发送出去
-        props.put(ProducerConfig.LINGER_MS_CONFIG, "2000");
+        props.put(ProducerConfig.LINGER_MS_CONFIG, "1000");
         //生产者内存缓冲区的大小
         props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, kafkaProperties.getBufferMemory());
         //反序列化，和生产者的序列化方式对应
@@ -70,5 +69,13 @@ public class KafkaProduceConfig {
     @Bean
     public KafkaTemplate<Object, Object> kafkaTemplate(KafkaProperties kafkaProperties) {
         return new KafkaTemplate<>(producerFactory(kafkaProperties));
+    }
+
+    @Bean(name = "chatKafkaTemplate")
+    public KafkaTemplate<Object, Object> chatKafkaTemplate(KafkaProperties kafkaProperties) {
+        Map<String, Object> props = producerConfigs(kafkaProperties);
+        props.put(ProducerConfig.LINGER_MS_CONFIG, "200");
+        DefaultKafkaProducerFactory<Object, Object> factory = new DefaultKafkaProducerFactory<>(props);
+        return new KafkaTemplate<>(factory);
     }
 }

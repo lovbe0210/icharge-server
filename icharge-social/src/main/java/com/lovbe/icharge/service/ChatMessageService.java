@@ -1,12 +1,9 @@
 package com.lovbe.icharge.service;
 
-import com.lovbe.icharge.entity.dto.ConversationDTO;
-import com.lovbe.icharge.entity.dto.ConversationUpdateDTO;
-import com.lovbe.icharge.entity.dto.MessageConfirmVo;
-import com.lovbe.icharge.entity.dto.WsMessageDTO;
+import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.vo.MessageActionVo;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -81,4 +78,24 @@ public interface ChatMessageService {
      * @date: 2025/3/7 23:11
      */
     void deleteMessageSession(ConversationUpdateDTO data, Long userId);
+
+    /**
+     * @description: 消息删除
+     * @param: messageId
+     * @param: userId
+     * @return: com.lovbe.icharge.entity.vo.MessageActionVo
+     * @author: lovbe0210
+     * @date: 2025/3/8 13:33
+     */
+    MessageActionVo deleteMessageLog(Long messageId, Long userId);
+
+    /**
+     * @description: 消息撤回
+     * @param: messageId
+     * @param: userId
+     * @return: com.lovbe.icharge.entity.vo.MessageActionVo
+     * @author: lovbe0210
+     * @date: 2025/3/8 13:34
+     */
+    MessageActionVo rollbackMessageLog(Long messageId, Long userId);
 }

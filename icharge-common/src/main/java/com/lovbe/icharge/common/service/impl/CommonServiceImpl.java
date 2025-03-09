@@ -28,8 +28,7 @@ import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.springframework.ai.chat.ChatClient;
-import org.springframework.ai.chat.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -40,6 +39,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,6 +59,8 @@ public class CommonServiceImpl implements CommonService {
     private ChatClient chatClient;
     @Resource
     private AIPromptProperties aiPromptProperties;
+    @Value("${spring.kafka.topics.chat-send-message}")
+    private String sendMessageTopic;
 
     @Override
     public UserInfoDo getCacheUser(Long userId) {
@@ -90,7 +92,12 @@ public class CommonServiceImpl implements CommonService {
     public <T> void sendMessage(String appName, String topic, T t) {
         KafkaMessage<T> message = new KafkaMessage<>(appName, topic, t);
         try {
-            KafkaTemplate kafkaTemplate = SpringContextUtils.getBean(KafkaTemplate.class);
+            KafkaTemplate kafkaTemplate = null;
+            if (Objects.equals(sendMessageTopic, topic)) {
+                kafkaTemplate = SpringContextUtils.getBean("chatKafkaTemplate", KafkaTemplate.class);
+            } else {
+                kafkaTemplate = SpringContextUtils.getBean("kafkaTemplate", KafkaTemplate.class);
+            }
             CompletableFuture send = kafkaTemplate.send(topic, JSONUtil.toJsonStr(message));
             send.thenAccept(result -> {
                 log.info("[send-message]--消息发送成功， sid：{}", message.getMsgId());

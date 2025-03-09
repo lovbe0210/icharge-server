@@ -223,7 +223,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     @Transactional(rollbackFor = Exception.class)
     public void handlerChatLog(List<ChatMessageLogDo> collect) {
         HashSet<Long> recvIds = new HashSet<>();
-        // 获取sendId和recvId对应的会话
+        // 获取sendId和recvId对应的消息记录
         Map<String, List<ChatMessageLogDo>> chatMessageMap = collect.stream()
                 .peek(chatLog -> recvIds.add(chatLog.getRecvId()))
                 .collect(Collectors.groupingBy(chatLog ->
@@ -284,7 +284,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
 
         // 会话更新通知
         List<WsMessageDTO> wsMessageDTOList = new ArrayList<>();
-        Collection<ConversationDo> conversations = conversationMap.values().stream()
+        conversationMap.values().stream()
                 .filter(c -> CommonStatusEnum.isNormal(c.getStatus()) && c.getIsNotDisturb() == 0)
                 .peek(c -> {
                     WsMessageDTO<Object> messageDTO = new WsMessageDTO<>(c.getOwnerUserId(),
@@ -293,7 +293,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 })
                 .collect(Collectors.toList());
         // 会话入库
-        conversationDao.insertOrUpdate(conversations);
+        conversationDao.insertOrUpdate(conversationMap.values());
         if (CollectionUtils.isEmpty(wsMessageDTOList)) {
             return;
         }
