@@ -280,10 +280,24 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             conversationDao.update(new UpdateWrapper<ConversationDo>()
                     .eq(SysConstant.ES_FILED_UID, conversation.getUid())
                     .set("unread_count", 0));
+            // 获取所有会话进行未读统计
+            if (SessionManager.isOnline(userId)) {
+                List<ConversationDo> conversationList = conversationDao.selectList(new LambdaQueryWrapper<ConversationDo>()
+                        .eq(ConversationDo::getOwnerUserId, userId)
+                        .eq(ConversationDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+                if (!CollectionUtils.isEmpty(conversationList)) {
+                    int unread = conversationList.stream()
+                            .mapToInt(ConversationDo::getUnreadCount)
+                            .sum();
+                    Map<String, Integer> chatMsgCount = Map.of("chatMsgCount", unread);
+                    WsMessageDTO<Map<String, Integer>> wsMessageDTO = new WsMessageDTO<>(SysConstant.MSG_TYPE_MESSAGE, SysConstant.GET_UNREAD_COUNT, userId, chatMsgCount);
+                    SessionManager.sendMessage(wsMessageDTO);
+                }
+            }
         }
         List<ChatMessageLogDo> chatLogList = messageLogDao.selectList(new LambdaQueryWrapper<ChatMessageLogDo>()
                 .eq(ChatMessageLogDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
-                .gt(conversation.getMinChatLogSeq() != null, ChatMessageLogDo::getUid, conversation.getMinChatLogSeq())
+                .ge(conversation.getMinChatLogSeq() != null, ChatMessageLogDo::getUid, conversation.getMinChatLogSeq())
                 .and(wrap -> wrap.eq(ChatMessageLogDo::getSendId, userId)
                         .eq(ChatMessageLogDo::getRecvId, conversation.getTargetUserId())
                         .eq(ChatMessageLogDo::getSendUserDelete, 0)
@@ -326,6 +340,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         }
         if (data.getIsPinned() != null) {
             conversationDo.setIsPinned(data.getIsPinned());
+            conversationDao.update(new UpdateWrapper<ConversationDo>()
+                    .eq("owner_user_id", userId)
+                    .set("is_pinned", 0));
         }
         if (data.getIsShield() != null) {
             conversationDo.setIsShield(data.getIsShield());

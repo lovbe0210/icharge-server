@@ -6,7 +6,6 @@ import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
-import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.config.SessionManager;
@@ -16,11 +15,9 @@ import com.lovbe.icharge.service.ActionHandlerService;
 import com.lovbe.icharge.service.ChatMessageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
 import java.util.function.Function;
@@ -246,6 +243,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         }
 
         // 遍历每个会话进行会话创建和消息推送
+        Set<Long> unreadUpdateSet = new HashSet<>();
         Iterator<ChatMessageLogDo> iterator = collect.iterator();
         while (iterator.hasNext()) {
             ChatMessageLogDo chatLog = iterator.next();
@@ -274,13 +272,40 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 // 该用户已被对方屏蔽
                 continue;
             }
-            recvUserMsgNotice(recConversation, chatLog, conversationMap, recCvsId);
+            ConversationDo unreadUpdate = recvUserMsgNotice(recConversation, chatLog, conversationMap, recCvsId);
+            if (unreadUpdate != null) {
+                unreadUpdateSet.add(unreadUpdate.getOwnerUserId());
+            }
         }
 
         // 消息入库
         if (collect.size() > 0) {
             messageLogDao.insertOrUpdate(collect);
         }
+
+        // 会话入库
+        conversationDao.insertOrUpdate(conversationMap.values());
+
+        // 接收人会话统计更新
+        if (unreadUpdateSet.size() == 0) {
+            return;
+        }
+        unreadUpdateSet.forEach(recvUserId -> {
+            if (!SessionManager.isOnline(recvUserId)) {
+                return;
+            }
+            List<ConversationDo> conversationDoList = conversationDao.selectList(new LambdaQueryWrapper<ConversationDo>()
+                    .eq(ConversationDo::getOwnerUserId, recvUserId)
+                    .eq(ConversationDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+            if (!CollectionUtils.isEmpty(conversationDoList)) {
+                int unread = conversationDoList.stream()
+                        .mapToInt(ConversationDo::getUnreadCount)
+                        .sum();
+                Map<String, Integer> chatMsgCount = Map.of("chatMsgCount", unread);
+                WsMessageDTO<Map<String, Integer>> wsMessageDTO = new WsMessageDTO<>(SysConstant.MSG_TYPE_MESSAGE, SysConstant.GET_UNREAD_COUNT, recvUserId, chatMsgCount);
+                SessionManager.sendMessage(wsMessageDTO);
+            }
+        });
 
         // 会话更新通知
         List<WsMessageDTO> wsMessageDTOList = new ArrayList<>();
@@ -292,8 +317,6 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                     wsMessageDTOList.add(messageDTO);
                 })
                 .collect(Collectors.toList());
-        // 会话入库
-        conversationDao.insertOrUpdate(conversationMap.values());
         if (CollectionUtils.isEmpty(wsMessageDTOList)) {
             return;
         }
@@ -306,6 +329,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     }
 
     /**
+     * @return
      * @description: 接收人消息通知
      * @param: recConversation
      * @param: chatLog
@@ -314,7 +338,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
      * @author: lovbe0210
      * @date: 2025/3/5 0:37
      */
-    private static void recvUserMsgNotice(ConversationDo recConversation, ChatMessageLogDo chatLog, Map<String, ConversationDo> conversationMap, String recCvsId) {
+    private static ConversationDo recvUserMsgNotice(ConversationDo recConversation, ChatMessageLogDo chatLog, Map<String, ConversationDo> conversationMap, String recCvsId) {
         if (recConversation == null) {
             recConversation = new ConversationDo()
                     .setOwnerUserId(chatLog.getRecvId())
@@ -346,11 +370,11 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         }
         // 判断是否会话免打扰
         if (recConversation.getIsNotDisturb() == 1) {
-            return;
+            return null;
         }
         // 设置未读数
         recConversation.setUnreadCount(recConversation.getUnreadCount() + 1);
-
+        return recConversation;
     }
 
     /**

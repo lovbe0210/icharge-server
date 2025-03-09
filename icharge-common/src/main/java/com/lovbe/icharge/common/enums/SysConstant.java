@@ -185,6 +185,7 @@ public class SysConstant {
     public static final String MESSAGE_CONFIRM = "messageConfirm";
     public static final String RECV_MESSAGE = "recvMessage";
     public static final String GET_CHAT_LOGS = "getChatLogs";
+    public static final String GET_UNREAD_COUNT = "getUnreadCount";
 
     /**
      * 聊天消息类型
