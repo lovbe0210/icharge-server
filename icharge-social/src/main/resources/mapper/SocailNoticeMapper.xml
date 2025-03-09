@@ -55,7 +55,7 @@
         SELECT *
         FROM s_notices sn
         WHERE sn.user_id = #{userId}
-            AND sn.notice_type = 4
+            AND sn.notice_type = #{noticeType}
             <if test="data.readStatus != null">
                 AND sn.read_status = #{data.readStatus}
             </if>

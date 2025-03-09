@@ -7,6 +7,7 @@ import com.lovbe.icharge.entity.dto.SocialNoticeReqDTO;
 import com.lovbe.icharge.entity.vo.CommentNoticeVo;
 import com.lovbe.icharge.entity.vo.LikeNoticeVo;
 import com.lovbe.icharge.entity.vo.SocialNoticeVo;
+import com.lovbe.icharge.entity.vo.SystemNoticeVo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -62,4 +63,13 @@ public interface MessageNoticeService {
      * @date: 2025/2/27 22:25
      */
     PageBean<SocialNoticeVo> getFollowsNotice(SocialNoticeReqDTO data, Long userId);
+    /**
+     * @description: 获取系统通知
+     * @param: data
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.PageBean<com.lovbe.icharge.entity.vo.SystemNoticeVo>
+     * @author: lovbe0210
+     * @date: 2025/3/10 0:20
+     */
+    PageBean<SystemNoticeVo> getSystemNotice(SocialNoticeReqDTO data, Long userId);
 }

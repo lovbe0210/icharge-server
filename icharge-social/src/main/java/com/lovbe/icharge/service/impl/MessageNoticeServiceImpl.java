@@ -3,6 +3,7 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -20,6 +21,7 @@ import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.CommentNoticeVo;
 import com.lovbe.icharge.entity.vo.LikeNoticeVo;
 import com.lovbe.icharge.entity.vo.SocialNoticeVo;
+import com.lovbe.icharge.entity.vo.SystemNoticeVo;
 import com.lovbe.icharge.service.MessageNoticeService;
 import com.lovbe.icharge.service.feign.ContentPickService;
 import jakarta.annotation.Resource;
@@ -28,6 +30,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -131,6 +134,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                     }
                 });
         // 组装文章和随笔信息
+        List<Long> repltyCommentIds = new ArrayList<>();
         List<CommentNoticeVo> collect = socialNoticeList.stream()
                 .map(socialNotice -> {
                     CommentNoticeVo commentNotice = new CommentNoticeVo();
@@ -153,7 +157,11 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                     return commentNotice;
                 })
                 .filter(Objects::nonNull)
+                .peek(notice -> repltyCommentIds.add(notice.getUid()))
                 .collect(Collectors.toList());
+        socialNoticeDao.update(new UpdateWrapper<SocialNoticeDo>()
+                .in(SysConstant.ES_FILED_UID, repltyCommentIds)
+                .set("read_status", 1));
         return new PageBean<>(Math.toIntExact(count), collect);
     }
 
@@ -208,7 +216,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
         }
         // 随笔类型
         Set<Long> eIds = collectMap.get(SysConstant.TARGET_TYPE_ESSAY);
-        if (CollectionUtils.isEmpty(eIds)) {
+        if (!CollectionUtils.isEmpty(eIds)) {
             ramblyJotIds.addAll(eIds);
         }
         ResponseBean<List<RamblyJotVo>> listByIds = cpsService.getRamblyjotListByIds(new BaseRequest<>(ramblyJotIds), userId);
@@ -218,6 +226,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
         }
 
         // 组装文章、随笔和评论信息
+        List<Long> likeIds = new ArrayList<>();
         List<LikeNoticeVo> collect = socialNoticeList.stream()
                 .map(socialNotice -> {
                     LikeNoticeVo likeNotice = new LikeNoticeVo();
@@ -252,7 +261,11 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                     return likeNotice;
                 })
                 .filter(Objects::nonNull)
+                .peek(notice -> likeIds.add(notice.getUid()))
                 .collect(Collectors.toList());
+        socialNoticeDao.update(new UpdateWrapper<SocialNoticeDo>()
+                .in(SysConstant.ES_FILED_UID, likeIds)
+                .set("read_status", 1));
         return new PageBean<>(Math.toIntExact(count), collect);
     }
 
@@ -266,14 +279,74 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
             return new PageBean<>(0, List.of());
         }
         List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(data, userId, SysConstant.NOTICE_FOLLOW);
+        List<Long> followIds = new ArrayList<>();
         List<SocialNoticeVo> collect = noticeDoList.stream()
                 .map(record -> {
                     SocialNoticeVo noticeVo = new SocialNoticeVo();
                     BeanUtil.copyProperties(record, noticeVo);
                     noticeVo.setActionUserInfo(commonService.getCacheUser(record.getActionUserId()));
+                    followIds.add(record.getUid());
                     return noticeVo;
                 })
                 .collect(Collectors.toList());
+        socialNoticeDao.update(new UpdateWrapper<SocialNoticeDo>()
+                .in(SysConstant.ES_FILED_UID, followIds)
+                .set("read_status", 1));
         return new PageBean<>(Math.toIntExact(count), collect);
+    }
+
+    @Override
+    public PageBean<SystemNoticeVo> getSystemNotice(SocialNoticeReqDTO data, Long userId) {
+        Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
+                .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM)
+                .eq(SocialNoticeDo::getUserId, userId)
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus()));
+        if (count == null || count == 0) {
+            return new PageBean<>(0, List.of());
+        }
+        List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(data, userId, SysConstant.NOTICE_SYSTEM);
+        List<Long> articleIds = new ArrayList<>();
+        List<SystemNoticeVo> collect = noticeDoList.stream()
+                .map(record -> {
+                    SystemNoticeVo noticeVo = new SystemNoticeVo();
+                    BeanUtil.copyProperties(record, noticeVo);
+                    articleIds.add(record.getTargetId());
+                    return noticeVo;
+                })
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(collect)) {
+            return new PageBean<>(0, List.of());
+        }
+        // 系统通知暂时知识文章或专栏文章形式出现
+        BaseRequest<Collection<Long>> baseRequest = new BaseRequest<>(articleIds);
+        ResponseBean<List<PublicArticleVo>> articleList = cpsService.getArticleListByIds(baseRequest, userId);
+        if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
+            Map<Long, PublicArticleVo> articleMap = articleList.getData().stream()
+                    .collect(Collectors.toMap(PublicArticleVo::getUid, Function.identity(), (a, b) -> b));
+            List<Long> systemNoticeIds = new ArrayList<>();
+            collect = collect.stream()
+                    .map(noticeVo -> {
+                        PublicArticleVo articleVo = articleMap.get(noticeVo.getTargetId());
+                        if (articleVo == null) {
+                            return null;
+                        }
+                        systemNoticeIds.add(noticeVo.getUid());
+                        noticeVo.setContent(articleVo.getTitle());
+                        noticeVo.setLabel(articleVo.getSummary());
+                        String url = "/" + articleVo.getDomain() + "/" +
+                                (StringUtils.hasLength(articleVo.getColumnUri()) ? ("/" + articleVo.getColumnUri() + "/") : "") +
+                                articleVo.getUri();
+                        noticeVo.setUrl(url);
+                        return noticeVo;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            socialNoticeDao.update(new UpdateWrapper<SocialNoticeDo>()
+                    .in(SysConstant.ES_FILED_UID, systemNoticeIds)
+                    .set("read_status", 1));
+            return new PageBean<>(Math.toIntExact(count), collect);
+        } else {
+            return new PageBean<>(0, List.of());
+        }
     }
 }
