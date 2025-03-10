@@ -251,10 +251,10 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                                 .setReplyId(noticeDo.getReplyId())
                                 .setReplyContent(noticeDo.getReplyContent());
                         // 补全评论的target信息
-                        if (Objects.equals(noticeDo.getNoticeType(), SysConstant.TARGET_TYPE_ARTICLE)) {
+                        if (Objects.equals(noticeDo.getTargetType(), SysConstant.TARGET_TYPE_ARTICLE)) {
                             likeNotice.setArticleInfo(articleVoMap.get(noticeDo.getTargetId()));
                         }
-                        if (Objects.equals(noticeDo.getNoticeType(), SysConstant.TARGET_TYPE_ESSAY)) {
+                        if (Objects.equals(noticeDo.getTargetType(), SysConstant.TARGET_TYPE_ESSAY)) {
                             likeNotice.setRamblyJot(ramblyJotVoMap.get(noticeDo.getTargetId()));
                         }
                     }
