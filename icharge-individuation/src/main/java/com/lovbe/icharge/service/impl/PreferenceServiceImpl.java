@@ -1,21 +1,23 @@
 package com.lovbe.icharge.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.lovbe.icharge.common.config.ServiceProperties;
+import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.FileUploadDTO;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
-import com.lovbe.icharge.dao.MusicPlayDao;
 import com.lovbe.icharge.dao.PreferenceSettingDao;
-import com.lovbe.icharge.entity.MusicInfoVo;
 import com.lovbe.icharge.entity.PreferenceSettingDTO;
 import com.lovbe.icharge.common.model.dto.PreferenceSettingVo;
+import com.lovbe.icharge.common.model.dto.UploadDTO;
 import com.lovbe.icharge.service.PreferenceService;
+import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -27,6 +29,10 @@ import java.util.Objects;
 public class PreferenceServiceImpl implements PreferenceService {
     @Resource
     private PreferenceSettingDao preferenceSettingDao;
+    @Resource
+    private StorageService storageService;
+    @Resource
+    private ServiceProperties serviceProperties;
 
     @Override
     public PreferenceSettingVo getPreferenceSetting(Long userId) {
@@ -102,5 +108,19 @@ public class PreferenceServiceImpl implements PreferenceService {
             settingVo.setMusicPlay(JsonUtils.toJsonString(data.getMusicPlay()));
         }
         preferenceSettingDao.updateById(settingVo);
+    }
+
+    @Override
+    public String uploadBackgroundImg(UploadDTO uploadDTO, Long userId) {
+        CommonUtils.checkUploadFrequencyLimit(userId == null ? uploadDTO.getUq() : String.valueOf(userId),
+                SysConstant.FILE_SCENE_BACKGROUND, serviceProperties.getUploadLimit());
+        String pathFlag = userId == null ? uploadDTO.getUq() : String.valueOf(userId);
+        ResponseBean<String> responseBean = storageService
+                .upload(new FileUploadDTO(uploadDTO.getFile(), SysConstant.FILE_SCENE_BACKGROUND, pathFlag));
+        if (responseBean != null && responseBean.isResult()) {
+            return responseBean.getData();
+        } else {
+            throw new ServiceException(ServiceErrorCodes.FILE_UPLOAD_FAILED);
+        }
     }
 }

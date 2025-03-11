@@ -41,7 +41,7 @@ public class OssStorageController {
     public ResponseBean upload(@Validated FileUploadDTO fileUploadDTO) {
         OssStorageService storageService = OssStorageFactory.getStorageService();
         String originalFilename = fileUploadDTO.getFile().getOriginalFilename();
-        String path = fileUploadDTO.getPathPrefix() + "/" + YitIdHelper.nextId() + SysConstant.SEPARATOR + originalFilename;
+        String path = fileUploadDTO.getPathFlag() + "/" + fileUploadDTO.getPathPrefix() + "/" + YitIdHelper.nextId() + SysConstant.SEPARATOR + originalFilename;
         try {
             String upload = storageService.upload(fileUploadDTO.getFile().getInputStream(), path);
             return ResponseBean.ok(upload);
@@ -67,7 +67,8 @@ public class OssStorageController {
             }
             // 获取文件名
             String fileName = extractFileName(response);
-            String path = uploadDTO.getPathPrefix() + "/" + YitIdHelper.nextId() + SysConstant.SEPARATOR + fileName;
+            String path = uploadDTO.getPathFlag() + "/" + uploadDTO.getPathPrefix() + "/" +
+                    YitIdHelper.nextId() + SysConstant.SEPARATOR + fileName;
             String upload = storageService.upload(inputStream, path);
             return ResponseBean.ok(upload);
         } catch (Exception e) {

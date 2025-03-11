@@ -68,8 +68,8 @@ public class ArticleController {
     public ResponseBean<ArticleVo> updateArticle(@Validated ArticleDTO articleDTO,
                                                  @RequestHeader(SysConstant.USERID) long userId) {
         MultipartFile coverFile = articleDTO.getCoverFile();
-        if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_10MB) {
-            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_5MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_5);
         }
         articleService.updateArticle(false, articleDTO, userId);
         return ResponseBean.ok();

@@ -18,7 +18,7 @@ import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
-import com.lovbe.icharge.config.ServiceProperties;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.dao.UserMapper;
 import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.dao.AccountMapper;
@@ -31,12 +31,8 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**

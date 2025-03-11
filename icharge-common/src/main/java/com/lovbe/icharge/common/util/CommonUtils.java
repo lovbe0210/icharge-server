@@ -7,7 +7,12 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
+import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -77,6 +82,42 @@ public class CommonUtils {
 
     public static String decryptStr(String sourceStr) {
         return aes.decryptStr(sourceStr);
+    }
+
+    /**
+     * @description: 上传频率限制
+     * @param: uniqueId
+     * @param: userId
+     * @param: limitTimes
+     * @author: lovbe0210
+     * @date: 2025/3/11 21:29
+     */
+    public static void checkUploadFrequencyLimit(String uniqueId, String scene, int limitTimes) {
+        // 唯一id频率校验
+        String uploadLockKey = RedisKeyConstant.getUploadLockKey(scene, uniqueId);
+        Object limit = RedisUtil.get(uploadLockKey);
+        if (limit != null &&  (Integer) limit > limitTimes) {
+            throw new ServiceException(ServiceErrorCodes.FILE_UPLOAD_LIMIT);
+        } else {
+            RedisUtil.incr(uploadLockKey, 1);
+            if (limit == null) {
+                RedisUtil.expire(uploadLockKey, SysConstant.HOUR_1);
+            }
+        }
+        // ip地址限制
+        String clientIP = ServletUtils.getClientIP();
+        if (clientIP != null) {
+            uploadLockKey = RedisKeyConstant.getUploadLockKey(scene, clientIP);
+            limit = RedisUtil.get(uploadLockKey);
+            if (limit != null &&  (Integer) limit > limitTimes) {
+                throw new ServiceException(ServiceErrorCodes.FILE_UPLOAD_LIMIT);
+            } else {
+                RedisUtil.incr(uploadLockKey, 1);
+                if (limit == null) {
+                    RedisUtil.expire(uploadLockKey, SysConstant.HOUR_1);
+                }
+            }
+        }
     }
 
     /**

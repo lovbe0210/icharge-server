@@ -1,5 +1,6 @@
 package com.lovbe.icharge.service;
 
+import com.lovbe.icharge.common.model.dto.UploadDTO;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.MessageActionVo;
 import com.lovbe.icharge.entity.vo.MessageSessionVo;
@@ -98,4 +99,14 @@ public interface ChatMessageService {
      * @date: 2025/3/8 13:34
      */
     MessageActionVo rollbackMessageLog(Long messageId, Long userId);
+
+    /**
+     * @description: 发送聊天记录文件
+     * @param: uploadDTO
+     * @param: userId
+     * @return: java.lang.String
+     * @author: lovbe0210
+     * @date: 2025/3/11 23:06
+     */
+    String uploadChatFile(UploadDTO uploadDTO, Long userId);
 }

@@ -2,6 +2,8 @@ package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
@@ -17,6 +19,7 @@ import me.zhyd.oauth.utils.AuthStateUtils;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -144,6 +147,10 @@ public class UserController {
     @PutMapping("/update")
     public ResponseBean updateUserInfo(@RequestHeader(name = SysConstant.USERID) Long userId,
                                        @Validated UpdateUserDTO userDTO) {
+        MultipartFile avatarFile = userDTO.getAvatarFile();
+        if (avatarFile != null && avatarFile.getSize() > SysConstant.SIZE_5MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_5);
+        }
         userService.updateUserInfo(userId, userDTO);
         return ResponseBean.ok();
     }

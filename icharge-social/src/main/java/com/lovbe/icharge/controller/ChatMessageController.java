@@ -2,8 +2,12 @@ package com.lovbe.icharge.controller;
 
 import cn.hutool.core.codec.Base64;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ServiceErrorCodes;
+import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.UploadDTO;
+import com.lovbe.icharge.common.model.dto.UrlUploadDTO;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.ConversationDTO;
@@ -15,6 +19,7 @@ import com.lovbe.icharge.service.ChatMessageService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -112,6 +117,27 @@ public class ChatMessageController {
                                                           @RequestHeader(SysConstant.USERID) Long userId) {
         MessageActionVo messageActionVo = chatMessageService.rollbackMessageLog(baseRequest.getData().getMessageId(), userId);
         return ResponseBean.ok(messageActionVo);
+    }
+
+    /**
+     * @description: 通过url上传文件
+     * @param: uploadDTO
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/3/11 22:25
+     */
+    @PostMapping("/chat/upload")
+    public ResponseBean upload(@Valid UploadDTO uploadDTO,
+                               @RequestHeader(value = SysConstant.USERID) Long userId) {
+        MultipartFile file = uploadDTO.getFile();
+        if (file == null) {
+            throw new ServiceException(ServiceErrorCodes.FILE_IS_NULL);
+        }
+        if (file.getSize() > SysConstant.SIZE_10MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        }
+        String path = chatMessageService.uploadChatFile(uploadDTO, userId);
+        return ResponseBean.ok(path);
     }
 
 }

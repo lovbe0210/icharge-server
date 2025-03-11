@@ -7,6 +7,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -17,6 +18,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -30,6 +32,7 @@ import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -60,6 +63,8 @@ public class ColumnServiceImpl implements ColumnService {
     private CommonService commonService;
     @Resource
     private ArticleService articleService;
+    @Resource
+    private ServiceProperties serviceProperties;
 
     @Override
     public ColumnVo createColumn(CreateColumnDTO data, long userId) {
@@ -118,8 +123,10 @@ public class ColumnServiceImpl implements ColumnService {
         // 判断是否需要更新封面文件
         if (columnDTO.getCoverFile() != null) {
             // 上传文件
+            CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId),
+                    SysConstant.FILE_SCENE_COVER, serviceProperties.getCoverUploadLimit());
             ResponseBean<String> upload = storageService
-                    .upload(new FileUploadDTO(columnDTO.getCoverFile(), SysConstant.FILE_SCENE_COVER));
+                    .upload(new FileUploadDTO(columnDTO.getCoverFile(), SysConstant.FILE_SCENE_COVER, String.valueOf(userId)));
             if (!upload.isResult()) {
                 log.error("[更新专栏信息] --- 封面上传失败，errorInfo: {}", upload.getMessage());
                 throw new ServiceException(ServiceErrorCodes.ARTICLE_INFO_UPDATE_FAILED);

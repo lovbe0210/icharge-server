@@ -26,4 +26,9 @@ public class UrlUploadDTO {
      */
     @NotBlank(message = "文件上传场景不得为空")
     private String pathPrefix;
+    /**
+     * 路径所属（人员id或浏览器指纹）
+     */
+    @NotNull(message = "文件归属路径不得为空")
+    private String pathFlag;
 }

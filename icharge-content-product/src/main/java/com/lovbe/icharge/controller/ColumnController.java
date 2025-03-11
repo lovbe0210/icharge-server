@@ -173,8 +173,8 @@ public class ColumnController {
     public ResponseBean<ArticleVo> updateColumnInfo(@Validated ColumnDTO columnDTO,
                                                     @RequestHeader(SysConstant.USERID) long userId) {
         MultipartFile coverFile = columnDTO.getCoverFile();
-        if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_10MB) {
-            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        if (coverFile != null && coverFile.getSize() > SysConstant.SIZE_5MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_5);
         }
         columnService.updateColumn(columnDTO, userId);
         return ResponseBean.ok();

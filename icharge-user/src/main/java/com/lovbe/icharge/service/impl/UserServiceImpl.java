@@ -1,13 +1,11 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
-import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
@@ -21,10 +19,9 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
-import com.lovbe.icharge.config.ServiceProperties;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
-import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
 import com.lovbe.icharge.service.AccountService;
@@ -35,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.request.AuthQqRequest;
 import me.zhyd.oauth.request.AuthRequest;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -155,6 +151,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUserInfo(Long userId, UpdateUserDTO userDTO) {
+        // 频率限制
+        CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId),
+                SysConstant.FILE_SCENE_AVATAR, properties.getUploadLimit());
         // 业务参数校验
         UserInfoDo userInfo = new UserInfoDo();
         userInfo.setUpdateTime(new Date());
@@ -166,7 +165,7 @@ public class UserServiceImpl implements UserService {
         BeanUtil.copyProperties(userDTO, userInfo);
         MultipartFile avatarFile = userDTO.getAvatarFile();
         if (avatarFile != null) {
-            ResponseBean<String> upload = storageService.upload(new FileUploadDTO(avatarFile, SysConstant.FILE_SCENE_AVATAR));
+            ResponseBean<String> upload = storageService.upload(new FileUploadDTO(avatarFile, SysConstant.FILE_SCENE_AVATAR, String.valueOf(userId)));
             if (!upload.isResult()) {
                 log.error("[更新用户信息] --- 头像上传失败，errorInfo: {}", upload.getMessage());
                 throw new ServiceException(ServiceErrorCodes.USER_INFO_UPDATE_FAILED);

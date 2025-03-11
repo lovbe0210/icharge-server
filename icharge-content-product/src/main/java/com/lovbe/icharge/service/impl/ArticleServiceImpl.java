@@ -6,6 +6,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -32,12 +33,10 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.*;
 import java.util.function.Function;
@@ -63,6 +62,8 @@ public class ArticleServiceImpl implements ArticleService {
     private CommonService commonService;
     @Resource
     private IndividuationService inService;
+    @Resource
+    private ServiceProperties serviceProperties;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.action-content-publish}")
     private String publishActionTopic;
@@ -147,9 +148,11 @@ public class ArticleServiceImpl implements ArticleService {
         BeanUtil.copyProperties(articleDTO, articleDo);
         // 判断是否需要更新封面文件
         if (!simpleUpdate && articleDTO.getCoverFile() != null) {
+            CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId),
+                    SysConstant.FILE_SCENE_COVER, serviceProperties.getCoverUploadLimit());
             // 上传文件
             ResponseBean<String> upload = storageService
-                    .upload(new FileUploadDTO(articleDTO.getCoverFile(), SysConstant.FILE_SCENE_COVER));
+                    .upload(new FileUploadDTO(articleDTO.getCoverFile(), SysConstant.FILE_SCENE_COVER, String.valueOf(userId)));
             if (!upload.isResult()) {
                 log.error("[更新文章信息] --- 封面上传失败，errorInfo: {}", upload.getMessage());
                 throw new ServiceException(ServiceErrorCodes.ARTICLE_INFO_UPDATE_FAILED);

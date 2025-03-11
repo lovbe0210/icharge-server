@@ -6,12 +6,16 @@ import cn.hutool.core.map.MapUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
+import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
+import com.lovbe.icharge.common.model.dto.UploadDTO;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
@@ -25,6 +29,7 @@ import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
 import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.UserSocialService;
+import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,11 +56,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private ConversationDao conversationDao;
     @Resource
     private ChatMessageLogDao messageLogDao;
-
+    @Resource
+    private StorageService storageService;
     @Resource
     private CommonService commonService;
     @Resource
     private UserSocialService socialService;
+    @Resource
+    private ServiceProperties serviceProperties;
 
     @Value("${spring.kafka.topics.chat-send-message}")
     private String sendMessageTopic;
@@ -477,5 +485,19 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         }
         return new MessageActionVo().setMessageId(messageId)
                 .setResult(true);
+    }
+
+    @Override
+    public String uploadChatFile(UploadDTO uploadDTO, Long userId) {
+        CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId),
+                SysConstant.FILE_SCENE_CHAT, serviceProperties.getUploadLimit());
+        String pathFlag = String.valueOf(userId);
+        ResponseBean<String> responseBean = storageService
+                .upload(new FileUploadDTO(uploadDTO.getFile(), SysConstant.FILE_SCENE_CHAT, pathFlag));
+        if (responseBean != null && responseBean.isResult()) {
+            return responseBean.getData();
+        } else {
+            throw new ServiceException(ServiceErrorCodes.FILE_UPLOAD_FAILED);
+        }
     }
 }

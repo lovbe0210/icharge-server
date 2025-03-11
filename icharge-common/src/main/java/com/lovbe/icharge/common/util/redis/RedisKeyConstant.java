@@ -45,6 +45,10 @@ public abstract class RedisKeyConstant {
      * 内容精选服务
      */
     public static final String PICKS = "content-picks:";
+    /**
+     * 存储服务限制频率
+     */
+    public static final String STORAGE = "storage:";
 
 
     /**
@@ -112,7 +116,7 @@ public abstract class RedisKeyConstant {
     }
 
     /** 
-     * @description: 获取验证码发送频率验证
+     * @description: 获取验证码是否使用
      * @param: String
      * @return: String
      * @author: lovbe0210
@@ -131,6 +135,17 @@ public abstract class RedisKeyConstant {
      */
     public static String getCodeLockKey(String payload) {
         return BASE_PROJECT + AUTH + "code-lock:" + payload;
+    }
+
+    /**
+     * @description: 获取文件上传频率验证
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:23
+     */
+    public static String getUploadLockKey(String scene, String payload) {
+        return BASE_PROJECT + STORAGE + "upload-lock:" + scene + ":" + payload;
     }
 
     /**

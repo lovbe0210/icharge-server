@@ -3,6 +3,7 @@ package com.lovbe.icharge.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -14,6 +15,7 @@ import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.service.CommonService;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.NoticeConfigDao;
@@ -69,6 +71,8 @@ public class ContentSocialServiceImpl implements ContentSocialService {
     private SocialNoticeDao socialNoticeDao;
     @Resource
     private NoticeConfigDao noticeConfigDao;
+    @Resource
+    private ServiceProperties serviceProperties;
 
     @Override
     public void contentLikeMark(ContentLikeDTO data, Long userId) {
@@ -242,9 +246,10 @@ public class ContentSocialServiceImpl implements ContentSocialService {
         // 图片文件上传
         MultipartFile contentImgFile = replyCommentDTO.getContentImgFile();
         if (contentImgFile != null) {
+            CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId), SysConstant.FILE_SCENE_COMMENT, serviceProperties.getUploadLimit());
             // 上传文件
             ResponseBean<String> upload = storageService
-                    .upload(new FileUploadDTO(contentImgFile, SysConstant.FILE_SCENE_COMMENT));
+                    .upload(new FileUploadDTO(contentImgFile, SysConstant.FILE_SCENE_COMMENT, String.valueOf(userId)));
             if (!upload.isResult()) {
                 log.error("[发表评论回复] --- 图片上传失败，errorInfo: {}", upload.getMessage());
                 throw new ServiceException(ServiceErrorCodes.COMMENT_IMAGE_UPLOAD_FAILED);

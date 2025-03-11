@@ -2,6 +2,7 @@ package com.lovbe.icharge.common.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 
 /**
  * @Author: lovbe0210
@@ -9,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @Description: 微调参数
  */
 @Data
+@RefreshScope
 @ConfigurationProperties(prefix = "spring.ai.fine-tune")
 public class AIPromptProperties {
     /**
