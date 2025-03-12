@@ -20,10 +20,8 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
-import com.lovbe.icharge.entity.dto.ArticleDTO;
-import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
-import com.lovbe.icharge.entity.dto.ContentDTO;
-import com.lovbe.icharge.entity.dto.ContentPublishDTO;
+import com.lovbe.icharge.dao.CreateRecordDao;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
@@ -58,6 +56,8 @@ public class ArticleServiceImpl implements ArticleService {
     private StorageService storageService;
     @Resource
     private ColumnDao columnDao;
+    @Resource
+    private CreateRecordDao createRecordDao;
     @Resource
     private CommonService commonService;
     @Resource
@@ -578,7 +578,16 @@ public class ArticleServiceImpl implements ArticleService {
                                 articleEsEntity.setTags(StringUtils.collectionToDelimitedString(subList, ","));
                             }
                         }
+                        // 审核通过，更新elasticsearch
                         commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
+                        // 审核通过，更新创作记录
+                        // 发布成功创建记录
+                        CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ESSAY, articleDo.getUserId());
+                        recordDo.setUid(articleDo.getUid())
+                                .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                                .setCreateTime(new Date())
+                                .setUpdateTime(recordDo.getCreateTime());
+                        createRecordDao.insertOrUpdate(recordDo);
                     }
                 } else if (resultDto != null && !resultDto.isResult()) {
                     log.info("[文章内容审核] --- 大模型审核失败, reason: {}", resultDto.getReason());

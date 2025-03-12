@@ -44,7 +44,7 @@ public class UserSocialController {
     }
 
     /**
-     * @description: 获取关注记录
+     * @description: 获取指定人员的关注记录
      * @param: targetUser
      * @param: userId
      * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.dto.RelationshipDo>
@@ -58,7 +58,7 @@ public class UserSocialController {
     }
 
     /**
-     * @description: 获取关注记录
+     * @description: 获取当前用户和指定人员的关注记录
      * @param: targetUser
      * @param: userId
      * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.dto.RelationshipDo>
@@ -81,11 +81,31 @@ public class UserSocialController {
      */
     @PostMapping("/user/relationship/{ship}")
     public ResponseBean<PageBean> getFollowFansList(@RequestBody @Valid BaseRequest<RequestListDTO> baseRequest,
-                                                      @PathVariable("ship") String targetShip,
-                                                      @RequestHeader("userId") Long userId) {
+                                                    @PathVariable("ship") String targetShip,
+                                                    @RequestHeader("userId") Long userId) {
         return ResponseBean.ok(socialService.getFollowFansList(userId, baseRequest.getData(), targetShip));
     }
 
+    /**
+     * @description: 获取所有关注用户id
+     * @param: userId
+     * @param: targetShip
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<java.util.List<com.lovbe.icharge.common.model.vo.RelationshipVo>>
+     * @author: lovbe0210
+     * @date: 2025/1/22 1:06
+     */
+    @PostMapping("/user/follow/users")
+    public ResponseBean<List<Long>> getFollowUserList(@RequestHeader("userId") Long userId) {
+        return ResponseBean.ok(socialService.getFollowUserList(userId));
+    }
+
+    /**
+     * @description: 获取粉丝关注统计数
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<java.util.Map>
+     * @author: lovbe0210
+     * @date: 2025/3/13 0:19
+     */
     @GetMapping("/user/relationship/count/{userId}")
     public ResponseBean<Map> getRelationShipStatistic(@PathVariable("userId") Long userId) {
         TargetStatisticDo statistic = socialService.getRelationShipStatistic(userId);

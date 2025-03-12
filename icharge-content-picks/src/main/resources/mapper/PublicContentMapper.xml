@@ -74,7 +74,7 @@
         </foreach>
     </select>
 
-    <!-- 获取精选文章列表 -->
+    <!-- 通过id获取文章列表 -->
     <select id="selectPublicArticleList" resultMap="publicArticleVoMap">
         SELECT a.*, a.tags tags_str,
                c.uri column_uri, c.title column_name,
@@ -350,12 +350,33 @@
     <select id="getRamblyjotListByIds" resultType="com.lovbe.icharge.common.model.dto.RamblyJotDo">
         SELECT
             ce.*,
-            ce.preview_img preview_img_str
+            ce.preview_img preview_img_str,
+            ce.preview_img,
+            s.like_count, s.comment_count, s.collect_count, s.view_count
         FROM c_essay ce
+        LEFT JOIN s_interaction_statistic s ON ce.uid = s.uid
         where uid in
         <foreach collection="data" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
+            AND ce.is_public = 1
+            AND ce.status = 'A'
+            AND ce.publish_status = 3
+    </select>
+
+    <!-- 获取关注用户动态 -->
+    <select id="getCreateRecord" resultType="com.lovbe.icharge.entity.vo.CreateRecordVo">
+        SELECT
+            ccr.uid targetId,
+            ccr.target_type targetType,
+            ccr.update_time createTime
+        FROM `c_create_record` ccr
+        WHERE ccr.user_id IN
+            <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        ORDER BY ccr.update_time DESC
+        LIMIT #{data.offset}, #{data.limit}
     </select>
 
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">

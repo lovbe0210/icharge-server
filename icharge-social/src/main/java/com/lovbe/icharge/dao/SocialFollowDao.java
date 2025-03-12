@@ -61,4 +61,13 @@ public interface SocialFollowDao extends BaseMapper<RelationshipDo> {
      * @date: 2025/1/22 21:38
      */
     TargetStatisticDo selectShipStatistic(@Param("userId") Long userId);
+
+    /**
+     * @description: 获取所有关注用户id
+     * @param: userId
+     * @return: java.util.List<java.lang.Long>
+     * @author: lovbe0210
+     * @date: 2025/3/13 0:26
+     */
+    List<Long> getFollowUserList(@Param("userId") Long userId);
 }

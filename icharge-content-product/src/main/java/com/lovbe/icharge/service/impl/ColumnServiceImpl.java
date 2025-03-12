@@ -22,9 +22,11 @@ import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
+import com.lovbe.icharge.dao.CreateRecordDao;
 import com.lovbe.icharge.entity.dto.ColumnDTO;
 import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
 import com.lovbe.icharge.entity.dto.CreateColumnDTO;
+import com.lovbe.icharge.common.model.dto.CreateRecordDo;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
 import com.lovbe.icharge.service.ArticleService;
@@ -32,13 +34,11 @@ import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,6 +59,8 @@ public class ColumnServiceImpl implements ColumnService {
     private ArticleDao articleDao;
     @Resource
     private ContentDao contentDao;
+    @Resource
+    private CreateRecordDao createRecordDao;
     @Resource
     private CommonService commonService;
     @Resource
@@ -87,6 +89,13 @@ public class ColumnServiceImpl implements ColumnService {
                     .setSynopsis(columnDo.getSynopsis());
             commonService.updateElasticsearchColumn(Arrays.asList(esEntity));
         }
+        // 发布创建记录
+        CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ESSAY, columnDo.getUserId());
+        recordDo.setUid(columnDo.getUid())
+                .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                .setCreateTime(new Date())
+                .setUpdateTime(recordDo.getCreateTime());
+        createRecordDao.insertOrUpdate(recordDo);
         return columnVo;
     }
 

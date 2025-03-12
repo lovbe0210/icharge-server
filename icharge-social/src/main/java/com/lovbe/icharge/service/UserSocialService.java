@@ -63,4 +63,13 @@ public interface UserSocialService {
      * @date: 2025/1/23 21:24
      */
     List<RelationshipVo> getRelationshipList(List<Long> userIdList, Long userId);
+
+    /**
+     * @description: 获取所有关注用户id
+     * @param: userId
+     * @return: java.util.List<java.lang.Long>
+     * @author: lovbe0210
+     * @date: 2025/3/13 0:22
+     */
+    List<Long> getFollowUserList(Long userId);
 }

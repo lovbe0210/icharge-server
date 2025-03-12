@@ -671,6 +671,94 @@ public class PublicContentServiceImpl implements PublicContentService {
         return collect;
     }
 
+    @Override
+    public PageBean<CreateRecordVo> getCreateRecord(RecommendRequestDTO data, Long userId) {
+        // 获取我的关注列表
+        List<Long> userIds = new ArrayList<>();
+        ResponseBean<List<Long>> responseBean = socialService.getFollowUserList(userId);
+        if (responseBean != null && responseBean.isResult()) {
+            userIds.addAll(responseBean.getData());
+        }
+        if (CollectionUtils.isEmpty(userIds)) {
+            return new PageBean<>(false, List.of());
+        }
+        List<CreateRecordVo> createRecordList = publicContentDao.getCreateRecord(data, userIds);
+        if (CollectionUtils.isEmpty(createRecordList)) {
+            return new PageBean<>(false, List.of());
+        }
+        Map<Integer, List<Long>> targetIdMap = createRecordList.stream()
+                .collect(Collectors.groupingBy(CreateRecordVo::getTargetType,
+                        Collectors.mapping(CreateRecordVo::getTargetId, Collectors.toList())));
+        HashMap<Long, FeaturedArticleVo> articleMap = new HashMap<>();
+        HashMap<Long, RecommendColumnVo> columnMap = new HashMap<>();
+        HashMap<Long, RamblyJotDo> ramblyjotMap = new HashMap<>();
+        targetIdMap.forEach((type, targetIds) -> {
+            switch (type) {
+                case SysConstant.TARGET_TYPE_ARTICLE -> {
+                    List<FeaturedArticleVo> articleList = publicContentDao.selectPublicArticleList(targetIds);
+                    if (!CollectionUtils.isEmpty(articleList)) {
+                        articleMap.putAll(articleList.stream()
+                                .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity())));
+                    }
+                }
+                case SysConstant.TARGET_TYPE_COLUMN -> {
+                    List<RecommendColumnVo> columnList = publicContentDao.selectPublicColumnList(targetIds);
+                    if (!CollectionUtils.isEmpty(columnList)) {
+                        columnMap.putAll(columnList.stream()
+                                .collect(Collectors.toMap(RecommendColumnVo::getUid, Function.identity())));
+                    }
+                }
+                case SysConstant.TARGET_TYPE_ESSAY -> {
+                    List<RamblyJotDo> columnList = publicContentDao.getRamblyjotListByIds(targetIds);
+                    if (!CollectionUtils.isEmpty(columnList)) {
+                        ramblyjotMap.putAll(columnList.stream()
+                                .collect(Collectors.toMap(RamblyJotDo::getUid, Function.identity())));
+                    }
+                }
+            }
+        });
+        String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
+        Set<Object> tmp = RedisUtil.zsGetSet(userLikedSet, 0, -1);
+        Set<Object> likeSet = tmp == null ? Set.of() : tmp;
+        List<CreateRecordVo> collect = createRecordList.stream()
+                .filter(record -> {
+                    boolean flag = false;
+                    int targetType = record.getTargetType();
+                    switch (targetType) {
+                        case SysConstant.TARGET_TYPE_ARTICLE -> {
+                            FeaturedArticleVo articleVo = articleMap.get(record.getTargetId());
+                            if (articleVo != null) {
+                                record.setArticleInfo(articleVo);
+                                record.setUserInfo(commonService.getCacheUser(articleVo.getUserInfo().getUid()));
+                                flag = true;
+                            }
+                        }
+                        case SysConstant.TARGET_TYPE_COLUMN -> {
+                            RecommendColumnVo columnVo = columnMap.get(record.getTargetId());
+                            if (columnVo != null) {
+                                record.setColumnInfo(columnVo);
+                                record.setUserInfo(commonService.getCacheUser(columnVo.getUserInfo().getUid()));
+                                flag = true;
+                            }
+                        }
+                        case SysConstant.TARGET_TYPE_ESSAY -> {
+                            RamblyJotDo ramblyJotDo = ramblyjotMap.get(record.getTargetId());
+                            if (ramblyJotDo != null) {
+                                record.setRamblyJotDo(ramblyJotDo);
+                                record.setUserInfo(commonService.getCacheUser(ramblyJotDo.getUserId()));
+                                flag = true;
+                            }
+                        }
+                    }
+                    return flag;
+                })
+                .peek(record -> {
+                    record.setIfLike(likeSet.contains(record.getTargetId()) ? 1 : 0);
+                })
+                .collect(Collectors.toList());
+        return new PageBean<>(true, collect);
+    }
+
 
     /**
      * @description: 获取排行榜文章

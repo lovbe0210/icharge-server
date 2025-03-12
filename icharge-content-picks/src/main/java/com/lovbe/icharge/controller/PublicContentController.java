@@ -108,7 +108,7 @@ public class PublicContentController {
      */
     @PostMapping("/ramblyjot/ids")
     public ResponseBean<List<RamblyJotVo>> getRamblyjotListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
-                                                             @RequestHeader(value = SysConstant.USERID) Long userId) {
+                                                                 @RequestHeader(value = SysConstant.USERID) Long userId) {
         return ResponseBean.ok(contentService.getRamblyjotListByIds(baseRequest.getData(), userId));
     }
 
@@ -298,6 +298,20 @@ public class PublicContentController {
     public ResponseBean getPublicColumn(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
                                         @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         PageBean<RecommendColumnVo> featuredArticle = contentService.getPublicColumn(baseRequest.getData(), userId);
+        return ResponseBean.ok(featuredArticle);
+    }
+
+    /**
+     * description: 获取关注用户动态
+     *
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/follow/create/record")
+    public ResponseBean getCreateRecord(@RequestBody @Valid BaseRequest<RecommendRequestDTO> baseRequest,
+                                        @RequestHeader(value = SysConstant.USERID) Long userId) {
+        PageBean<CreateRecordVo> featuredArticle = contentService.getCreateRecord(baseRequest.getData(), userId);
         return ResponseBean.ok(featuredArticle);
     }
 }

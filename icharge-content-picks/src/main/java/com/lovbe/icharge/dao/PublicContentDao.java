@@ -3,6 +3,7 @@ package com.lovbe.icharge.dao;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
+import com.lovbe.icharge.entity.vo.CreateRecordVo;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
 import com.lovbe.icharge.entity.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
@@ -256,4 +257,15 @@ public interface PublicContentDao{
      * @date: 2025/2/24 20:32
      */
     List<RamblyJotDo> getRamblyjotListByIds(@Param("data") List<Long> data);
+
+    /**
+     * @description: 获取关注用户动态
+     * @param: data
+     * @param: userId
+     * @return: java.util.List<com.lovbe.icharge.entity.vo.CreateRecordVo>
+     * @author: lovbe0210
+     * @date: 2025/3/13 0:09
+     */
+    List<CreateRecordVo> getCreateRecord(@Param("data") RecommendRequestDTO data,
+                                         @Param("userIds") List<Long> userIds);
 }

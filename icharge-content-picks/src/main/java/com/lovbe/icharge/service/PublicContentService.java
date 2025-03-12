@@ -194,4 +194,14 @@ public interface PublicContentService {
      * @date: 2025/2/24 20:24
      */
     List<RamblyJotVo> getRamblyjotListByIds(List<Long> data, Long userId);
+
+    /**
+     * @description: 获取关注用户动态
+     * @param: data
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.PageBean<com.lovbe.icharge.entity.vo.CreateRecordVo>
+     * @author: lovbe0210
+     * @date: 2025/3/13 0:07
+     */
+    PageBean<CreateRecordVo> getCreateRecord(RecommendRequestDTO data, Long userId);
 }

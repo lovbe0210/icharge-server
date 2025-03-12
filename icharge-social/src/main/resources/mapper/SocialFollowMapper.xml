@@ -52,4 +52,14 @@
     <select id="selectShipStatistic" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
         SELECT * FROM s_interaction_statistic where uid = #{userId}
     </select>
+
+    <!-- 获取所有关注用户id -->
+    <select id="getFollowUserList" resultType="java.lang.Long">
+        SELECT DISTINCT user_id
+        FROM (
+              SELECT user_id_slave AS user_id FROM s_relationship WHERE user_id_master = #{userId} AND master_watch_slave = 1
+              UNION ALL
+              SELECT user_id_master AS user_id FROM s_relationship WHERE user_id_slave = #{userId} AND slave_watch_master = 1
+        ) res
+    </select>
 </mapper>

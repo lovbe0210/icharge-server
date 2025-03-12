@@ -190,4 +190,10 @@ public class UserSocialServiceImpl implements UserSocialService {
                 .collect(Collectors.toList());
         return relationshipList;
     }
+
+    @Override
+    public List<Long> getFollowUserList(Long userId) {
+        List<Long> followUserIds = followDao.getFollowUserList(userId);
+        return CollectionUtils.isEmpty(followUserIds) ? List.of() : followUserIds;
+    }
 }

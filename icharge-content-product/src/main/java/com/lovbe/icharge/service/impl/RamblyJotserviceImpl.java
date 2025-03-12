@@ -17,8 +17,10 @@ import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ContentDao;
+import com.lovbe.icharge.dao.CreateRecordDao;
 import com.lovbe.icharge.dao.RamblyJotDao;
 import com.lovbe.icharge.entity.dto.ContentPublishDTO;
+import com.lovbe.icharge.common.model.dto.CreateRecordDo;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import com.lovbe.icharge.service.RamblyJotService;
@@ -48,6 +50,8 @@ public class RamblyJotserviceImpl implements RamblyJotService {
     private RamblyJotDao ramblyJotDao;
     @Resource
     private ContentDao contentDao;
+    @Resource
+    private CreateRecordDao createRecordDao;
     @Resource
     private CommonService commonService;
     @Resource
@@ -156,6 +160,10 @@ public class RamblyJotserviceImpl implements RamblyJotService {
         }
         for (ContentPublishDTO publishDTO : collect) {
             // 获取内容进行审核
+            RamblyJotDo ramblyJotDo = ramblyJotDao.selectById(publishDTO.getTargetId());
+            if (ramblyJotDo == null || !CommonStatusEnum.isNormal(ramblyJotDo.getStatus())) {
+                continue;
+            }
             ContentDo contentDo = contentMap.get(publishDTO.getContentId());
             if (contentDo == null || !StringUtils.hasLength(contentDo.getContent())) {
                 continue;
@@ -181,8 +189,15 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                     log.info("[随笔内容审核] --- 大模型审核通过");
                     // 根据发布时间contentId更新发布状态
                     updateWrapper.set("publish_status", SysConstant.PUBLISH_SUCCESS);
+                    // 发布成功创建记录
+                    CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ESSAY, ramblyJotDo.getUserId());
+                    recordDo.setUid(ramblyJotDo.getUid())
+                            .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                            .setCreateTime(new Date())
+                            .setUpdateTime(recordDo.getCreateTime());
+                    createRecordDao.insertOrUpdate(recordDo);
                 } else {
-                    log.info("[文章内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
+                    log.info("[随笔内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
                     updateWrapper.set("publish_status", SysConstant.PUBLISH_FAILED);
                 }
                 ramblyJotDao.update(updateWrapper);

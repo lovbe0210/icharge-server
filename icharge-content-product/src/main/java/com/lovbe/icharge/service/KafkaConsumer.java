@@ -36,7 +36,7 @@ public class KafkaConsumer {
     private KafkaProperties kafkaProperties;
 
     /**
-     * @description: 系统启动后每5分钟消费一次
+     * @description: 文章发布消息处理 系统启动后每5分钟消费一次
      * @author: lovbe0210
      * @date: 2025/2/11 21:25
      */
