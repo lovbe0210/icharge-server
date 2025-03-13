@@ -1,6 +1,7 @@
 package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.UnreadMsgStatisticVo;
 import org.apache.ibatis.annotations.Mapper;
@@ -28,7 +29,7 @@ public interface SocialNoticeDao extends BaseMapper<SocialNoticeDo> {
      * @description: 获取评论通知列表
      * @param: data
      * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.dto.SocialNoticeDo>
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.SocialNoticeDo>
      * @author: lovbe0210
      * @date: 2025/2/24 16:43
      */
@@ -38,7 +39,7 @@ public interface SocialNoticeDao extends BaseMapper<SocialNoticeDo> {
      * @description: 获取点赞通知列表
      * @param: data
      * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.dto.SocialNoticeDo>
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.SocialNoticeDo>
      * @author: lovbe0210
      * @date: 2025/2/25 15:56
      */
@@ -48,7 +49,7 @@ public interface SocialNoticeDao extends BaseMapper<SocialNoticeDo> {
      * @description: 获取指定类型通知分页列表
      * @param: data
      * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.dto.SocialNoticeDo>
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.SocialNoticeDo>
      * @author: lovbe0210
      * @date: 2025/2/27 23:34
      */

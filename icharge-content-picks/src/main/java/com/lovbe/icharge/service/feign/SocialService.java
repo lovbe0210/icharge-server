@@ -1,9 +1,9 @@
 package com.lovbe.icharge.service.feign;
 
+import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.vo.RelationshipVo;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,8 +25,8 @@ public interface SocialService {
      * @author: lovbe0210
      * @date: 2025/1/22 15:13
      */
-    @GetMapping("/api/sl/user/follows/query")
-    ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody List<Long> userIds,
+    @PostMapping("/api/sl/user/follows/query")
+    ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody BaseRequest<List<Long>>  userIds,
                                                            @RequestHeader("userId") Long userId);
 
     /**
@@ -37,6 +37,6 @@ public interface SocialService {
      * @author: lovbe0210
      * @date: 2025/1/22 1:06
      */
-    @PostMapping("/user/follow/users")
+    @PostMapping("/api/sl/user/follows/users")
     ResponseBean<List<Long>> getFollowUserList(@RequestHeader("userId") Long userId);
 }

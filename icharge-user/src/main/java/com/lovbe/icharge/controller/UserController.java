@@ -7,8 +7,10 @@ import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -153,6 +155,19 @@ public class UserController {
         }
         userService.updateUserInfo(userId, userDTO);
         return ResponseBean.ok();
+    }
+
+    /**
+     * @description: 获取用户统计信息
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/3/14 0:23
+     */
+    @GetMapping("/statistic")
+    public ResponseBean getStatisticInfo(@RequestHeader(name = SysConstant.USERID) Long userId) {
+        UserStatisticVo statisticVo = userService.getStatisticInfo(userId);
+        return ResponseBean.ok(statisticVo);
     }
 
 

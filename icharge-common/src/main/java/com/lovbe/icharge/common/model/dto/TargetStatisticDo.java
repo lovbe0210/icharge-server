@@ -1,6 +1,5 @@
 package com.lovbe.icharge.common.model.dto;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;

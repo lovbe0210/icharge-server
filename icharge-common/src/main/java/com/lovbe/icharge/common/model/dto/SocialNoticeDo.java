@@ -1,4 +1,4 @@
-package com.lovbe.icharge.entity.dto;
+package com.lovbe.icharge.common.model.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -20,7 +20,7 @@ public class SocialNoticeDo extends BaseEntity {
      */
     private Long userId;
     /**
-     * 通知类型 1评论 2回复 3点赞 4新增关注 0系统消息
+     * 通知类型 1评论 2回复 3点赞 4新增关注 5文章审核结果 6随笔审核结果 0系统消息
      */
     private int noticeType;
     /**
@@ -54,6 +54,10 @@ public class SocialNoticeDo extends BaseEntity {
      */
     @TableField(exist = false)
     private String replyContent;
+    /**
+     * 通知内容
+     */
+    private String noticeContent;
     /**
      * 阅读状态 0未读 1已读
      */

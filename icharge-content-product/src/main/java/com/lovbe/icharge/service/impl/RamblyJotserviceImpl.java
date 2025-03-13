@@ -16,6 +16,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.dao.CreateRecordDao;
 import com.lovbe.icharge.dao.RamblyJotDao;
@@ -148,6 +149,7 @@ public class RamblyJotserviceImpl implements RamblyJotService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void handlerPublishAction(List<ContentPublishDTO> collect) {
         // 随笔不可编辑，因此直接获取content内容
         List<Long> contentIdList = collect.stream()
@@ -197,8 +199,37 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                             .setUpdateTime(recordDo.getCreateTime());
                     createRecordDao.insertOrUpdate(recordDo);
                 } else {
-                    log.info("[随笔内容审核] --- kimi审核失败, reason: {}", resultDto.getReason());
+                    List<String> reasonList = resultDto.getReason();
+                    log.warn("[随笔内容审核] --- kimi审核失败, reason: {}", reasonList);
                     updateWrapper.set("publish_status", SysConstant.PUBLISH_FAILED);
+                    // 记录审核失败通知
+                    String noticeContent = "随笔发布失败，公开发布内容需符合本站创作内容约定";
+                    if (!CollectionUtils.isEmpty(reasonList)) {
+                        StringBuilder tmp = new StringBuilder();
+                        for (String reason : reasonList) {
+                            if (reason != null && reason.contains("reason")) {
+                                try {
+                                    JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
+                                    tmp.append(entries.getStr("reason"));
+                                }catch (Exception e) {
+                                    log.error("");
+                                }
+                            } else if (reason != null) {
+                                tmp.append(reason);
+                            }
+                        }
+                        if (tmp.length() > 0) {
+                            noticeContent = tmp.toString();
+                        }
+                    }
+                    SocialNoticeDo noticeDo = new SocialNoticeDo()
+                            .setTargetId(publishDTO.getTargetId())
+                            .setUserId(ramblyJotDo.getUserId())
+                            .setNoticeType(SysConstant.NOTICE_AUDIT_EASSAY)
+                            .setActionUserId(0L)
+                            .setNoticeContent(noticeContent);
+                    noticeDo.setUid(YitIdHelper.nextId());
+                    ramblyJotDao.insertAuditNotice(noticeDo);
                 }
                 ramblyJotDao.update(updateWrapper);
             } catch (Exception e) {

@@ -355,7 +355,7 @@
             s.like_count, s.comment_count, s.collect_count, s.view_count
         FROM c_essay ce
         LEFT JOIN s_interaction_statistic s ON ce.uid = s.uid
-        where uid in
+        where ce.uid in
         <foreach collection="data" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>

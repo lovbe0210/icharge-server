@@ -17,7 +17,7 @@ import com.lovbe.icharge.dao.SocialFollowDao;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
 import com.lovbe.icharge.dao.SocialNoticeDao;
 import com.lovbe.icharge.entity.dto.NoticeConfigDo;
-import com.lovbe.icharge.entity.dto.SocialNoticeDo;
+import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;

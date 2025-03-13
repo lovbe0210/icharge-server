@@ -1,9 +1,9 @@
 package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.entity.dto.*;
-import com.lovbe.icharge.entity.vo.LikeNoticeVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

@@ -12,7 +12,7 @@
         WHERE user_id = #{userId}
           AND read_status = 0
     </select>
-    <select id="selectCommentListCount" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+    <select id="selectCommentListCount" resultType="com.lovbe.icharge.common.model.dto.SocialNoticeDo">
         SELECT
             sn.uid,
             sn.notice_type noticeType,
@@ -33,7 +33,7 @@
     </select>
 
     <!-- 获取点赞通知列表 -->
-    <select id="selectLikeListCount" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+    <select id="selectLikeListCount" resultType="com.lovbe.icharge.common.model.dto.SocialNoticeDo">
         SELECT
             sn.uid,
             sn.notice_type noticeType,
@@ -51,7 +51,7 @@
     </select>
 
     <!-- 获取指定类型通知列表 -->
-    <select id="selectList" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+    <select id="selectList" resultType="com.lovbe.icharge.common.model.dto.SocialNoticeDo">
         SELECT *
         FROM s_notices sn
         WHERE sn.user_id = #{userId}

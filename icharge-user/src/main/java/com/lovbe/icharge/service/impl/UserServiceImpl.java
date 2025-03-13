@@ -24,6 +24,7 @@ import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
+import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
@@ -236,6 +237,14 @@ public class UserServiceImpl implements UserService {
                 .set("content_id", null));
         String cacheUserKey = RedisKeyConstant.getCacheUserKey(userId);
         RedisUtil.del(cacheUserKey);
+    }
+
+    @Override
+    public UserStatisticVo getStatisticInfo(Long userId) {
+        TargetStatisticDo statisticDo = userMapper.selectStatisticInfo(userId);
+        UserStatisticVo statisticVo = new UserStatisticVo();
+        BeanUtil.copyProperties(statisticDo, statisticVo);
+        return statisticVo;
     }
 
     /**

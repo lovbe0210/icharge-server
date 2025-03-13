@@ -13,6 +13,7 @@ import com.lovbe.icharge.service.UserSocialService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -66,9 +67,10 @@ public class UserSocialController {
      * @date: 2025/1/22 1:05
      */
     @PostMapping("/user/follows/query")
-    public ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody @NotEmpty(message = "查询用户id不得为空") List<Long> userIdList,
+    public ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody @Valid BaseRequest<List<Long>> baseRequest,
                                                                   @RequestHeader("userId") Long userId) {
-        return ResponseBean.ok(socialService.getRelationshipList(userIdList, userId));
+        Assert.notEmpty(baseRequest.getData(), "查询用户id不得为空");
+        return ResponseBean.ok(socialService.getRelationshipList(baseRequest.getData(), userId));
     }
 
     /**
@@ -94,7 +96,7 @@ public class UserSocialController {
      * @author: lovbe0210
      * @date: 2025/1/22 1:06
      */
-    @PostMapping("/user/follow/users")
+    @PostMapping("/user/follows/users")
     public ResponseBean<List<Long>> getFollowUserList(@RequestHeader("userId") Long userId) {
         return ResponseBean.ok(socialService.getFollowUserList(userId));
     }

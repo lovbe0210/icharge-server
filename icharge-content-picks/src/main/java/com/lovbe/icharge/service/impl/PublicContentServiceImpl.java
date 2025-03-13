@@ -442,7 +442,7 @@ public class PublicContentServiceImpl implements PublicContentService {
         // 获取关注状态
         Set<Long> followIds = new HashSet<>();
         if (userId != null) {
-            ResponseBean<List<RelationshipVo>> relationshipList = socialService.getRelationshipList(userIds, userId);
+            ResponseBean<List<RelationshipVo>> relationshipList = socialService.getRelationshipList(new BaseRequest<>(userIds), userId);
             if (relationshipList != null && !CollectionUtils.isEmpty(relationshipList.getData())) {
                 relationshipList.getData().forEach(ship -> followIds.add(ship.getUid()));
             }
@@ -709,9 +709,9 @@ public class PublicContentServiceImpl implements PublicContentService {
                     }
                 }
                 case SysConstant.TARGET_TYPE_ESSAY -> {
-                    List<RamblyJotDo> columnList = publicContentDao.getRamblyjotListByIds(targetIds);
-                    if (!CollectionUtils.isEmpty(columnList)) {
-                        ramblyjotMap.putAll(columnList.stream()
+                    List<RamblyJotDo> ramblyJotList = publicContentDao.getRamblyjotListByIds(targetIds);
+                    if (!CollectionUtils.isEmpty(ramblyJotList)) {
+                        ramblyjotMap.putAll(ramblyJotList.stream()
                                 .collect(Collectors.toMap(RamblyJotDo::getUid, Function.identity())));
                     }
                 }
@@ -744,6 +744,11 @@ public class PublicContentServiceImpl implements PublicContentService {
                         case SysConstant.TARGET_TYPE_ESSAY -> {
                             RamblyJotDo ramblyJotDo = ramblyjotMap.get(record.getTargetId());
                             if (ramblyJotDo != null) {
+                                String previewImgStr = ramblyJotDo.getPreviewImgStr();
+                                if (StringUtils.hasText(previewImgStr)) {
+                                    List<String> parseArray = JsonUtils.parseArray(previewImgStr, String.class);
+                                    ramblyJotDo.setPreviewImg(parseArray);
+                                }
                                 record.setRamblyJotDo(ramblyJotDo);
                                 record.setUserInfo(commonService.getCacheUser(ramblyJotDo.getUserId()));
                                 flag = true;

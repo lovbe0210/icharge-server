@@ -8,6 +8,7 @@ import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
+import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import me.zhyd.oauth.request.AuthRequest;
 
 import java.util.List;
@@ -98,4 +99,13 @@ public interface UserService {
      * @date: 2025/2/6 14:26
      */
     void deleteDomainContent(DomainContentUpdateDTO data, Long userId);
+
+    /**
+     * @description: 获取用户统计信息
+     * @param: userId
+     * @return: com.lovbe.icharge.entity.vo.UserStatisticVo
+     * @author: lovbe0210
+     * @date: 2025/3/14 0:24
+     */
+    UserStatisticVo getStatisticInfo(Long userId);
 }

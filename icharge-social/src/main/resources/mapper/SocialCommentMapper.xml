@@ -156,7 +156,7 @@
     </select>
 
     <!-- 通过id获取评论回复相关信息 -->
-    <select id="selectCommentReplyListByIds" resultType="com.lovbe.icharge.entity.dto.SocialNoticeDo">
+    <select id="selectCommentReplyListByIds" resultType="com.lovbe.icharge.common.model.dto.SocialNoticeDo">
         SELECT
             sc.uid,
             sc.target_type targetType,

@@ -20,8 +20,13 @@ import java.util.Map;
 public class SocialServiceFallback extends BaseFallback implements SocialService {
 
     @Override
-    public ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody List<Long> userIds,
+    public ResponseBean<List<RelationshipVo>> getRelationshipList(@RequestBody BaseRequest<List<Long>>  userIds,
                                                                   @RequestHeader("userId") Long userId) {
+        return getFallBack();
+    }
+
+    @Override
+    public ResponseBean<List<Long>> getFollowUserList(Long userId) {
         return getFallBack();
     }
 }

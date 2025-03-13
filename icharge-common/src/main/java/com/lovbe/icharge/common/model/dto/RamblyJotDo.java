@@ -46,12 +46,22 @@ public class RamblyJotDo extends BaseEntity {
      * 点赞数
      */
     @TableField(exist = false)
-    private Integer likeCount;
+    private int likeCount;
     /**
      * 评论数
      */
     @TableField(exist = false)
-    private Integer commentCount;
+    private int commentCount;
+    /**
+     * 阅读数
+     */
+    @TableField(exist = false)
+    private int viewCount;
+    /**
+     * 收藏数
+     */
+    @TableField(exist = false)
+    private int collectCount;
     /**
      * 是否公开可见 0否1是
      */
