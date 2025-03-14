@@ -1,6 +1,8 @@
 package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 import lombok.Data;
 
 import java.util.Date;
@@ -18,6 +20,10 @@ public class SystemNoticeVo {
      */
     private Long targetId;
     /**
+     * 通知类型 1文章 2专栏 3随笔
+     */
+    private int targetType;
+    /**
      * 通知内容
      */
     private String content;
@@ -29,6 +35,14 @@ public class SystemNoticeVo {
      * 请求路径，可以是https://全路径也可以是/viw/asdas
      */
     private String url;
+    /**
+     * 文章信息
+     */
+    private PublicArticleVo articleInfo;
+    /**
+     * 随笔信息
+     */
+    private RamblyJotVo ramblyJot;
     /**
      * 是否已读
      */

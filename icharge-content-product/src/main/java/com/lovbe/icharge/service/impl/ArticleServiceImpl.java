@@ -17,6 +17,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -539,6 +540,8 @@ public class ArticleServiceImpl implements ArticleService {
                     // TODO 对于审核异常的需要放入死信队列手动审核
                     continue;
                 }
+                // 获取文章title、category等其他搜索字段
+                ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
                 // 结果解析ok
                 if (resultDto != null && resultDto.isResult()) {
                     log.info("[文章内容审核] --- 大模型审核通过");
@@ -550,8 +553,6 @@ public class ArticleServiceImpl implements ArticleService {
                         ArticleEsEntity articleEsEntity = new ArticleEsEntity()
                                 .setUid(publishDTO.getTargetId())
                                 .setContent(textValue);
-                        // 获取文章title、category等其他搜索字段
-                        ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
                         if (articleDo != null) {
                             articleEsEntity.setTitle(articleDo.getTitle())
                                     .setSummary(articleDo.getSummary())
@@ -582,7 +583,7 @@ public class ArticleServiceImpl implements ArticleService {
                         commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
                         // 审核通过，更新创作记录
                         // 发布成功创建记录
-                        CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ESSAY, articleDo.getUserId());
+                        CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ARTICLE, articleDo.getUserId());
                         recordDo.setUid(articleDo.getUid())
                                 .setStatus(CommonStatusEnum.NORMAL.getStatus())
                                 .setCreateTime(new Date())
@@ -590,8 +591,42 @@ public class ArticleServiceImpl implements ArticleService {
                         createRecordDao.insertOrUpdate(recordDo);
                     }
                 } else if (resultDto != null && !resultDto.isResult()) {
-                    log.info("[文章内容审核] --- 大模型审核失败, reason: {}", resultDto.getReason());
+                    List<String> reasonList = resultDto.getReason();
+                    log.info("[文章内容审核] --- 大模型审核失败, reason: {}", reasonList);
                     articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_FAILED);
+                    // 记录审核失败通知
+                    String noticeContent = "文章发布失败，公开发布内容需符合本站创作内容约定";
+                    if (!CollectionUtils.isEmpty(reasonList)) {
+                        StringBuilder tmp = new StringBuilder();
+                        for (int i = 0; i < reasonList.size(); i++) {
+                            String reason = reasonList.get(i);
+                            if (reason != null && reason.contains("reason")) {
+                                try {
+                                    JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
+                                    tmp.append("\"" + entries.getStr("content") + "\"");
+                                    tmp.append(entries.getStr("reason"));
+                                }catch (Exception e) {
+                                    log.error("");
+                                }
+                            } else if (reason != null) {
+                                tmp.append(reason);
+                            }
+                            if (i != reasonList.size() - 1) {
+                                tmp.append(";");
+                            }
+                        }
+                        if (tmp.length() > 0) {
+                            noticeContent = tmp.toString();
+                        }
+                    }
+                    SocialNoticeDo noticeDo = new SocialNoticeDo()
+                            .setTargetId(publishDTO.getTargetId())
+                            .setUserId(articleDo.getUserId())
+                            .setNoticeType(SysConstant.NOTICE_AUDIT_ARTICLE)
+                            .setActionUserId(0L)
+                            .setNoticeContent(noticeContent);
+                    noticeDo.setUid(YitIdHelper.nextId());
+                    articleDao.insertAuditNotice(noticeDo);
                 }
             } catch (Exception e) {
                 log.error("[文章内容审核] --- 正文内容解析失败，contentId: {}, errorInfo: {}", publishDTO.getContentId(), e.toString());

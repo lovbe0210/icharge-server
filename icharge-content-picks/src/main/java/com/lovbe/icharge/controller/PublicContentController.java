@@ -66,7 +66,7 @@ public class PublicContentController {
      */
     @PostMapping("/article/ids")
     public ResponseBean<List<PublicArticleVo>> getArticleListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
-                                                             @RequestHeader(value = SysConstant.USERID) Long userId) {
+                                                                   @RequestHeader(value = SysConstant.USERID) Long userId) {
         return ResponseBean.ok(contentService.getArticleListByIds(baseRequest.getData(), userId));
     }
 

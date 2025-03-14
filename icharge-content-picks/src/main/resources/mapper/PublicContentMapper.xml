@@ -49,6 +49,7 @@
         <foreach collection="articleIds" item="articleId" separator="," open="(" close=")">
             #{articleId}
         </foreach>
+        AND a.status = 'A'
         ORDER BY a.update_time DESC
     </select>
 
@@ -359,9 +360,7 @@
         <foreach collection="data" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
-            AND ce.is_public = 1
             AND ce.status = 'A'
-            AND ce.publish_status = 3
     </select>
 
     <!-- 获取关注用户动态 -->

@@ -272,7 +272,12 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
         if (count == null || count == 0) {
             return new PageBean<>(0, List.of());
         }
-        List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(data, userId, SysConstant.NOTICE_FOLLOW);
+        List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(new LambdaQueryWrapper<SocialNoticeDo>()
+                .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_FOLLOW)
+                .eq(SocialNoticeDo::getUserId, userId)
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
+                .orderByDesc(SocialNoticeDo::getCreateTime)
+                .last(" limit " + data.getOffset() + "," + data.getLimit()));
         List<Long> followIds = new ArrayList<>();
         List<SocialNoticeVo> collect = noticeDoList.stream()
                 .map(record -> {
@@ -292,55 +297,96 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
     @Override
     public PageBean<SystemNoticeVo> getSystemNotice(SocialNoticeReqDTO data, Long userId) {
         Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
-                .eq(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM)
+                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM, SysConstant.NOTICE_AUDIT_ARTICLE, SysConstant.NOTICE_AUDIT_EASSAY)
                 .eq(SocialNoticeDo::getUserId, userId)
                 .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus()));
         if (count == null || count == 0) {
-            return new PageBean<>(0, List.of());
+            return new PageBean<>(false, List.of());
         }
-        List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(data, userId, SysConstant.NOTICE_SYSTEM);
+        List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(new LambdaQueryWrapper<SocialNoticeDo>()
+                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM, SysConstant.NOTICE_AUDIT_ARTICLE, SysConstant.NOTICE_AUDIT_EASSAY)
+                .eq(SocialNoticeDo::getUserId, userId)
+                .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
+                .orderByDesc(SocialNoticeDo::getCreateTime)
+                .last(" limit " + data.getOffset() + "," + data.getLimit()));
+        if (CollectionUtils.isEmpty(noticeDoList)) {
+            return new PageBean<>(false, List.of());
+        }
         List<Long> articleIds = new ArrayList<>();
+        List<Long> essayIds = new ArrayList<>();
+        noticeDoList.stream()
+                .peek(record -> {
+                    int noticeType = record.getNoticeType();
+                    if (noticeType == SysConstant.NOTICE_AUDIT_ARTICLE || noticeType == SysConstant.NOTICE_SYSTEM) {
+                        articleIds.add(record.getTargetId());
+                    } else if (noticeType == SysConstant.NOTICE_AUDIT_EASSAY) {
+                        essayIds.add(record.getTargetId());
+                    }
+                })
+                .collect(Collectors.toList());
+        Map<Long, PublicArticleVo> articleMap = new HashMap<>();
+        Map<Long, RamblyJotVo> essayMap = new HashMap<>();
+        // 系统通知分为两类，系统活动和升级为一类，另一类为文章随笔审核失败说明
+        BaseRequest<Collection<Long>> baseRequest = new BaseRequest<>(articleIds);
+        if (articleIds.size() > 0) {
+            ResponseBean<List<PublicArticleVo>> articleList = cpsService.getArticleListByIds(baseRequest, userId);
+            if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
+                articleMap.putAll(articleList.getData().stream()
+                        .collect(Collectors.toMap(PublicArticleVo::getUid, Function.identity(), (a, b) -> b)));
+            }
+        }
+        if (essayIds.size() > 0) {
+            baseRequest = new BaseRequest<>(essayIds);
+            ResponseBean<List<RamblyJotVo>> essayList = cpsService.getRamblyjotListByIds(baseRequest, userId);
+            if (essayList.isResult() && !CollectionUtils.isEmpty(essayList.getData())) {
+                essayMap.putAll(essayList.getData().stream()
+                        .collect(Collectors.toMap(RamblyJotVo::getUid, Function.identity(), (a, b) -> b)));
+            }
+        }
+        List<Long> systemNoticeIds = new ArrayList<>();
         List<SystemNoticeVo> collect = noticeDoList.stream()
                 .map(record -> {
                     SystemNoticeVo noticeVo = new SystemNoticeVo();
                     BeanUtil.copyProperties(record, noticeVo);
-                    articleIds.add(record.getTargetId());
-                    return noticeVo;
-                })
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(collect)) {
-            return new PageBean<>(0, List.of());
-        }
-        // 系统通知暂时知识文章或专栏文章形式出现
-        BaseRequest<Collection<Long>> baseRequest = new BaseRequest<>(articleIds);
-        ResponseBean<List<PublicArticleVo>> articleList = cpsService.getArticleListByIds(baseRequest, userId);
-        if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
-            Map<Long, PublicArticleVo> articleMap = articleList.getData().stream()
-                    .collect(Collectors.toMap(PublicArticleVo::getUid, Function.identity(), (a, b) -> b));
-            List<Long> systemNoticeIds = new ArrayList<>();
-            collect = collect.stream()
-                    .map(noticeVo -> {
-                        PublicArticleVo articleVo = articleMap.get(noticeVo.getTargetId());
+                    int noticeType = record.getNoticeType();
+                    noticeVo.setTargetType(noticeType == SysConstant.NOTICE_AUDIT_EASSAY ? 3 : 1);
+                    // 系统通知、文章审核失败
+                    if (noticeType == SysConstant.NOTICE_SYSTEM || noticeType == SysConstant.NOTICE_AUDIT_ARTICLE) {
+                        PublicArticleVo articleVo = articleMap.get(record.getTargetId());
                         if (articleVo == null) {
                             return null;
                         }
-                        systemNoticeIds.add(noticeVo.getUid());
-                        noticeVo.setContent(articleVo.getTitle());
-                        noticeVo.setLabel(articleVo.getSummary());
-                        String url = "/" + articleVo.getDomain() + "/" +
-                                (StringUtils.hasLength(articleVo.getColumnUri()) ? ("/" + articleVo.getColumnUri() + "/") : "") +
-                                articleVo.getUri();
-                        noticeVo.setUrl(url);
-                        return noticeVo;
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                        systemNoticeIds.add(record.getUid());
+                        if (noticeType == SysConstant.NOTICE_SYSTEM) {
+                            noticeVo.setContent(articleVo.getTitle());
+                            noticeVo.setLabel(articleVo.getSummary());
+                        } else {
+                            String content = "文章 " + articleVo.getTitle() + " 发布失败，" + record.getNoticeContent();
+                            noticeVo.setContent(content);
+                            noticeVo.setLabel("前往查看");
+                        }
+                        noticeVo.setArticleInfo(articleVo);
+                    } else {
+                        // 随笔审核失败
+                        RamblyJotVo ramblyJotVo = essayMap.get(record.getTargetId());
+                        if (ramblyJotVo == null) {
+                            return null;
+                        }
+                        systemNoticeIds.add(record.getUid());
+                        String content = "随笔 " + ramblyJotVo.getTitle() + " 发布失败，" + record.getNoticeContent();
+                        noticeVo.setContent(content);
+                        noticeVo.setLabel("前往查看");
+                        noticeVo.setRamblyJot(ramblyJotVo);
+                    }
+                    return noticeVo;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (systemNoticeIds.size() > 0) {
             socialNoticeDao.update(new UpdateWrapper<SocialNoticeDo>()
                     .in(SysConstant.ES_FILED_UID, systemNoticeIds)
                     .set("read_status", 1));
-            return new PageBean<>(Math.toIntExact(count), collect);
-        } else {
-            return new PageBean<>(0, List.of());
         }
+        return new PageBean<>(true, collect);
     }
 }

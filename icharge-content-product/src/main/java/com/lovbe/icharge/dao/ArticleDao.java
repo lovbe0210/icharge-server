@@ -2,7 +2,9 @@ package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.entity.dto.ContentPublishDTO;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
@@ -67,4 +69,11 @@ public interface ArticleDao extends BaseMapper<ArticleDo> {
      * @date: 2025/2/11 23:55
      */
     Integer selectEnableAutoPublish(@Param("uid") Long uid);
+
+    @Insert(value = """
+                    INSERT INTO s_notices (uid, user_id, notice_type, target_id, action_user_id, notice_content) 
+                    VALUES (#{noticeDo.uid}, #{noticeDo.userId}, #{noticeDo.noticeType}, 
+                            #{noticeDo.targetId}, 0, #{noticeDo.noticeContent})
+                    """)
+    void insertAuditNotice(@Param("noticeDo") SocialNoticeDo noticeDo);
 }

@@ -712,6 +712,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                     List<RamblyJotDo> ramblyJotList = publicContentDao.getRamblyjotListByIds(targetIds);
                     if (!CollectionUtils.isEmpty(ramblyJotList)) {
                         ramblyjotMap.putAll(ramblyJotList.stream()
+                                .filter(r -> Objects.equals(r.getIsPublic(), 1) && Objects.equals(r.getPublishStatus(), 3))
                                 .collect(Collectors.toMap(RamblyJotDo::getUid, Function.identity())));
                     }
                 }

@@ -206,16 +206,21 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                     String noticeContent = "随笔发布失败，公开发布内容需符合本站创作内容约定";
                     if (!CollectionUtils.isEmpty(reasonList)) {
                         StringBuilder tmp = new StringBuilder();
-                        for (String reason : reasonList) {
+                        for (int i = 0; i < reasonList.size(); i++) {
+                            String reason = reasonList.get(i);
                             if (reason != null && reason.contains("reason")) {
                                 try {
                                     JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
+                                    tmp.append("\"" + entries.getStr("content") + "\"");
                                     tmp.append(entries.getStr("reason"));
                                 }catch (Exception e) {
                                     log.error("");
                                 }
                             } else if (reason != null) {
                                 tmp.append(reason);
+                            }
+                            if (i != reasonList.size() - 1) {
+                                tmp.append(";");
                             }
                         }
                         if (tmp.length() > 0) {

@@ -44,16 +44,4 @@ public interface SocialNoticeDao extends BaseMapper<SocialNoticeDo> {
      * @date: 2025/2/25 15:56
      */
     List<SocialNoticeDo> selectLikeListCount(@Param("data") SocialNoticeReqDTO data, @Param("userId") Long userId);
-
-    /**
-     * @description: 获取指定类型通知分页列表
-     * @param: data
-     * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.common.model.dto.SocialNoticeDo>
-     * @author: lovbe0210
-     * @date: 2025/2/27 23:34
-     */
-    List<SocialNoticeDo> selectList(@Param("data") SocialNoticeReqDTO data,
-                                    @Param("userId") Long userId,
-                                    @Param("noticeType") int noticeType);
 }
