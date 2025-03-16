@@ -1,6 +1,6 @@
 package com.lovbe.icharge.schedule;
 
-import com.lovbe.icharge.service.CreationStatisticService;
+import com.lovbe.icharge.service.GrowthStatsService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CreateStatisticSchedule {
     @Resource
-    private CreationStatisticService statisticService;
+    private GrowthStatsService statisticService;
 
     @PostConstruct
     public void init() {

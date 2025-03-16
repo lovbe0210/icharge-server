@@ -14,7 +14,7 @@ import com.lovbe.icharge.dao.CreationIndexDao;
 import com.lovbe.icharge.dao.GrowthStatsDao;
 import com.lovbe.icharge.entity.dto.CreationIndexDo;
 import com.lovbe.icharge.entity.dto.GrowthStatsDo;
-import com.lovbe.icharge.service.CreationStatisticService;
+import com.lovbe.icharge.service.GrowthStatsService;
 import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,7 +32,7 @@ import java.util.stream.Collectors;
  * @Description: MS
  */
 @Service
-public class CreationStatisticServiceImpl implements CreationStatisticService {
+public class GrowthStatsServiceImpl implements GrowthStatsService {
     @Resource
     private UserService userService;
     @Resource
@@ -205,6 +202,24 @@ public class CreationStatisticServiceImpl implements CreationStatisticService {
         if (creationIndexList.size() > 0) {
             creationIndexDao.insert(creationIndexList);
         }
+    }
+
+    @Override
+    public GrowthStatsDo getGrowthStatList(long userId, Integer rangeType) {
+        GrowthStatsDo statsDo = growthStatsDao.selectOne(new LambdaQueryWrapper<GrowthStatsDo>()
+                .eq(GrowthStatsDo::getUserId, userId)
+                .eq(GrowthStatsDo::getRangeType, rangeType), false);
+        return statsDo;
+    }
+
+    @Override
+    public List<CreationIndexDo> getCreationIndexList(long userId) {
+        List<CreationIndexDo> creationIndexList = creationIndexDao.selectList(new LambdaQueryWrapper<CreationIndexDo>()
+                .eq(CreationIndexDo::getUserId, userId)
+                .geSql(CreationIndexDo::getRecordDate, "DATE_SUB(CURDATE(), INTERVAL 1 YEAR)")
+                .orderByAsc(CreationIndexDo::getCreateTime));
+
+        return List.of();
     }
 
     /**
