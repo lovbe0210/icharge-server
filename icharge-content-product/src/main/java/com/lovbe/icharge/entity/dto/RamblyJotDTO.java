@@ -30,6 +30,10 @@ public class RamblyJotDTO {
     @Length(max = 300, message = "随笔预览内容不得超过255字")
     private String previewContent;
     /**
+     * 字数
+     */
+    private int wordsNum;
+    /**
      * 预览图片
      */
     private List<String> previewImg;

@@ -1,28 +1,27 @@
 package com.lovbe.icharge.service.feign;
 
+import cn.hutool.db.Page;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
-import java.util.Map;
 
-/**
- * @Author: lovbe0210
- * @Date: 2024/12/14 23:55
- * @Description: MS
- */
 @FeignClient(name = "user", fallback = UserServiceFallback.class)
 public interface UserService {
+
     /**
-     * 批量获取用户信息
-     * @param batchRequest mapKey:userIdList  mapValue: List<Long>
-     * @return
+     * @description: 通过userId批量获取用户信息
+     * @param: BaseRequest<BatchUserRequestDTO>
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:39
      */
     @PostMapping("/api/user/ids")
-    ResponseBean<List<UserInfoDo>> getUserInfoList(@RequestBody @Validated BaseRequest<Map> batchRequest);
+    ResponseBean<PageBean<UserInfoDo>> getUserInfoList(@RequestBody @Valid BaseRequest<Page> batchRequest);
 }

@@ -2,6 +2,7 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.db.Page;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -10,7 +11,7 @@ import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
-import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.entity.LoginUser;
@@ -20,7 +21,6 @@ import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.config.ServiceProperties;
-import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
@@ -29,6 +29,8 @@ import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.request.AuthQqRequest;
@@ -184,13 +186,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserInfoDo> getUserInfoList(BaseRequest<BatchUserRequestDTO> batchRequest) {
-        List<Long> userIdList = batchRequest.getData().getUserIdList();
-        if (userIdList.size() > properties.getBatchSize()) {
-            userIdList = userIdList.subList(0, properties.getBatchSize());
-        }
-        List<UserInfoDo> userInfoList = userMapper.selectBatchIds(userIdList);
-        return CollectionUtils.isEmpty(userInfoList) ? List.of() : userInfoList;
+    public PageBean<PageBean<UserInfoDo>> getUserInfoList(Page page) {
+        page = page == null ? new Page() : page;
+        List<UserInfoDo> userInfoList = userMapper.selectList(new LambdaQueryWrapper<UserInfoDo>()
+                .eq(UserInfoDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .orderByDesc(UserInfoDo::getCreateTime)
+                .last(" limit " + page.getStartIndex() + "," + page.getPageSize()));
+        List<UserInfoDo> list = CollectionUtils.isEmpty(userInfoList) ? List.of() : userInfoList;
+        return new PageBean(list.size() == page.getPageSize(), list);
     }
 
     @Override

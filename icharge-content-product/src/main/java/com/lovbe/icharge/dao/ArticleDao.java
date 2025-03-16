@@ -3,13 +3,14 @@ package com.lovbe.icharge.dao;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
+import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.entity.dto.ContentPublishDTO;
-import org.apache.ibatis.annotations.Insert;
+import com.lovbe.icharge.entity.dto.GrowthStatsDo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -26,15 +27,6 @@ public interface ArticleDao extends BaseMapper<ArticleDo> {
      * @author lovbe0210
      * @date 2024/11/9 16:28
      */
-    @Update(value = """
-                    UPDATE c_article
-                    SET sort = CASE WHEN sort IS NULL 
-                                    THEN(SELECT * FROM (SELECT IFNULL(MAX(sort), 0)+1 FROM c_article) t1) 
-                                    ELSE NULL
-                               END,
-                        update_time = (SELECT * FROM (SELECT update_time FROM c_article WHERE uid = #{uid}) t2)
-                    WHERE uid = #{uid};
-                    """)
     void updateArticleTop(@Param("uid") Long uid);
 
     /**
@@ -70,10 +62,63 @@ public interface ArticleDao extends BaseMapper<ArticleDo> {
      */
     Integer selectEnableAutoPublish(@Param("uid") Long uid);
 
-    @Insert(value = """
-                    INSERT INTO s_notices (uid, user_id, notice_type, target_id, action_user_id, notice_content) 
-                    VALUES (#{noticeDo.uid}, #{noticeDo.userId}, #{noticeDo.noticeType}, 
-                            #{noticeDo.targetId}, 0, #{noticeDo.noticeContent})
-                    """)
+    /**
+     * @description: 插入文章审核通知
+     * @param: noticeDo
+     * @author: lovbe0210
+     * @date: 2025/3/16 9:55
+     */
     void insertAuditNotice(@Param("noticeDo") SocialNoticeDo noticeDo);
+
+    /**
+     * @description: 获取昨日更新文章数
+     * @param: userIds
+     * @return: int
+     * @author: lovbe0210
+     * @date: 2025/3/16 9:59
+     */
+    List<TargetStatisticDo> selectYdUpdateArticleCount(@Param("userIds") Set<Long> userIds);
+    /**
+     * @description: 获取昨日更新专栏数
+     * @param: userIds
+     * @return: com.lovbe.icharge.common.model.dto.TargetStatisticDo
+     * @author: lovbe0210
+     * @date: 2025/3/16 10:33
+     */
+    List<TargetStatisticDo> selectYdUpdateColumnCount(@Param("userIds") Set<Long> userIds);
+    /**
+     * @description: 获取昨日更新随笔数
+     * @param: userIds
+     * @return: com.lovbe.icharge.common.model.dto.TargetStatisticDo
+     * @author: lovbe0210
+     * @date: 2025/3/16 10:33
+     */
+    List<TargetStatisticDo> selectYdUpdateEssayCount(@Param("userIds") Set<Long> userIds);
+
+    /**
+     * @description: 获取文章统计数据
+     * @param: userIds
+     * @return: java.util.List<com.lovbe.icharge.entity.dto.GrowthStatsDo>
+     * @author: lovbe0210
+     * @date: 2025/3/16 15:50
+     */
+    List<GrowthStatsDo> selectArticleCreationStatistic(@Param("userIds") Set<Long> userIds);
+
+    /**
+     * @description: 获取专栏统计数据
+     * @param: userIds
+     * @return: java.util.List<com.lovbe.icharge.entity.dto.GrowthStatsDo>
+     * @author: lovbe0210
+     * @date: 2025/3/16 16:06
+     */
+    List<GrowthStatsDo> selectColumnCreationStatistic(@Param("userIds") Set<Long> userIds);
+
+    /**
+     * @description:  获取随笔统计数据
+     * @param: userIds
+     * @return: java.util.List<com.lovbe.icharge.entity.dto.GrowthStatsDo>
+     * @author: lovbe0210
+     * @date: 2025/3/16 21:35
+     */
+    List<GrowthStatsDo> selectEssayCreationStatistic(@Param("userIds") Set<Long> userIds);
 }

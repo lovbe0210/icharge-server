@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.JsonUtils;
@@ -76,6 +77,15 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                     .collect(Collectors.toSet());
             RedisUtil.zSetTuple(rankSetKey, tupleList);
         }
+        // 获取前30名文章设置入选精选
+        Set<ZSetOperations.TypedTuple<Object>> typedTuples = RedisUtil.zsGetSet(rankSetKey, 0, 29, true);
+        if (CollectionUtils.isEmpty(typedTuples)) {
+            return;
+        }
+        List<Long> articleIds = typedTuples.stream()
+                .map(tuple -> (Long) tuple.getValue())
+                .collect(Collectors.toList());
+        contentDao.updateArticleFeature(articleIds);
     }
 
     @Override
@@ -257,7 +267,7 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
      * @date: 2025/1/8 16:14
      */
     private ZSetOperations.TypedTuple<Object> getRankTypedTuple(TargetStatisticDo statistic, Date now) {
-        // 遂于创作者或专栏，公开文章数为0，直接分数为0
+        // 对于创作者或专栏，公开文章数为0，直接分数为0
         if ((statistic.getType() == SysConstant.TARGET_TYPE_COLUMN || statistic.getType() == SysConstant.TARGET_TYPE_AUTHOR)
                 && statistic.getArticleCount() == 0) {
             return ZSetOperations.TypedTuple.of(statistic.getUid(), 0.0);

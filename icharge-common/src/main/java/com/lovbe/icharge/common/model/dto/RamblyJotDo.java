@@ -36,6 +36,10 @@ public class RamblyJotDo extends BaseEntity {
      */
     private String previewContent;
     /**
+     * 字数
+     */
+    private int wordsNum;
+    /**
      * 预览图片
      */
     @TableField(typeHandler = JacksonTypeHandler.class)

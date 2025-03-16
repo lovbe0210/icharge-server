@@ -1,6 +1,5 @@
 package com.lovbe.icharge.schedule;
 
-import com.lovbe.icharge.config.ContentPicksConfigProperties;
 import com.lovbe.icharge.service.RecommendPicksService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

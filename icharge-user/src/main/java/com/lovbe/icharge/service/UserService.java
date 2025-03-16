@@ -1,14 +1,15 @@
 package com.lovbe.icharge.service;
 
-import com.lovbe.icharge.common.model.base.BaseRequest;
+import cn.hutool.db.Page;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.entity.dto.BatchUserRequestDTO;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
-import com.lovbe.icharge.entity.dto.ForgetPasswordDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import me.zhyd.oauth.request.AuthRequest;
 
 import java.util.List;
@@ -63,7 +64,7 @@ public interface UserService {
      * @author: lovbe0210
      * @date: 2024/12/14 23:48
      */
-    List<UserInfoDo> getUserInfoList(BaseRequest<BatchUserRequestDTO> batchRequest);
+    PageBean<PageBean<UserInfoDo>> getUserInfoList(Page page);
 
     /**
      * @description: 获取三方登录地址

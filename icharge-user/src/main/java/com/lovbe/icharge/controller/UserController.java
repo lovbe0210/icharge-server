@@ -1,13 +1,17 @@
 package com.lovbe.icharge.controller;
 
+import cn.hutool.db.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
@@ -18,12 +22,14 @@ import jakarta.validation.Valid;
 import me.zhyd.oauth.model.AuthCallback;
 import me.zhyd.oauth.request.AuthRequest;
 import me.zhyd.oauth.utils.AuthStateUtils;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @description: 用户信息相关控制层
@@ -128,15 +134,15 @@ public class UserController {
     }
 
     /**
-     * @description: 通过userId批量获取用户信息
+     * @description: 批量获取用户信息
      * @param: BaseRequest<BatchUserRequestDTO>
      * @return: ResponseBean
      * @author: lovbe0210
      * @date: 2024/12/14 23:39
      */
     @PostMapping("/ids")
-    public ResponseBean getUserInfoList(@RequestBody @Valid BaseRequest<BatchUserRequestDTO> batchRequest) {
-        return ResponseBean.ok(userService.getUserInfoList(batchRequest));
+    public ResponseBean<PageBean<UserInfoDo>> getUserInfoList(@RequestBody @Valid BaseRequest<Page> batchRequest) {
+        return ResponseBean.ok(userService.getUserInfoList(batchRequest.getData()));
     }
 
     /**

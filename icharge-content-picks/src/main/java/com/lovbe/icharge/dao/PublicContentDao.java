@@ -268,4 +268,12 @@ public interface PublicContentDao{
      */
     List<CreateRecordVo> getCreateRecord(@Param("data") RecommendRequestDTO data,
                                          @Param("userIds") List<Long> userIds);
+
+    /**
+     * @description: 文章入选精选
+     * @param: articleIds
+     * @author: lovbe0210
+     * @date: 2025/3/16 22:22
+     */
+    void updateArticleFeature(@Param("articleIds") List<Long> articleIds);
 }

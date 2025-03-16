@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lovbe.icharge.dao.ArticleDao">
-
     <!-- 批量操作 -->
     <update id="batchUpdate">
         UPDATE c_article SET
@@ -42,6 +41,17 @@
                         )
     </update>
 
+    <!-- 文章置顶 -->
+    <update id="updateArticleTop">
+        UPDATE c_article
+        SET sort = CASE WHEN sort IS NULL
+                            THEN(SELECT * FROM (SELECT IFNULL(MAX(sort), 0)+1 FROM c_article) t1)
+                        ELSE NULL
+            END,
+            update_time = (SELECT * FROM (SELECT update_time FROM c_article WHERE uid = #{uid}) t2)
+        WHERE uid = #{uid};
+    </update>
+
     <!-- 获取能否自动发布文章 -->
     <select id="selectEnableAutoPublish" resultType="java.lang.Integer">
         SELECT IF(cc.auto_publish IS NOT NULL, cc.auto_publish, ipc.auto_publish)
@@ -50,4 +60,198 @@
         LEFT JOIN c_column cc ON ca.column_id = cc.uid AND cc.status = 'A'
         WHERE ca.uid = #{uid} AND ca.status = 'A'
     </select>
+
+    <!-- 获取昨日更新文章数 -->
+    <select id="selectYdUpdateArticleCount" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT user_id userId, COUNT(*) articleCount
+        FROM c_article
+        WHERE `status` = 'A'
+          AND user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                            #{userId}
+                         </foreach>
+          AND DATE(update_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+        GROUP BY user_id
+    </select>
+
+    <!-- 获取昨日更新专栏数 -->
+    <select id="selectYdUpdateColumnCount" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT user_id userId, COUNT(*) columnCount
+        FROM c_column
+        WHERE `status` = 'A'
+        AND user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                            #{userId}
+                       </foreach>
+        AND DATE(update_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+        GROUP BY user_id
+    </select>
+
+    <!-- 获取昨日更新随笔数 -->
+    <select id="selectYdUpdateEssayCount" resultType="com.lovbe.icharge.common.model.dto.TargetStatisticDo">
+        SELECT user_id userId, COUNT(*) essayCount
+        FROM c_essay
+        WHERE `status` = 'A'
+            AND user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                #{userId}
+                           </foreach>
+        AND DATE(update_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+        GROUP BY user_id
+    </select>
+
+    <!-- 获取文章统计数据 -->
+    <select id="selectArticleCreationStatistic" resultType="com.lovbe.icharge.entity.dto.GrowthStatsDo">
+        SELECT a.*,
+               cam.uid mostWordsArticleId
+        FROM (
+             SELECT
+                 ca.user_id userId,
+                 0 rangeType,
+                 SUM(ca.words_num) creationWords,
+                 SUM(IFNULL(sis.like_count,0)) harvestLikes,
+                 COUNT(*) updateContents,
+                 COUNT(*) articleTotal,
+                 MAX(ca.words_num) maxWords,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL,1,0)) publicArticles,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL,IFNULL(sis.view_count,0),0)) articleViews,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL,IFNULL(sis.like_count,0),0)) contentLikes,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL,IFNULL(sis.comment_count,0),0)) contentComments,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL,IF(sis.is_feature = 1, 1, 0),0)) articleFeatures
+             FROM c_article ca
+             LEFT JOIN s_interaction_statistic sis ON ca.uid = sis.uid
+             WHERE ca.`status` = 'A'
+                AND ca.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                    #{userId}
+                                  </foreach>
+             GROUP BY ca.user_id
+             UNION ALL
+             SELECT
+                 ca.user_id userId,
+                 1 rangeType,
+                 SUM(IF(ca.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),ca.words_num,0)) creationWords,
+                 SUM(IFNULL(sis.like_count,0)) harvestLikes,
+                 SUM(IF(ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),1,0)) updateContents,
+                 SUM(IF(ca.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),1,0)) articleTotal,
+                 MAX(ca.words_num) maxWords,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL AND ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),1,0)) publicArticles,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL AND ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),IFNULL(sis.view_count,0),0)) articleViews,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL AND ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),IFNULL(sis.like_count,0),0)) contentLikes,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL AND ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),IFNULL(sis.comment_count,0),0)) contentComments,
+                 SUM(IF(ca.is_public = 1 AND ca.published_content_id IS NOT NULL AND ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR),IF(sis.is_feature = 1, 1, 0),0)) articleFeatures
+             FROM c_article ca
+             LEFT JOIN s_interaction_statistic sis ON ca.uid = sis.uid
+             WHERE ca.`status` = 'A'
+                AND ca.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                    #{userId}
+                                  </foreach>
+               AND (ca.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) OR ca.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR))
+             GROUP BY ca.user_id ) a
+        INNER JOIN c_article cam ON a.userId = cam.user_id
+            AND a.maxWords = cam.words_num
+            AND cam.`status` = 'A'
+    </select>
+
+    <!-- 获取专栏统计数据 -->
+    <select id="selectColumnCreationStatistic" resultType="com.lovbe.icharge.entity.dto.GrowthStatsDo">
+        SELECT cc.*, ccm.uid mostWordsColumnId
+        FROM (
+            SELECT
+                a.userId,
+                0 rangeType,
+                SUM( a.updateContents ) updateContents,
+                SUM( a.updateContents ) columnTotal,
+                MAX( a.totalWords ) maxWords
+            FROM (SELECT
+                    cc.user_id userId,
+                    COUNT(*) updateContents,
+                    COUNT(*) columnTotal,
+                    SUM(IFNULL( ca.words_num, 0 )) totalWords
+                  FROM c_column cc
+                  LEFT JOIN c_article ca ON cc.uid = ca.column_id
+                      AND ca.`status` = 'A'
+                  WHERE cc.`status` = 'A'
+                    AND cc.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                        #{userId}
+                                      </foreach>
+                  GROUP BY cc.uid ) a
+                  GROUP BY a.userId
+                  UNION ALL
+                  SELECT
+                    a.userId,
+                    1 rangeType,
+                    SUM( a.updateContents ) updateContents,
+                    SUM( a.updateContents ) columnTotal,
+                    MAX( a.totalWords ) maxWords
+                  FROM (
+                    SELECT
+                        cc.user_id userId,
+                        SUM(IF(cc.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR), 1, 0)) updateContents,
+                        SUM(IF(cc.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR), 1, 0)) columnTotal,
+                        SUM(IFNULL(ca.words_num, 0 )) totalWords
+                    FROM c_column cc
+                    LEFT JOIN c_article ca ON cc.uid = ca.column_id
+                        AND ca.`status` = 'A'
+                    WHERE cc.`status` = 'A'
+                        AND cc.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                            #{userId}
+                                          </foreach>
+                        AND (cc.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) OR cc.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR))
+                    GROUP BY cc.uid
+                  ) a
+                  GROUP BY a.userId
+        ) cc
+        LEFT JOIN (
+            SELECT cc.user_id userId,
+                   cc.uid,
+                   SUM(IFNULL( ca.words_num, 0 ) ) totalWords
+            FROM c_column cc
+            LEFT JOIN c_article ca ON cc.uid = ca.column_id
+                AND ca.`status` = 'A'
+            WHERE cc.`status` = 'A'
+                AND cc.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                    #{userId}
+                                  </foreach>
+            GROUP BY cc.uid
+        ) ccm ON cc.userId = ccm.userId
+            AND cc.maxWords = ccm.totalWords
+        GROUP BY cc.userId, cc.rangeType
+    </select>
+
+    <!-- 获取随笔统计数据 -->
+    <select id="selectEssayCreationStatistic" resultType="com.lovbe.icharge.entity.dto.GrowthStatsDo">
+        SELECT
+            ce.user_id userId,
+            0 rangeType,
+            SUM(ce.words_num) creationWords,
+            COUNT(*) updateContents,
+            COUNT(*) essayTotal,
+            SUM(IFNULL(sis.like_count,0)) contentLikes
+        FROM c_essay ce
+        LEFT JOIN s_interaction_statistic sis ON ce.uid = sis.uid
+        WHERE ce.`status` = 'A'
+            AND ce.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                #{userId}
+                              </foreach>
+        GROUP BY ce.user_id
+        UNION ALL
+        SELECT
+            ce.user_id userId,
+            1 rangeType,
+            SUM(IF(ce.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR), ce.words_num, 0)) creationWords,
+            SUM(IF(ce.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ,1,0)) updateContents,
+            SUM(IF(ce.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ,1,0)) essayTotal,
+            SUM(IFNULL(sis.like_count,0)) contentLikes
+        FROM c_essay ce
+        LEFT JOIN s_interaction_statistic sis ON ce.uid = sis.uid
+        WHERE ce.`status` = 'A'
+            AND ce.user_id IN <foreach collection="userIds" item="userId" open="(" close=")" separator=",">
+                                #{userId}
+                              </foreach>
+        GROUP BY ce.user_id
+    </select>
+
+    <!-- 插入文章审核通知 -->
+    <insert id="insertAuditNotice">
+        INSERT INTO s_notices (uid, user_id, notice_type, target_id, action_user_id, notice_content)
+        VALUES (#{noticeDo.uid}, #{noticeDo.userId}, #{noticeDo.noticeType},
+                #{noticeDo.targetId}, 0, #{noticeDo.noticeContent})
+    </insert>
 </mapper>

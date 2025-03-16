@@ -19,10 +19,6 @@ import java.util.Set;
 @ConfigurationProperties(prefix = "service")
 public class ServiceProperties {
     /**
-     * 批量获取用户信息，可一次性最多获取多少个
-     */
-    private int batchSize;
-    /**
      * domain过滤，保留一些菜单值和特殊字符
      */
     private Set<String> domainFilter = new HashSet<>();

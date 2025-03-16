@@ -15,6 +15,10 @@ import java.util.Date;
 @Accessors(chain = true)
 public class TargetStatisticDo extends BaseEntity {
     /**
+     * 用户id
+     */
+    private Long userId;
+    /**
      * 用户等级
      */
     private int userLevel;
@@ -47,6 +51,10 @@ public class TargetStatisticDo extends BaseEntity {
      * 专栏数
      */
     private int columnCount;
+    /**
+     * 随笔数
+     */
+    private int essayCount;
     /**
      * 用户粉丝数
      */
