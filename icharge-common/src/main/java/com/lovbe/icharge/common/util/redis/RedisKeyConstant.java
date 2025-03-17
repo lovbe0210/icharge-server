@@ -260,4 +260,13 @@ public abstract class RedisKeyConstant {
     public static String getLastPortraitTagTimeKey() {
         return BASE_PROJECT + PICKS + "last-portrait-time";
     }
+
+    /**
+     * 用户每日奖励
+     * @param userId
+     * @return
+     */
+    public static String getUserdailyEncourage(Long userId) {
+        return BASE_PROJECT + USER + "daily-encourage:" + userId;
+    }
 }

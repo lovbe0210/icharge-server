@@ -16,6 +16,9 @@ import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.EnumMap;
 import java.util.Random;
 
 /**
@@ -26,9 +29,17 @@ import java.util.Random;
 public class CommonUtils {
     private static byte[] key = new byte[]{2, -115, 44, -80, 32, -60, -55, -103, 37, 54, 30, 72, -121, -103, 107, 123};
     private static AES aes;
+    private static EnumMap<DayOfWeek, String> CHINESE_WEEKDAYS = new EnumMap<>(DayOfWeek.class);
 
     static {
         aes = SecureUtil.aes(key);
+        CHINESE_WEEKDAYS.put(DayOfWeek.MONDAY, "周一");
+        CHINESE_WEEKDAYS.put(DayOfWeek.TUESDAY, "周二");
+        CHINESE_WEEKDAYS.put(DayOfWeek.WEDNESDAY, "周三");
+        CHINESE_WEEKDAYS.put(DayOfWeek.THURSDAY, "周四");
+        CHINESE_WEEKDAYS.put(DayOfWeek.FRIDAY, "周五");
+        CHINESE_WEEKDAYS.put(DayOfWeek.SATURDAY, "周六");
+        CHINESE_WEEKDAYS.put(DayOfWeek.SUNDAY, "周日");
     }
     /**
      * @description 获取指定长度的字母数字组合
@@ -193,5 +204,16 @@ public class CommonUtils {
                 }
             }
         }
+    }
+
+    /**
+     * @description: 将 LocalDate 转换为中文星期名称
+     * @param: date
+     * @return: java.lang.String
+     * @author: lovbe0210
+     * @date: 2025/3/17 21:58
+     */
+    public static String weekday(LocalDate date) {
+        return CHINESE_WEEKDAYS.get(date.getDayOfWeek());
     }
 }

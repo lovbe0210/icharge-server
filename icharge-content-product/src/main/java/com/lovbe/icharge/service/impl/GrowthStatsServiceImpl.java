@@ -1,5 +1,8 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.db.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
@@ -7,13 +10,20 @@ import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.ColumnDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
+import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.CreationIndexDao;
 import com.lovbe.icharge.dao.GrowthStatsDao;
 import com.lovbe.icharge.entity.dto.CreationIndexDo;
 import com.lovbe.icharge.entity.dto.GrowthStatsDo;
+import com.lovbe.icharge.entity.vo.ColumnVo;
+import com.lovbe.icharge.entity.vo.StateDayLabelVo;
+import com.lovbe.icharge.entity.vo.StateMonthLabelVo;
 import com.lovbe.icharge.service.GrowthStatsService;
 import com.lovbe.icharge.service.feign.UserService;
 import jakarta.annotation.Resource;
@@ -21,8 +31,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +54,8 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
     private CreationIndexDao creationIndexDao;
     @Resource
     private GrowthStatsDao growthStatsDao;
+    @Resource
+    private ColumnDao columnDao;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -209,17 +224,75 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
         GrowthStatsDo statsDo = growthStatsDao.selectOne(new LambdaQueryWrapper<GrowthStatsDo>()
                 .eq(GrowthStatsDo::getUserId, userId)
                 .eq(GrowthStatsDo::getRangeType, rangeType), false);
+        if (statsDo != null && statsDo.getMostWordsColumnId() != null) {
+            ColumnDo columnDo = columnDao.selectById(statsDo.getMostWordsColumnId());
+            if (columnDo != null && CommonStatusEnum.isNormal(columnDo.getStatus())) {
+                List<ArticleDo> selectedList = articleDao.selectList(new LambdaQueryWrapper<ArticleDo>()
+                        .eq(ArticleDo::getColumnId, columnDo.getUid())
+                        .eq(ArticleDo::getStatus, CommonStatusEnum.NORMAL.getStatus()));
+                if (!CollectionUtils.isEmpty(selectedList)) {
+                    statsDo.setMostWordsTitle(columnDo.getTitle());
+                    int mostTotalWords = selectedList.stream().mapToInt(ArticleDo::getWordsNum).sum();
+                    statsDo.setMostWords(mostTotalWords)
+                            .setMostColumnArticle(selectedList.size());
+                }
+            }
+            if (statsDo.getMostWordsTitle() == null && statsDo.getMostWordsArticleId() != null) {
+                ArticleDo articleDo = articleDao.selectById(statsDo.getMostWordsArticleId());
+                if (articleDo != null) {
+                    statsDo.setMostWordsTitle(articleDo.getTitle())
+                            .setMostWords(articleDo.getWordsNum());
+                }
+            }
+        }
         return statsDo;
     }
 
     @Override
-    public List<CreationIndexDo> getCreationIndexList(long userId) {
+    public Map<String, List> getCreationIndexList(long userId) {
+        // 获取起始日期
+        LocalDate endDate = LocalDate.now();
+        String format = "yyyy-MM-dd";
+        int weekOfMonth = endDate.get(WeekFields.ISO.weekOfMonth());
+        int monthValue = endDate.getMonthValue();
+        int year = endDate.getYear();
+        LocalDate startDate = LocalDate.of(year - 1, monthValue, 1)
+                .with(WeekFields.ISO.weekOfMonth(), weekOfMonth + 1)
+                .with(WeekFields.ISO.dayOfWeek(), 1);
         List<CreationIndexDo> creationIndexList = creationIndexDao.selectList(new LambdaQueryWrapper<CreationIndexDo>()
                 .eq(CreationIndexDo::getUserId, userId)
-                .geSql(CreationIndexDo::getRecordDate, "DATE_SUB(CURDATE(), INTERVAL 1 YEAR)")
-                .orderByAsc(CreationIndexDo::getCreateTime));
-
-        return List.of();
+                .ge(CreationIndexDo::getRecordDate, startDate));
+        Map<String, CreationIndexDo> creationIndexMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(creationIndexList)) {
+            for (CreationIndexDo indexDo : creationIndexList) {
+                String date = DateUtil.format(indexDo.getRecordDate(), format);
+                creationIndexMap.put(date, indexDo);
+            }
+        }
+        // 从开始日期到结束日期开始按周组转数据
+        List<StateMonthLabelVo> monthLabelList = new ArrayList<>();
+        List<List<StateDayLabelVo>> yearLabelList = new ArrayList<>();
+        List<StateDayLabelVo> weekLabelList = new ArrayList<>();
+        while (startDate.compareTo(endDate) <= 0) {
+            String date = LocalDateTimeUtil.format(startDate, format);
+            CreationIndexDo indexDo = creationIndexMap.get(date);
+            String weekDisplayName = CommonUtils.weekday(startDate);
+            weekLabelList.add(new StateDayLabelVo(date, weekDisplayName, indexDo == null ? 0 : indexDo.getCreationScore()));
+            int dayOfMonth = startDate.getDayOfMonth();
+            if (dayOfMonth == 1) {
+                monthLabelList.add(new StateMonthLabelVo(startDate.getMonthValue()+"月", yearLabelList.size()));
+            }
+            if (Objects.equals(startDate.getDayOfWeek().getValue(), DayOfWeek.SUNDAY.getValue())) {
+                yearLabelList.add(weekLabelList);
+                weekLabelList = new ArrayList<>();
+            }
+            startDate = startDate.plus(1, ChronoUnit.DAYS);
+        }
+        if (weekLabelList.size() > 0) {
+            yearLabelList.add(weekLabelList);
+        }
+        Map<String, List> map = Map.of("monthLabel", monthLabelList, "yearLabel", yearLabelList);
+        return map;
     }
 
     /**

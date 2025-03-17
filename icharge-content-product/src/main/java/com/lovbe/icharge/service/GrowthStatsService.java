@@ -4,6 +4,7 @@ import com.lovbe.icharge.entity.dto.CreationIndexDo;
 import com.lovbe.icharge.entity.dto.GrowthStatsDo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe0210
@@ -42,5 +43,5 @@ public interface GrowthStatsService {
      * @author: lovbe0210
      * @date: 2025/3/16 23:37
      */
-    List<CreationIndexDo> getCreationIndexList(long userId);
+    Map<String, List> getCreationIndexList(long userId);
 }

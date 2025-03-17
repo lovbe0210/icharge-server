@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe0210
@@ -45,8 +46,8 @@ public class GrowthStatsController {
      */
     @GetMapping("/creation/index")
     public ResponseBean<List<CreationIndexDo>> getCreationIndexList(@RequestHeader(SysConstant.USERID) long userId) {
-        List<CreationIndexDo> creationIndexList = growthStatsService.getCreationIndexList(userId);
-        return ResponseBean.ok(creationIndexList);
+        Map<String, List> creationIndexResult = growthStatsService.getCreationIndexList(userId);
+        return ResponseBean.ok(creationIndexResult);
     }
 
 

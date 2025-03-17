@@ -1,7 +1,10 @@
 package com.lovbe.icharge.entity.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.lovbe.icharge.common.model.base.BaseEntity;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
+import com.lovbe.icharge.entity.vo.ColumnVo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -64,6 +67,21 @@ public class GrowthStatsDo extends BaseEntity {
      * 字数最多的文章
      */
     private Long mostWordsArticleId;
+    /**
+     * 字数最多文章或专栏标题
+     */
+    @TableField(exist = false)
+    private String mostWordsTitle;
+    /**
+     * 最多字数
+     */
+    @TableField(exist = false)
+    private int mostWords;
+    /**
+     * 最多字数专栏的文章数
+     */
+    @TableField(exist = false)
+    private Integer mostColumnArticle;
     /**
      * 公开文档数
      */

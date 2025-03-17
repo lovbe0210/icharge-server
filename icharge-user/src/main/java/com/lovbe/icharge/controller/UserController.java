@@ -164,7 +164,7 @@ public class UserController {
     }
 
     /**
-     * @description: 获取用户统计信息
+     * @description: 获取用户社交统计信息
      * @param: userId
      * @return: com.lovbe.icharge.common.model.base.ResponseBean
      * @author: lovbe0210

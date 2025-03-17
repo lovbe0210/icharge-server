@@ -74,4 +74,19 @@ public interface UserMapper extends BaseMapper<UserInfoDo> {
                     	AND sis.`status` = 'A'
                     """)
     TargetStatisticDo selectStatisticInfo(@Param("userId") Long userId);
+
+    /**
+     * @description: 经验值++
+     * @param: userId
+     * @param: i
+     * @author: lovbe0210
+     * @date: 2025/3/18 0:26
+     */
+    @Update(value = """
+                    UPDATE p_user 
+                    SET growth_value = growth_value + #{score} 
+                    WHERE uid = #{userId}
+                        AND status = 'A'
+                    """)
+    void updateGrowthValue(@Param("userId") Long userId, @Param("score") int score);
 }

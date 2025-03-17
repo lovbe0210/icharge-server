@@ -136,6 +136,15 @@ public class UserServiceImpl implements UserService {
         if (CommonStatusEnum.DELETE.getStatus().equals(userInfoDo.getStatus()) || userInfoDo.getUid() == null) {
             throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
         }
+        // 完成今日登录
+        String dailyEncourageKey = RedisKeyConstant.getUserdailyEncourage(userId);
+        boolean absent = RedisUtil.hsetIfAbsent(dailyEncourageKey, "login", 1);
+        if (absent) {
+            // 今日首次登录，经验值+5
+            UserInfoDo userInfo = userMapper.selectById(userId);
+            userInfo.setGrowthValue(userInfo.getGrowthValue() + 5);
+            userMapper.updateById(userInfo);
+        }
         return userInfoDo;
     }
 
