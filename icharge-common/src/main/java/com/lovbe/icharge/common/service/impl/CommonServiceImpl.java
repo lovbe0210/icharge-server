@@ -3,8 +3,12 @@ package com.lovbe.icharge.common.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
+import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.config.AIPromptProperties;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.dao.CommonDao;
+import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.dto.*;
@@ -36,10 +40,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -61,6 +62,8 @@ public class CommonServiceImpl implements CommonService {
     private AIPromptProperties aiPromptProperties;
     @Value("${spring.kafka.topics.chat-send-message}")
     private String sendMessageTopic;
+    @Resource
+    private ServiceProperties properties;
 
     @Override
     public UserInfoDo getCacheUser(Long userId) {
@@ -275,6 +278,39 @@ public class CommonServiceImpl implements CommonService {
         } catch (IOException e) {
             log.error("[删除专栏信息] --- 更新elasticsearch数据失败，errorInfo: {}", e.toString());
         }
+    }
+
+    @Override
+    public void updateUserLevel(Long userId, int exp) {
+        CacheUserDo userById = commonDao.getUserById(userId);
+        userById.setGrowthValue(userById.getGrowthValue() + exp);
+        if (userById.getGrowthValue() >= properties.getLevel6Exp()) {
+            userById.setLevel(6);
+        } else if (userById.getGrowthValue() >= properties.getLevel5Exp()) {
+            userById.setLevel(5);
+        } else if (userById.getGrowthValue() >= properties.getLevel4Exp()) {
+            userById.setLevel(4);
+        } else if (userById.getGrowthValue() >= properties.getLevel3Exp()) {
+            userById.setLevel(3);
+        } else if (userById.getGrowthValue() >= properties.getLevel2Exp()) {
+            userById.setLevel(2);
+        } else if (userById.getGrowthValue() >= properties.getLevel1Exp()) {
+            userById.setLevel(1);
+        }
+        commonDao.updateUserById(userById);
+        RedisUtil.del(RedisKeyConstant.getCacheUserKey(userId));
+    }
+
+    @Override
+    public void saveEncourageLog(Long userId, Long targetId, String title, EncorageBehaviorEnum encorageBehaviorEnum) {
+        EncourageLogDo encourageLogDo = new EncourageLogDo()
+                .setUserId(userId)
+                .setBehaviorType(encorageBehaviorEnum.getBehaviorType())
+                .setTargetId(targetId)
+                .setTargetName(title)
+                .setEncourageScore(encorageBehaviorEnum.getEncourageScore());
+        encourageLogDo.setUid(YitIdHelper.nextId());
+        commonDao.insertEncourageLog(encourageLogDo);
     }
 
     @Override

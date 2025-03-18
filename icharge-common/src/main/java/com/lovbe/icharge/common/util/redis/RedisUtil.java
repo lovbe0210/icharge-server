@@ -4,7 +4,6 @@ import cn.hutool.core.io.IoUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -21,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -281,20 +279,32 @@ public final class RedisUtil {
         }
     }
 
+    public static Boolean setnx(String key, long milliSecond) {
+        return redisTemplate.execute((RedisConnection conn) -> {
+            try {
+                Boolean nx = redisTemplate.opsForValue().setIfAbsent(key, key, milliSecond, TimeUnit.MILLISECONDS);
+                return nx;
+            } finally {
+                conn.close();
+            }
+        });
+    }
+
     public static Boolean setnx(String key) {
-        return setnx(key, key, -1);
+        return redisTemplate.execute((RedisConnection conn) -> {
+            try {
+                Boolean nx = redisTemplate.opsForValue().setIfAbsent(key, 1);
+                return nx;
+            } finally {
+                conn.close();
+            }
+        });
     }
 
     public static Boolean setnx(final String key, final Object value, long seconds) {
         return redisTemplate.execute((RedisConnection conn) -> {
             try {
                 Boolean nx = redisTemplate.opsForValue().setIfAbsent(key, value, seconds, TimeUnit.SECONDS);
-                if (nx) {
-                    if (!redisTemplate.expire(key, seconds, TimeUnit.SECONDS)) {
-                        redisTemplate.delete(key);
-                        return Boolean.FALSE;
-                    }
-                }
                 return nx;
             } finally {
                 conn.close();
@@ -355,6 +365,16 @@ public final class RedisUtil {
         c.set(Calendar.SECOND, 0);
         Date t = c.getTime();
         return redisTemplate.expireAt(key, t);
+    }
+
+    /**
+     * 指定时间过期
+     * @param key
+     * @param date
+     * @return
+     */
+    public static Boolean setExpireAt(String key, Date date) {
+        return redisTemplate.expireAt(key, date);
     }
 
     /**
@@ -671,7 +691,7 @@ public final class RedisUtil {
      */
     public static boolean hsetIfAbsent(String key, String item, Object value) {
         try {
-            return Optional.ofNullable(redisTemplate.opsForHash().putIfAbsent(key, item, value)).orElse(false);
+            return redisTemplate.opsForHash().putIfAbsent(key, item, value);
         } catch (Exception e) {
             e.printStackTrace();
             return false;

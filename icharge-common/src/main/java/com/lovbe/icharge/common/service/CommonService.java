@@ -1,5 +1,6 @@
 package com.lovbe.icharge.common.service;
 
+import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.*;
 
@@ -94,4 +95,24 @@ public interface CommonService {
      */
     void updateElasticsearchColumn(List<ColumnEsEntity> esColumnList);
     void deleteElasticsearchColumn(List<String> columnidList);
+
+    /**
+     * @description: 用户经验升级
+     * @param: userId
+     * @param: i
+     * @author: lovbe0210
+     * @date: 2025/3/18 22:38
+     */
+    void updateUserLevel(Long userId, int exp);
+
+    /**
+     * @description: 激励电池入库
+     * @param: userId
+     * @param: uid
+     * @param: title
+     * @param: encorageBehaviorEnum
+     * @author: lovbe0210
+     * @date: 2025/3/18 23:35
+     */
+    void saveEncourageLog(Long userId, Long targetId, String title, EncorageBehaviorEnum encorageBehaviorEnum);
 }

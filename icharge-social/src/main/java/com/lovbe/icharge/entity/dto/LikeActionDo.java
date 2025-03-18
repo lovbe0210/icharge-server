@@ -40,6 +40,11 @@ public class LikeActionDo extends BaseEntity {
      */
     @TableField(exist = false)
     private Integer action;
+    /**
+     * 标记位 是否为首次点赞
+     */
+    @TableField(exist = false)
+    private boolean newAction;
 
     public LikeActionDo(Long targetId, Integer targetType, Long userId) {
         this.targetId = targetId;
@@ -47,4 +52,11 @@ public class LikeActionDo extends BaseEntity {
         this.userId = userId;
     }
 
+    public LikeActionDo(Long targetId, Long targetUserId, Integer targetType, Long userId, Integer action) {
+        this.targetId = targetId;
+        this.targetUserId = targetUserId;
+        this.targetType = targetType;
+        this.userId = userId;
+        this.action = action;
+    }
 }

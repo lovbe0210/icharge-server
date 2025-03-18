@@ -66,7 +66,7 @@ public class PublicContentController {
      */
     @PostMapping("/article/ids")
     public ResponseBean<List<PublicArticleVo>> getArticleListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
-                                                                   @RequestHeader(value = SysConstant.USERID) Long userId) {
+                                                                   @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getArticleListByIds(baseRequest.getData(), userId));
     }
 
@@ -108,7 +108,7 @@ public class PublicContentController {
      */
     @PostMapping("/ramblyjot/ids")
     public ResponseBean<List<RamblyJotVo>> getRamblyjotListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
-                                                                 @RequestHeader(value = SysConstant.USERID) Long userId) {
+                                                                 @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getRamblyjotListByIds(baseRequest.getData(), userId));
     }
 

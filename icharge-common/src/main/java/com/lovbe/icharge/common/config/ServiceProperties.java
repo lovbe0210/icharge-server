@@ -42,4 +42,13 @@ public class ServiceProperties {
      * 封面上传频率限制
      */
     private int coverUploadLimit = 20;
+    /**
+     * 经验等级
+     */
+    private int level1Exp;
+    private int level2Exp;
+    private int level3Exp;
+    private int level4Exp;
+    private int level5Exp;
+    private int level6Exp;
 }

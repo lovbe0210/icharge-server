@@ -45,6 +45,8 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -53,6 +55,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -76,6 +79,8 @@ public class PublicContentServiceImpl implements PublicContentService {
     private CollectDao collectDao;
     @Resource
     private RestHighLevelClient highLevelClient;
+    @Resource
+    private RedissonClient redissonClient;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.user-action-browse}")
     private String browseActionTopic;
@@ -327,6 +332,36 @@ public class PublicContentServiceImpl implements PublicContentService {
             if (update == 1) {
                 // 新增时统计阅读量
                 commonService.sendMessage(appName, browseActionTopic, historyDo);
+            }
+            // 浏览文章增加经验
+            RLock lock = redissonClient.getLock(String.valueOf(userId));
+            try {
+                if (lock.tryLock(5, TimeUnit.SECONDS)) {
+                    Calendar c = Calendar.getInstance();
+                    c.set(Calendar.HOUR_OF_DAY, 23);
+                    c.set(Calendar.MINUTE, 59);
+                    c.set(Calendar.SECOND, 59);
+                    c.set(Calendar.MILLISECOND, 999);
+                    String encourageKey = RedisKeyConstant.getUserdailyEncourage(userId, SysConstant.LEVEL_ENCOURAGE_READ);
+                    if (RedisUtil.hsetIfAbsent(encourageKey, String.valueOf(targetId), 1)) {
+                        List<Object> list = RedisUtil.hgetAll(encourageKey);
+                        if (list != null && list.size() == 1) {
+                            RedisUtil.setExpireAt(encourageKey, c.getTime());
+                        }
+                        if (list != null && list.size() <= 5) {
+                            // 加一个阅读经验
+                            commonService.updateUserLevel(userId, 2);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("[阅读增加经验值] --- 更新经验条失败，errorInfo: {}", e.toString());
+            } finally {
+                try {
+                    lock.unlock();
+                } catch (Exception e1) {
+                    log.error("[阅读增加经验值] --- redission释放锁失败，errorInfo: {}", e1.toString());
+                }
             }
             return;
         }

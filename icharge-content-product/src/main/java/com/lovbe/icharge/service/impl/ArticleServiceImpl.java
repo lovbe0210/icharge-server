@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
@@ -18,6 +19,8 @@ import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
+import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
+import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
@@ -197,6 +200,7 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map updateContent(BaseRequest<ContentDTO> contentEntity, long userId) {
         ContentDTO contentDTO = contentEntity.getData();
         ArticleDo articleDo = articleDao.selectById(contentDTO.getArticleId());
@@ -218,6 +222,20 @@ public class ArticleServiceImpl implements ArticleService {
             map.put(SysConstant.CONTENT_ID, uid);
             return map;
         }
+
+        // 今日写作+5经验
+        String dailyEncourageKey = RedisKeyConstant.getUserdailyEncourage(userId, SysConstant.LEVEL_ENCOURAGE_WRITE);
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, 23);
+        c.set(Calendar.MINUTE, 59);
+        c.set(Calendar.SECOND, 59);
+        c.set(Calendar.MILLISECOND, 999);
+        boolean absent = RedisUtil.setnx(dailyEncourageKey);
+        if (absent) {
+            RedisUtil.setExpireAt(dailyEncourageKey, c.getTime());
+            commonService.updateUserLevel(userId, 5);
+        }
+
         // 是否需要更新摘要
         if (articleDo.getAutoSummary() == 1) {
             articleDo.setSummary(contentDTO.getSummary());
@@ -582,13 +600,16 @@ public class ArticleServiceImpl implements ArticleService {
                         // 审核通过，更新elasticsearch
                         commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
                         // 审核通过，更新创作记录
-                        // 发布成功创建记录
                         CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ARTICLE, articleDo.getUserId());
                         recordDo.setUid(articleDo.getUid())
                                 .setStatus(CommonStatusEnum.NORMAL.getStatus())
                                 .setCreateTime(new Date())
                                 .setUpdateTime(recordDo.getCreateTime());
                         createRecordDao.insertOrUpdate(recordDo);
+                        if (articleDo.getPublishTime() == null) {
+                            // 发布成功，如果是该篇文章首次发布，增加激励电池
+                            commonService.saveEncourageLog(articleDo.getUserId(), articleDo.getUid(), articleDo.getTitle(), EncorageBehaviorEnum.BEHAVIOR_PUBLISH);
+                        }
                     }
                 } else if (resultDto != null && !resultDto.isResult()) {
                     List<String> reasonList = resultDto.getReason();

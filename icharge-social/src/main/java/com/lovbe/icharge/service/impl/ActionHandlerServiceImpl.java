@@ -5,8 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.config.SessionManager;
@@ -14,6 +17,7 @@ import com.lovbe.icharge.dao.*;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.service.ActionHandlerService;
 import com.lovbe.icharge.service.ChatMessageService;
+import com.lovbe.icharge.service.feign.ContentPickService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,6 +52,8 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private NoticeConfigDao noticeConfigDao;
     @Resource
     private ChatMessageService messageService;
+    @Resource
+    private ContentPickService contentPickService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -103,6 +109,8 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
             if (!CollectionUtils.isEmpty(noticeList)) {
                 socialNoticeDao.insertOrUpdate(noticeList);
             }
+            // 添加点赞激励
+            addEncourageLog(likeActionUpdateList);
         }
         if (likeActionDeleteList.size() > 0) {
             socialLikeDao.deleteByIds(likeActionDeleteList);
@@ -118,6 +126,34 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
             String changeTargetKey = RedisKeyConstant.getLikeChangeTargetSet();
             RedisUtil.sSet(changeTargetKey, targetIdSet.toArray());
         }
+    }
+
+    /**
+     * @description: 添加点赞激励
+     * @param: likeActionUpdateList
+     * @author: lovbe0210
+     * @date: 2025/3/19 0:06
+     */
+    private void addEncourageLog(List<LikeActionDo> likeActionUpdateList) {
+        Map<Integer, List<Long>> listMap = likeActionUpdateList.stream()
+                .filter(likeAction -> likeAction.isNewAction() &&
+                        (Objects.equals(SysConstant.TARGET_TYPE_ARTICLE, likeAction.getTargetType()) &&
+                                Objects.equals(SysConstant.TARGET_TYPE_ESSAY, likeAction.getTargetType())))
+                .collect(Collectors.groupingBy(LikeActionDo::getTargetType,
+                                Collectors.mapping(LikeActionDo::getTargetId, Collectors.toList())
+                        )
+                );
+        // 获取文章和随笔信息
+        listMap.forEach((targetType, list) -> {
+            if (Objects.equals(targetType, SysConstant.TARGET_TYPE_ARTICLE)) {
+                ResponseBean<List<PublicArticleVo>> articleList = contentPickService.getArticleListByIds(new BaseRequest<>(list), null);
+                if (articleList != null && !CollectionUtils.isEmpty(articleList.getData())) {
+                    for (PublicArticleVo datum : articleList.getData()) {
+                        // TODO 激励电磁批量入库
+                    }
+                }
+            }
+        });
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -459,6 +495,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 lastAction.setUid(YitIdHelper.nextId())
                         .setUpdateTime(lastAction.getCreateTime())
                         .setStatus(CommonStatusEnum.NORMAL.getStatus());
+                lastAction.setNewAction(true);
                 likeActionUpdateList.add(lastAction);
                 statisticAddList.add(lastAction);
                 userIdSet.add(action.getUserId());
@@ -517,6 +554,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 action.setUid(YitIdHelper.nextId())
                         .setUpdateTime(action.getCreateTime())
                         .setStatus(CommonStatusEnum.NORMAL.getStatus());
+                action.setNewAction(true);
                 likeActionUpdateList.add(action);
                 statisticAddList.add(action);
                 userIdSet.add(action.getUserId());

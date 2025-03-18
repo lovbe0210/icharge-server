@@ -208,5 +208,10 @@ public class SysConstant {
     public static final int MSG_TYPE_SESSION = 1;
     public static final int MSG_TYPE_MESSAGE = 2;
 
-
+    /**
+     * 等级激励类型 登录、阅读、写作
+     */
+    public static final String LEVEL_ENCOURAGE_LOGIN = "login";
+    public static final String LEVEL_ENCOURAGE_READ = "read";
+    public static final String LEVEL_ENCOURAGE_WRITE = "write";
 }

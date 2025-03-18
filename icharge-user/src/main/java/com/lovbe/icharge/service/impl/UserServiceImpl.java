@@ -41,6 +41,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -137,13 +138,17 @@ public class UserServiceImpl implements UserService {
             throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
         }
         // 完成今日登录
-        String dailyEncourageKey = RedisKeyConstant.getUserdailyEncourage(userId);
-        boolean absent = RedisUtil.hsetIfAbsent(dailyEncourageKey, "login", 1);
+        String dailyEncourageKey = RedisKeyConstant.getUserdailyEncourage(userId, SysConstant.LEVEL_ENCOURAGE_LOGIN);
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, 23);
+        c.set(Calendar.MINUTE, 59);
+        c.set(Calendar.SECOND, 59);
+        c.set(Calendar.MILLISECOND, 999);
+        boolean absent = RedisUtil.setnx(dailyEncourageKey);
         if (absent) {
             // 今日首次登录，经验值+5
-            UserInfoDo userInfo = userMapper.selectById(userId);
-            userInfo.setGrowthValue(userInfo.getGrowthValue() + 5);
-            userMapper.updateById(userInfo);
+            RedisUtil.setExpireAt(dailyEncourageKey, c.getTime());
+            commonService.updateUserLevel(userId, 5);
         }
         return userInfoDo;
     }

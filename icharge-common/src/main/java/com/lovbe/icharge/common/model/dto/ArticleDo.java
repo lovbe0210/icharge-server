@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -114,6 +115,10 @@ public class ArticleDo extends BaseEntity {
      * 正文字体大小
      */
     private Integer bodyFontSize;
+    /**
+     * 首次发布时间
+     */
+    private Date publishTime;
     /**
      * 点赞数
      */

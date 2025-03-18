@@ -266,7 +266,7 @@ public abstract class RedisKeyConstant {
      * @param userId
      * @return
      */
-    public static String getUserdailyEncourage(Long userId) {
-        return BASE_PROJECT + USER + "daily-encourage:" + userId;
+    public static String getUserdailyEncourage(Long userId, String type) {
+        return BASE_PROJECT + USER + "daily-encourage:" + type + ":" + userId;
     }
 }
