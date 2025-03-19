@@ -115,4 +115,5 @@ public interface CommonService {
      * @date: 2025/3/18 23:35
      */
     void saveEncourageLog(Long userId, Long targetId, String title, EncorageBehaviorEnum encorageBehaviorEnum);
+    void saveEncourageLog(List<EncourageLogDo> encourageLogList);
 }

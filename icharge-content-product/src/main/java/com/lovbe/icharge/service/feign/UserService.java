@@ -7,6 +7,8 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -24,4 +26,14 @@ public interface UserService {
      */
     @PostMapping("/api/user/ids")
     ResponseBean<PageBean<UserInfoDo>> getUserInfoList(@RequestBody @Valid BaseRequest<Page> batchRequest);
+
+    /**
+     * @description: 通过domain获取用户信息
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
+    @GetMapping("/api/user/domain/{domain}")
+    ResponseBean<UserInfoDo> getUserInfo(@PathVariable("domain") String domain);
 }

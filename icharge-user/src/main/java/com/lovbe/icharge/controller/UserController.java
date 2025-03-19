@@ -176,6 +176,16 @@ public class UserController {
         return ResponseBean.ok(statisticVo);
     }
 
+    /**
+     * @description: 获取等级对应经验条
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/3/19 22:36
+     */
+    @GetMapping("/level/exp")
+    public ResponseBean getLevelScore() {
+        return ResponseBean.ok(userService.getLevelExp());
+    }
 
 
     @PostMapping("/oauth/render")

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.RelationshipDo;
+import com.lovbe.icharge.entity.dto.TargetFollowDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -70,4 +71,15 @@ public interface SocialFollowDao extends BaseMapper<RelationshipDo> {
      * @date: 2025/3/13 0:26
      */
     List<Long> getFollowUserList(@Param("userId") Long userId);
+
+    /**
+     * @description: 获取已经添加新增粉丝的激励用户
+     * @param: targetFollowList
+     * @return: java.util.List<com.lovbe.icharge.entity.dto.TargetFollowDTO>
+     * @author: lovbe0210
+     * @date: 2025/3/19 20:38
+     */
+    List<TargetFollowDTO> selectNoEncourageUser(@Param("targetFollowList") List<TargetFollowDTO> targetFollowList,
+                                                @Param("behaviorType") int behaviorType);
+
 }

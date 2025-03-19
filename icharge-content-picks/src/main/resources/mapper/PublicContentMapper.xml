@@ -389,6 +389,21 @@
         LIMIT #{data.offset}, #{data.limit}
     </select>
 
+    <!-- 获取从未获得电池激励的文章信息 -->
+    <select id="selectNoEncourageList" resultType="com.lovbe.icharge.common.model.vo.PublicArticleVo">
+        SELECT *
+        FROM (
+        SELECT ca.*, el.uid encourgeId
+        FROM c_article ca
+        LEFT JOIN p_encorage_log el ON ca.uid = el.target_id AND el.behavior_type = #{behaviorType}
+        WHERE ca.uid IN <foreach collection="articleIds" item="articleId" separator="," open="(" close=")">
+                            #{articleId}
+                        </foreach>
+        AND ca.`status` = 'A'
+        ) a
+        WHERE a.encourgeId IS NULL
+    </select>
+
     <resultMap id="columnInfoMap" type="com.lovbe.icharge.common.model.dto.ColumnDo">
         <id column="uid" property="uid"/>
         <result column="title" property="title"/>

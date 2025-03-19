@@ -1,6 +1,7 @@
 package com.lovbe.icharge.dao;
 
 import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.CreateRecordVo;
@@ -276,4 +277,14 @@ public interface PublicContentDao{
      * @date: 2025/3/16 22:22
      */
     void updateArticleFeature(@Param("articleIds") List<Long> articleIds);
+
+    /**
+     * @description: 获取从未获得电池激励的文章信息
+     * @param: articleIds
+     * @return: java.util.List<com.lovbe.icharge.common.model.vo.PublicArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/3/19 20:07
+     */
+    List<PublicArticleVo> selectNoEncourageList(@Param("articleIds") List<Long> articleIds,
+                                                @Param("behaviorType") int behaviorType);
 }

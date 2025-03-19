@@ -264,6 +264,16 @@ public class UserServiceImpl implements UserService {
         return statisticVo;
     }
 
+    @Override
+    public Map<String, Integer> getLevelExp() {
+        return Map.of("level1", properties.getLevel1Exp(),
+                      "level2", properties.getLevel2Exp(),
+                      "level3", properties.getLevel3Exp(),
+                      "level4", properties.getLevel4Exp(),
+                      "level5", properties.getLevel5Exp(),
+                      "level6", properties.getLevel6Exp());
+    }
+
     /**
      * @return String
      * @description 获取一个全局唯一的domain

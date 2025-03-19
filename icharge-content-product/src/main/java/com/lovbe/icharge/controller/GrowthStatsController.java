@@ -41,12 +41,12 @@ public class GrowthStatsController {
      * description: 获取创作指数
      * @author: Lvhl
      * @date: 2024/9/16 11:56
-     * @param userId
+     * @param domain
      * @return ResponseBean<ColumnVo>
      */
-    @GetMapping("/creation/index")
-    public ResponseBean<List<CreationIndexDo>> getCreationIndexList(@RequestHeader(SysConstant.USERID) long userId) {
-        Map<String, List> creationIndexResult = growthStatsService.getCreationIndexList(userId);
+    @GetMapping("/creation/index/{domain}")
+    public ResponseBean<List<CreationIndexDo>> getCreationIndexList(@PathVariable("domain") String domain) {
+        Map<String, List> creationIndexResult = growthStatsService.getCreationIndexList(domain);
         return ResponseBean.ok(creationIndexResult);
     }
 

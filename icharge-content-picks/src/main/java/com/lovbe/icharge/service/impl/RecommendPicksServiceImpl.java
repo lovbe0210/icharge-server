@@ -5,10 +5,13 @@ import cn.hutool.core.util.PageUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
@@ -86,6 +89,24 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                 .map(tuple -> (Long) tuple.getValue())
                 .collect(Collectors.toList());
         contentDao.updateArticleFeature(articleIds);
+        // 查询还未获得精选激励的文章添加电池激励
+        List<PublicArticleVo> articleVoList = contentDao.selectNoEncourageList(articleIds, EncorageBehaviorEnum.BEHAVIOR_LIKED.getBehaviorType());
+        if (CollectionUtils.isEmpty(articleVoList)) {
+            return;
+        }
+        List<EncourageLogDo> collect = articleVoList.stream()
+                .map(article -> {
+                    EncourageLogDo encourageLog = new EncourageLogDo()
+                            .setUserId(article.getUserId())
+                            .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_FEATURE.getBehaviorType())
+                            .setTargetId(article.getUid())
+                            .setTargetName(article.getTitle())
+                            .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_FEATURE.getEncourageScore());
+                    encourageLog.setUid(YitIdHelper.nextId());
+                    return encourageLog;
+                })
+                .collect(Collectors.toList());
+        commonService.saveEncourageLog(collect);
     }
 
     @Override

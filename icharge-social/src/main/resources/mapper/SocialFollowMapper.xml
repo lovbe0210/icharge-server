@@ -62,4 +62,14 @@
               SELECT user_id_master AS user_id FROM s_relationship WHERE user_id_slave = #{userId} AND slave_watch_master = 1
         ) res
     </select>
+
+    <!-- 获取已经添加新增粉丝的激励用户 -->
+    <select id="selectNoEncourageUser" resultType="com.lovbe.icharge.entity.dto.TargetFollowDTO">
+        SELECT user_id targetUser,target_id userId
+        FROM p_encorage_log
+        WHERE behavior_type = #{behaviorType}
+        AND ( <foreach collection="targetFollowList" item="targetFollow" separator=" OR " open="(" close=")">
+                user_id = #{targetFollow.targetUser} AND target_id = #{targetFollow.userId}
+            </foreach> )
+    </select>
 </mapper>

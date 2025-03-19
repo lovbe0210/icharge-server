@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import me.zhyd.oauth.request.AuthRequest;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: lovbe
@@ -109,4 +110,12 @@ public interface UserService {
      * @date: 2025/3/14 0:24
      */
     UserStatisticVo getStatisticInfo(Long userId);
+
+    /**
+     * @description: 获取各等级对应分数
+     * @return: java.util.Map<java.lang.String,java.lang.Integer>
+     * @author: lovbe0210
+     * @date: 2025/3/19 22:33
+     */
+    Map<String, Integer> getLevelExp();
 }

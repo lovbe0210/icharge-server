@@ -70,8 +70,10 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
                 List<UserInfoDo> list = responseBean.getData().getList();
                 list = CollectionUtils.isEmpty(list) ? List.of() : list;
                 Set<Long> userIds = list.stream().map(UserInfoDo::getUid).collect(Collectors.toSet());
-                growthStatsDao.delete(new LambdaQueryWrapper<GrowthStatsDo>()
-                        .in(GrowthStatsDo::getUserId, userIds));
+                if (!CollectionUtils.isEmpty(userIds)) {
+                    growthStatsDao.delete(new LambdaQueryWrapper<GrowthStatsDo>()
+                            .in(GrowthStatsDo::getUserId, userIds));
+                }
                 // 获取创作天数
                 List<GrowthStatsDo> selecteList = growthStatsDao.selectCreationCount(userIds);
                 if (!CollectionUtils.isEmpty(selecteList)) {
@@ -155,15 +157,18 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
             HashMap<Long, TargetStatisticDo> statisticMap = new HashMap<>();
             ResponseBean<PageBean<UserInfoDo>> responseBean = userService.getUserInfoList(new BaseRequest<>(Page.of(pageNumber++, pageSize)));
             if (responseBean != null && responseBean.isResult()) {
+                hasMore = responseBean.getData().isHasMore();
                 List<UserInfoDo> list = responseBean.getData().getList();
                 list = CollectionUtils.isEmpty(list) ? List.of() : list;
                 Set<Long> userIds = list.stream().map(UserInfoDo::getUid).collect(Collectors.toSet());
                 LocalDate yesterday = LocalDate.now().minusDays(1);
                 // 转换为 Date（默认系统时区）
                 Date date = Date.from(yesterday.atStartOfDay(ZoneId.systemDefault()).toInstant());
-                creationIndexDao.delete(new LambdaQueryWrapper<CreationIndexDo>()
-                        .in(CreationIndexDo::getUserId, userIds)
-                        .eq(CreationIndexDo::getRecordDate, date));
+                if (!CollectionUtils.isEmpty(userIds)) {
+                    creationIndexDao.delete(new LambdaQueryWrapper<CreationIndexDo>()
+                            .in(CreationIndexDo::getUserId, userIds)
+                            .eq(CreationIndexDo::getRecordDate, date));
+                }
                 // 获取文章更新数量
                 List<TargetStatisticDo> articleUpdateCount = articleDao.selectYdUpdateArticleCount(userIds);
                 if (!CollectionUtils.isEmpty(articleUpdateCount)) {
@@ -205,7 +210,6 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
                             creationIndexList.add(aDo);
                         })
                         .collect(Collectors.toList());
-                hasMore = responseBean.getData().isHasMore();
             } else {
                 hasMore = false;
             }
@@ -249,7 +253,12 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
     }
 
     @Override
-    public Map<String, List> getCreationIndexList(long userId) {
+    public Map<String, List> getCreationIndexList(String domain) {
+        ResponseBean<UserInfoDo> userInfo = userService.getUserInfo(domain);
+        if (userInfo == null || !userInfo.isResult()) {
+            return Map.of();
+        }
+        Long userId = userInfo.getData().getUid();
         // 获取起始日期
         LocalDate endDate = LocalDate.now();
         String format = "yyyy-MM-dd";

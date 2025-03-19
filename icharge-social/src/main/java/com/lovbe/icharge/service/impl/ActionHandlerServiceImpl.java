@@ -4,12 +4,17 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
+import com.lovbe.icharge.common.model.dto.EncourageLogDo;
 import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
+import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.vo.PublicArticleVo;
+import com.lovbe.icharge.common.model.vo.RamblyJotVo;
+import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.config.SessionManager;
@@ -20,6 +25,8 @@ import com.lovbe.icharge.service.ChatMessageService;
 import com.lovbe.icharge.service.feign.ContentPickService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.bootstrap.encrypt.KeyProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -54,6 +61,10 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private ChatMessageService messageService;
     @Resource
     private ContentPickService contentPickService;
+    @Resource
+    private CommonService commonService;
+    @Autowired
+    private KeyProperties keyProperties;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -144,16 +155,45 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                         )
                 );
         // 获取文章和随笔信息
+        List<EncourageLogDo> encourageLogList = new ArrayList<>();
         listMap.forEach((targetType, list) -> {
             if (Objects.equals(targetType, SysConstant.TARGET_TYPE_ARTICLE)) {
                 ResponseBean<List<PublicArticleVo>> articleList = contentPickService.getArticleListByIds(new BaseRequest<>(list), null);
                 if (articleList != null && !CollectionUtils.isEmpty(articleList.getData())) {
                     for (PublicArticleVo datum : articleList.getData()) {
-                        // TODO 激励电磁批量入库
+                        EncourageLogDo encourageLog = new EncourageLogDo()
+                                .setUserId(datum.getUserId())
+                                .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_LIKED.getBehaviorType())
+                                .setTargetId(datum.getUid())
+                                .setTargetName(datum.getTitle())
+                                .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_LIKED.getEncourageScore());
+                        encourageLog.setUid(YitIdHelper.nextId());
+                        encourageLogList.add(encourageLog);
+                    }
+                }
+            } else if (Objects.equals(targetType, SysConstant.TARGET_TYPE_ESSAY)) {
+                ResponseBean<List<RamblyJotVo>> ramblyjotList = contentPickService.getRamblyjotListByIds(new BaseRequest<>(list), null);
+                if (ramblyjotList != null && !CollectionUtils.isEmpty(ramblyjotList.getData())) {
+                    for (RamblyJotVo datum : ramblyjotList.getData()) {
+                        UserInfoDo userInfo = datum.getUserInfo();
+                        if (userInfo == null) {
+                            continue;
+                        }
+                        EncourageLogDo encourageLog = new EncourageLogDo()
+                                .setUserId(userInfo.getUid())
+                                .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_LIKED.getBehaviorType())
+                                .setTargetId(datum.getUid())
+                                .setTargetName(datum.getTitle())
+                                .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_LIKED.getEncourageScore());
+                        encourageLog.setUid(YitIdHelper.nextId());
+                        encourageLogList.add(encourageLog);
                     }
                 }
             }
         });
+        if (encourageLogList.size() > 0) {
+            commonService.saveEncourageLog(encourageLogList);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -161,12 +201,15 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     public void handlerCommentAction(List<ReplyCommentDo> actionList) {
         // 评论明细入库
         replyCommentDao.insert(actionList);
+        // 评论电池激励
+        List<EncourageLogDo> encourageLogList = new ArrayList<>();
         // 通知明细
         List<SocialNoticeDo> noticeList = new ArrayList<>();
         // 过滤出楼中楼回复对父级评论更新统计
         Map<Long, TargetStatisticDo> statisticMap = new HashMap<>();
         actionList.stream()
                 .peek(replyCommentDo -> {
+                    // 更新统计数据
                     TargetStatisticDo statisticDo = statisticMap.get(replyCommentDo.getTargetId());
                     if (statisticDo == null) {
                         statisticDo = new TargetStatisticDo()
@@ -177,6 +220,15 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                     } else {
                         statisticDo.setCommentCount(statisticDo.getCommentCount() + 1);
                     }
+                    // 创建电池激励
+                    EncourageLogDo encourageLog = new EncourageLogDo()
+                            .setUserId(replyCommentDo.getTargetUserId())
+                            .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_COMMENT.getBehaviorType())
+                            .setTargetId(replyCommentDo.getTargetId())
+                            .setTargetName(replyCommentDo.getContent())
+                            .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_COMMENT.getEncourageScore());
+                    encourageLog.setUid(YitIdHelper.nextId());
+                    encourageLogList.add(encourageLog);
                     // targetUserId为null不通知,自己给自己评论不通知
                     if (replyCommentDo.getTargetUserId() == null) {
                         return;
@@ -215,13 +267,23 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
         if (noticeList.size() > 0) {
             socialNoticeDao.insert(noticeList);
         }
+        if (encourageLogList.size() > 0) {
+            commonService.saveEncourageLog(encourageLogList);
+        }
     }
 
     @Override
     public void handlerFollowAction(List<TargetFollowDTO> collect) {
+        // 新增关注才会有电池激励
+        List<TargetFollowDTO> targetFollowList = new ArrayList<>();
         // 按userId进行分组统计，作为关注数量的变化
         Map<Long, TargetStatisticDo> statisticMap = collect.stream()
-                .peek(followDto -> followDto.setAction(followDto.getAction() == 1 ? 1 : -1))
+                .peek(followDto -> {
+                    if (followDto.getAction() == 1) {
+                        targetFollowList.add(followDto);
+                    }
+                    followDto.setAction(followDto.getAction() == 1 ? 1 : -1);
+                })
                 .collect(Collectors.groupingBy(TargetFollowDTO::getUserId))
                 .values().stream()
                 .map(list -> {
@@ -251,6 +313,35 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                 });
         // 更新统计表
         socialFollowDao.updateFollowCount(statisticMap.values());
+        if (targetFollowList.size() == 0) {
+            return;
+        }
+        // 获取已经添加新增粉丝的激励用户
+        List<TargetFollowDTO> encourgeUserList = socialFollowDao.selectNoEncourageUser(targetFollowList, EncorageBehaviorEnum.BEHAVIOR_NEW_FAN.getBehaviorType());
+        if (!CollectionUtils.isEmpty(encourgeUserList) && encourgeUserList.size() == targetFollowList.size()) {
+            return;
+        }
+        Map<String, TargetFollowDTO> targetFollowMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(encourgeUserList)) {
+            encourgeUserList.forEach(encourgeUser -> targetFollowMap.put(encourgeUser.getUserId() + "_" + encourgeUser.getTargetUser(), encourgeUser));
+        }
+        List<EncourageLogDo> encourageLogList = targetFollowList.stream()
+                .filter(targetFollow -> {
+                    String key = targetFollow.getUserId() + "_" + targetFollow.getTargetUser();
+                    return targetFollowMap.get(key) == null;
+                })
+                .map(targetFollow -> {
+                    EncourageLogDo encourageLog = new EncourageLogDo()
+                            .setUserId(targetFollow.getTargetUser())
+                            .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_NEW_FAN.getBehaviorType())
+                            .setTargetId(targetFollow.getUserId())
+                            .setTargetName(commonService.getCacheUser(targetFollow.getUserId()).getUsername())
+                            .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_NEW_FAN.getEncourageScore());
+                    encourageLog.setUid(YitIdHelper.nextId());
+                    return encourageLog;
+                })
+                .collect(Collectors.toList());
+        commonService.saveEncourageLog(encourageLogList);
     }
 
     @Override

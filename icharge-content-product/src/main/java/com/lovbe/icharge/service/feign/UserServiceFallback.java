@@ -24,4 +24,9 @@ public class UserServiceFallback extends BaseFallback implements UserService{
     public ResponseBean<PageBean<UserInfoDo>> getUserInfoList(@RequestBody BaseRequest<Page> batchRequest) {
         return getFallBack();
     }
+
+    @Override
+    public ResponseBean<UserInfoDo> getUserInfo(String domain) {
+        return getFallBack();
+    }
 }

@@ -310,7 +310,12 @@ public class CommonServiceImpl implements CommonService {
                 .setTargetName(title)
                 .setEncourageScore(encorageBehaviorEnum.getEncourageScore());
         encourageLogDo.setUid(YitIdHelper.nextId());
-        commonDao.insertEncourageLog(encourageLogDo);
+        commonDao.insertEncourageLog(Arrays.asList(encourageLogDo));
+    }
+
+    @Override
+    public void saveEncourageLog(List<EncourageLogDo> encourageLogList) {
+        commonDao.insertEncourageLog(encourageLogList);
     }
 
     @Override

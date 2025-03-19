@@ -43,5 +43,5 @@ public interface GrowthStatsService {
      * @author: lovbe0210
      * @date: 2025/3/16 23:37
      */
-    Map<String, List> getCreationIndexList(long userId);
+    Map<String, List> getCreationIndexList(String domain);
 }

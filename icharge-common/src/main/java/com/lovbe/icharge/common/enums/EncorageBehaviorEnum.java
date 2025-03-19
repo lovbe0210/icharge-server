@@ -18,7 +18,7 @@ public enum EncorageBehaviorEnum {
     BEHAVIOR_NEW_FAN(5, 3,"新增粉丝");
 
     /**
-     * 上传场景
+     * 激励类型
      */
     private final int behaviorType;
     /**
