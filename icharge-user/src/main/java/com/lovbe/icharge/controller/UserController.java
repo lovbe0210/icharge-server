@@ -187,6 +187,17 @@ public class UserController {
         return ResponseBean.ok(userService.getLevelExp());
     }
 
+    /**
+     * @description: 获取每日奖励
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/3/19 22:36
+     */
+    @GetMapping("/encourage/daily")
+    public ResponseBean getEncourageDaily(@RequestHeader(name = SysConstant.USERID) Long userId) {
+        return ResponseBean.ok(userService.getEncourageDaily(userId));
+    }
+
 
     @PostMapping("/oauth/render")
     public void getOAuthRender(@RequestBody BaseRequest<OAuthLoginDTO> baseRequest,

@@ -8,11 +8,8 @@ import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import me.zhyd.oauth.request.AuthRequest;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -118,4 +115,12 @@ public interface UserService {
      * @date: 2025/3/19 22:33
      */
     Map<String, Integer> getLevelExp();
+
+    /**
+     * @description: 获取每日奖励进度
+     * @return: java.lang.Object
+     * @author: lovbe0210
+     * @date: 2025/3/19 23:52
+     */
+    Object getEncourageDaily(Long userId);
 }

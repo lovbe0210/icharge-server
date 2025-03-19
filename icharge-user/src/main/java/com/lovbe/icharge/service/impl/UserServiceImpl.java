@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
+import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
@@ -21,6 +22,7 @@ import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.config.ServiceProperties;
+import com.lovbe.icharge.entity.EncourageScoreEnum;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
@@ -29,8 +31,6 @@ import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.request.AuthQqRequest;
@@ -41,7 +41,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -272,6 +271,23 @@ public class UserServiceImpl implements UserService {
                       "level4", properties.getLevel4Exp(),
                       "level5", properties.getLevel5Exp(),
                       "level6", properties.getLevel6Exp());
+    }
+
+    @Override
+    public Object getEncourageDaily(Long userId) {
+        String loginKey = RedisKeyConstant.getUserdailyEncourage(userId, SysConstant.LEVEL_ENCOURAGE_LOGIN);
+        boolean hasLogin = RedisUtil.hasKey(loginKey);
+        String readKey = RedisKeyConstant.getUserdailyEncourage(userId, SysConstant.LEVEL_ENCOURAGE_READ);
+        List<Object> readList = RedisUtil.hgetAll(readKey);
+        String writeKey = RedisKeyConstant.getUserdailyEncourage(userId, SysConstant.LEVEL_ENCOURAGE_WRITE);
+        boolean hasWrite = RedisUtil.hasKey(writeKey);
+        return Map.of("hasLogin", hasLogin,
+                "loginExp", 5,
+                "readSize", readList == null ? 0 : readList.size() > 5 ? 5 : readList.size(),
+                "readExp", 2,
+                "maxRead", 5,
+                "hasWrite", hasWrite,
+                "writeExp", 5);
     }
 
     /**
