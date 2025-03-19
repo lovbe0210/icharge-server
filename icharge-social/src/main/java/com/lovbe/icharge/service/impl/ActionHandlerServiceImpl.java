@@ -63,8 +63,6 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private ContentPickService contentPickService;
     @Resource
     private CommonService commonService;
-    @Autowired
-    private KeyProperties keyProperties;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -148,7 +146,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
     private void addEncourageLog(List<LikeActionDo> likeActionUpdateList) {
         Map<Integer, List<Long>> listMap = likeActionUpdateList.stream()
                 .filter(likeAction -> likeAction.isNewAction() &&
-                        (Objects.equals(SysConstant.TARGET_TYPE_ARTICLE, likeAction.getTargetType()) &&
+                        (Objects.equals(SysConstant.TARGET_TYPE_ARTICLE, likeAction.getTargetType()) ||
                                 Objects.equals(SysConstant.TARGET_TYPE_ESSAY, likeAction.getTargetType())))
                 .collect(Collectors.groupingBy(LikeActionDo::getTargetType,
                                 Collectors.mapping(LikeActionDo::getTargetId, Collectors.toList())
