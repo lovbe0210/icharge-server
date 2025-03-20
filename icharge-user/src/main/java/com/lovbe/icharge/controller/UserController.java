@@ -10,6 +10,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
@@ -198,10 +199,34 @@ public class UserController {
         return ResponseBean.ok(userService.getEncourageDaily(userId));
     }
 
+    /**
+     * @description: 获取每日奖励
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean
+     * @author: lovbe0210
+     * @date: 2025/3/19 22:36
+     */
+    @GetMapping("/encourage/rule")
+    public ResponseBean getEncourageRule() {
+        return ResponseBean.ok(userService.getEncourageRule());
+    }
+
+    /**
+     * @description: 获取电池激励明细
+     * @param: baseRequest
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.common.model.base.PageBean>
+     * @author: lovbe0210
+     * @date: 2025/3/20 15:25
+     */
+    @PostMapping("/encourage/log")
+    public ResponseBean<PageBean> getEncourageLog(@RequestBody @Valid BaseRequest<RequestListDTO> baseRequest,
+                                                  @RequestHeader(name = SysConstant.USERID) Long userId) {
+        return ResponseBean.ok(userService.getEncourageLog(baseRequest.getData(), userId));
+    }
+
 
     @PostMapping("/oauth/render")
     public void getOAuthRender(@RequestBody BaseRequest<OAuthLoginDTO> baseRequest,
-                                       HttpServletResponse response) throws IOException {
+                               HttpServletResponse response) throws IOException {
         AuthRequest authRequest = userService.getAuthRequest();
         response.sendRedirect(authRequest.authorize(AuthStateUtils.createState()));
     }

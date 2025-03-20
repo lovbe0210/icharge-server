@@ -3,10 +3,12 @@ package com.lovbe.icharge.service;
 import cn.hutool.db.Page;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
+import com.lovbe.icharge.entity.vo.EncourageLogVo;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import me.zhyd.oauth.request.AuthRequest;
 
@@ -123,4 +125,21 @@ public interface UserService {
      * @date: 2025/3/19 23:52
      */
     Object getEncourageDaily(Long userId);
+
+    /**
+     * @description: 获取激励规则
+     * @return: java.lang.Object
+     * @author: lovbe0210
+     * @date: 2025/3/20 12:45
+     */
+    Object getEncourageRule();
+
+    /**
+     * @description: 获取电池激励明细
+     * @param: data
+     * @return: com.lovbe.icharge.common.model.base.PageBean<com.lovbe.icharge.entity.vo.EncourageLogVo>
+     * @author: lovbe0210
+     * @date: 2025/3/20 15:31
+     */
+    PageBean<EncourageLogVo> getEncourageLog(RequestListDTO data, Long userId);
 }

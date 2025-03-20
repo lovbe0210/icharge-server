@@ -11,11 +11,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum EncorageBehaviorEnum {
-    BEHAVIOR_PUBLISH(1, 3, "发布文章"),
-    BEHAVIOR_LIKED(2, 2, "内容获得点赞"),
-    BEHAVIOR_FEATURE(3, 5,"文档获得精选"),
-    BEHAVIOR_COMMENT(4, 1,"内容获得评论"),
-    BEHAVIOR_NEW_FAN(5, 3,"新增粉丝");
+    BEHAVIOR_PUBLISH(1, 3, "发表 1 篇文档"),
+    BEHAVIOR_LIKED(2, 2, "内容获得 1 个点赞"),
+    BEHAVIOR_FEATURE(3, 5,"文档获得 1 次精选"),
+    BEHAVIOR_COMMENT(4, 1,"内容获得 1 条评论"),
+    BEHAVIOR_NEW_FAN(5, 3,"新增 1 个粉丝");
 
     /**
      * 激励类型
@@ -29,4 +29,14 @@ public enum EncorageBehaviorEnum {
      * 描述
      */
     private final String desc;
+
+    public static EncorageBehaviorEnum getEncourageEnum(int behaviorType) {
+        EncorageBehaviorEnum[] values = EncorageBehaviorEnum.values();
+        for (EncorageBehaviorEnum value : values) {
+            if (value.getBehaviorType() == behaviorType) {
+                return value;
+            }
+        }
+        return null;
+    }
 }

@@ -22,10 +22,11 @@ import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.config.ServiceProperties;
-import com.lovbe.icharge.entity.EncourageScoreEnum;
+import com.lovbe.icharge.dao.EncourageLogMapper;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
+import com.lovbe.icharge.entity.vo.EncourageLogVo;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
@@ -42,6 +43,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author: lovbe
@@ -61,6 +63,8 @@ public class UserServiceImpl implements UserService {
     private CommonService commonService;
     @Resource
     private ServiceProperties properties;
+    @Resource
+    private EncourageLogMapper encourageLogMapper;
 
 
     @Override
@@ -266,11 +270,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Map<String, Integer> getLevelExp() {
         return Map.of("level1", properties.getLevel1Exp(),
-                      "level2", properties.getLevel2Exp(),
-                      "level3", properties.getLevel3Exp(),
-                      "level4", properties.getLevel4Exp(),
-                      "level5", properties.getLevel5Exp(),
-                      "level6", properties.getLevel6Exp());
+                "level2", properties.getLevel2Exp(),
+                "level3", properties.getLevel3Exp(),
+                "level4", properties.getLevel4Exp(),
+                "level5", properties.getLevel5Exp(),
+                "level6", properties.getLevel6Exp());
     }
 
     @Override
@@ -288,6 +292,55 @@ public class UserServiceImpl implements UserService {
                 "maxRead", 5,
                 "hasWrite", hasWrite,
                 "writeExp", 5);
+    }
+
+    @Override
+    public Object getEncourageRule() {
+        return List.of(Map.of("behaviorType", EncorageBehaviorEnum.BEHAVIOR_PUBLISH.getDesc(), "encourageScore", EncorageBehaviorEnum.BEHAVIOR_PUBLISH.getEncourageScore()),
+                Map.of("behaviorType", EncorageBehaviorEnum.BEHAVIOR_LIKED.getDesc(), "encourageScore", EncorageBehaviorEnum.BEHAVIOR_LIKED.getEncourageScore()),
+                Map.of("behaviorType", EncorageBehaviorEnum.BEHAVIOR_FEATURE.getDesc(), "encourageScore", EncorageBehaviorEnum.BEHAVIOR_FEATURE.getEncourageScore()),
+                Map.of("behaviorType", EncorageBehaviorEnum.BEHAVIOR_COMMENT.getDesc(), "encourageScore", EncorageBehaviorEnum.BEHAVIOR_COMMENT.getEncourageScore()),
+                Map.of("behaviorType", EncorageBehaviorEnum.BEHAVIOR_NEW_FAN.getDesc(), "encourageScore", EncorageBehaviorEnum.BEHAVIOR_NEW_FAN.getEncourageScore())
+        );
+    }
+
+    @Override
+    public PageBean<EncourageLogVo> getEncourageLog(RequestListDTO data, Long userId) {
+        Long count = encourageLogMapper.selectCount(new LambdaQueryWrapper<EncourageLogDo>()
+                .eq(EncourageLogDo::getUserId, userId));
+        if (count == 0) {
+            return new PageBean<>(false, 0, List.of());
+        }
+        List<EncourageLogDo> encourageLogList = encourageLogMapper.selectList(new LambdaQueryWrapper<EncourageLogDo>()
+                .eq(EncourageLogDo::getUserId, userId)
+                .orderByDesc(EncourageLogDo::getCreateTime)
+                .last(" limit " + data.getOffset() + "," + data.getLimit()));
+        if (CollectionUtils.isEmpty(encourageLogList)) {
+            return new PageBean<>(false, Math.toIntExact(count), List.of());
+        }
+        List<EncourageLogVo> collect = encourageLogList.stream()
+                .map(encourageLogDo -> {
+                    EncourageLogVo encourageLogVo = new EncourageLogVo();
+                    BeanUtil.copyProperties(encourageLogDo, encourageLogVo);
+                    int behaviorType = encourageLogDo.getBehaviorType();
+                    EncorageBehaviorEnum encourageEnum = EncorageBehaviorEnum.getEncourageEnum(behaviorType);
+                    String behaviorMark = null;
+                    if (encourageEnum == null) {
+                        behaviorMark = "获得电池激励";
+                    } else {
+                        switch (encourageEnum) {
+                            case BEHAVIOR_PUBLISH -> behaviorMark = "发表了文章";
+                            case BEHAVIOR_LIKED -> behaviorMark = "获得一个赞";
+                            case BEHAVIOR_FEATURE -> behaviorMark = "文章入选精选";
+                            case BEHAVIOR_COMMENT -> behaviorMark = "获得一条评论";
+                            case BEHAVIOR_NEW_FAN -> behaviorMark = "新增粉丝";
+                        }
+                    }
+                    encourageLogVo.setBehaviorMark(behaviorMark);
+                    return encourageLogVo;
+                })
+                .collect(Collectors.toList());
+        return new PageBean<>(collect.size() == data.getLimit(), Math.toIntExact(count), collect);
     }
 
     /**
