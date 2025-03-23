@@ -29,6 +29,16 @@ public interface PublicContentService {
     PublicArticleVo getArticleInfo(String uri, Long userId);
 
     /**
+     * @description: 获取专栏信息用于阅读
+     * @param: uri
+     * @param: userId
+     * @return: com.lovbe.icharge.entity.vo.RecommendColumnVo
+     * @author: lovbe0210
+     * @date: 2025/3/21 16:12
+     */
+    RecommendColumnVo getColumnInfo(String uri, Long userId);
+
+    /**
      * @description 根据uri判断为1文章还是2专栏
      * @param[1] dynamicId
      * @return Integer

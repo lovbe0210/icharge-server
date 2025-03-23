@@ -61,7 +61,9 @@ public class CollectServiceImpl implements CollectService {
                 .eq(CollectDo::getTargetId, data.getTargetId()));
         if (collectDb != null) {
             // 更新
-            collectDb.setTags(data.getTags()).setUpdateTime(new Date());
+            collectDb.setTags(data.getTags())
+                    .setUpdateTime(new Date())
+                    .setStatus(CommonStatusEnum.NORMAL.getStatus());
             collectDao.insertOrUpdate(collectDb);
             return userId;
         }
@@ -95,7 +97,7 @@ public class CollectServiceImpl implements CollectService {
         if (updated < 1) {
             log.error("[收藏夹] --- 取消收藏失败，ftId：{}，userId：{}", ftId, userId);
         } else {
-          // 发送消息取消收藏统计
+            // 发送消息取消收藏统计
             sendCollectMessage(collectDo.getTargetId(), collectDo.getTargetType(), 0);
         }
     }
@@ -104,6 +106,7 @@ public class CollectServiceImpl implements CollectService {
     public List<CollectTagsDTO> getCollectTagCount(Long userId) {
         List<CollectTagsDTO> collectTagList = collectTagDao.selectList(new LambdaQueryWrapper<CollectTagsDTO>()
                 .eq(CollectTagsDTO::getUserId, userId)
+                .eq(CollectTagsDTO::getStatus, CommonStatusEnum.NORMAL.getStatus())
                 .orderByDesc(CollectTagsDTO::getUpdateTime));
         collectTagList = CollectionUtils.isEmpty(collectTagList) ? new ArrayList<>() : collectTagList;
         CollectTagsDTO defaultTag = new CollectTagsDTO().setTitle("全部收藏");
@@ -111,6 +114,7 @@ public class CollectServiceImpl implements CollectService {
         collectTagList.add(0, defaultTag);
         // 获取所有收藏内容
         List<CollectDo> collectList = collectDao.selectList(new LambdaQueryWrapper<CollectDo>()
+                .eq(CollectDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
                 .eq(CollectDo::getUserId, userId));
         if (CollectionUtils.isEmpty(collectList)) {
             return collectTagList;

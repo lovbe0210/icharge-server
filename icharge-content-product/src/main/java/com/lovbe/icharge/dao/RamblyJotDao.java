@@ -16,10 +16,4 @@ import org.apache.ibatis.annotations.Param;
  */
 @Mapper
 public interface RamblyJotDao extends BaseMapper<RamblyJotDo> {
-    @Insert(value = """
-                    INSERT INTO s_notices (uid, user_id, notice_type, target_id, action_user_id, notice_content) 
-                    VALUES (#{noticeDo.uid}, #{noticeDo.userId}, #{noticeDo.noticeType}, 
-                            #{noticeDo.targetId}, 0, #{noticeDo.noticeContent})
-                    """)
-    void insertAuditNotice(@Param("noticeDo") SocialNoticeDo noticeDo);
 }

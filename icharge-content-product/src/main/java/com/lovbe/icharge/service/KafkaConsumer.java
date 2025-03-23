@@ -29,6 +29,8 @@ public class KafkaConsumer {
     @Resource
     private ArticleService articleService;
     @Resource
+    private ColumnService columnService;
+    @Resource
     private RamblyJotService ramblyJotService;
     @Resource
     private KafkaProperties kafkaProperties;
@@ -58,32 +60,6 @@ public class KafkaConsumer {
     }
 
     /**
-     * 文章内容发布消息消费
-     *
-     * @param consumerRecords
-     * @param ack
-     */
-//    @KafkaListener(topics = "${spring.kafka.topics.action-content-publish}",
-//            containerFactory = "kafkaListenerContainerFactory", groupId = "article-publish")
-    public void listenArticlePublish(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
-        if (consumerRecords.isEmpty()) {
-            return;
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("received msgSize: " + consumerRecords.size());
-        }
-        try {
-            List<ContentPublishDTO> collect = getContentPublishDTOS(consumerRecords);
-            if (collect == null) return;
-            articleService.handlerPublishAction(collect);
-        } catch (Exception e) {
-            log.error("[文章发布消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
-        } finally {
-            ack.acknowledge();
-        }
-    }
-
-    /**
      * 随笔内容发布消息消费
      *
      * @param consumerRecords
@@ -104,6 +80,32 @@ public class KafkaConsumer {
             ramblyJotService.handlerPublishAction(collect);
         } catch (Exception e) {
             log.error("[随笔发布消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+        } finally {
+            ack.acknowledge();
+        }
+    }
+
+    /**
+     * 专栏主页内容更新消息消费
+     *
+     * @param consumerRecords
+     * @param ack
+     */
+    @KafkaListener(topics = "${spring.kafka.topics.action-column-content}",
+            containerFactory = "kafkaListenerContainerFactory", groupId = "column-content")
+    public void listenColumnContent(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
+        if (consumerRecords.isEmpty()) {
+            return;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("received msgSize: " + consumerRecords.size());
+        }
+        try {
+            List<ContentPublishDTO> collect = getContentPublishDTOS(consumerRecords);
+            if (collect == null) return;
+            columnService.handlerPublishAction(collect);
+        } catch (Exception e) {
+            log.error("[专栏主页更新消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

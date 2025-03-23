@@ -55,6 +55,14 @@ public class ColumnDo extends BaseEntity {
      */
     private Long dirContentId;
     /**
+     * 自定义内容审核状态 专栏首页内容审核状态 0未提交 2失败 3成功
+     */
+    private Integer homeContentStatus;
+    /**
+     * 自定义内容id
+     */
+    private Long homeContentId;
+    /**
      * 是否公开访问 0否1是
      */
     private Integer isPublic;

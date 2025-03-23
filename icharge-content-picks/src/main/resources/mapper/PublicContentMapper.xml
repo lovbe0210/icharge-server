@@ -33,17 +33,20 @@
             c.uri,
             c.user_id,
             c.dir_content_id,
+            c.home_content_id,
+            c.home_content_status,
             c.is_public,
             c.enable_comment,
             a.uid articleId,
             a.title articleTitle,
             a.summary articleSummary,
             a.uri articleUri,
+            a.words_num,
             a.published_content_id,
             a.create_time,
             a.update_time
         FROM c_column c
-        INNER JOIN c_article a ON c.uid = a.column_id
+        LEFT JOIN c_article a ON c.uid = a.column_id
             AND a.`status` = 'A'
         WHERE
             c.uri = #{uri}
@@ -60,7 +63,6 @@
         <foreach collection="articleIds" item="articleId" separator="," open="(" close=")">
             #{articleId}
         </foreach>
-        AND a.status = 'A'
         ORDER BY a.update_time DESC
     </select>
 
@@ -410,6 +412,8 @@
         <result column="uri" property="uri"/>
         <result column="user_id" property="userId"/>
         <result column="dir_content_id" property="dirContentId"/>
+        <result column="home_content_id" property="homeContentId"/>
+        <result column="home_content_status" property="homeContentStatus"/>
         <result column="is_public" property="isPublic"/>
         <result column="enable_comment" property="enableComment"/>
         <collection column="articleId" property="articleList" ofType="com.lovbe.icharge.common.model.dto.ArticleDo">
@@ -418,6 +422,7 @@
             <result column="articleSummary" property="summary"/>
             <result column="articleUri" property="uri"/>
             <result column="published_content_id" property="publishedContentId"/>
+            <result column="words_num" property="wordsNum"/>
             <result column="create_time" property="createTime"/>
             <result column="update_time" property="updateTime"/>
         </collection>

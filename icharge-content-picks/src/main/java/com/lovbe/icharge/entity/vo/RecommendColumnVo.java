@@ -1,11 +1,15 @@
 package com.lovbe.icharge.entity.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.lovbe.icharge.common.model.base.BaseEntity;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @Author: lovbe0210
@@ -13,6 +17,7 @@ import java.util.List;
  * @Description: 推荐专栏信息
  */
 @Data
+@Accessors(chain = true)
 public class RecommendColumnVo extends BaseEntity {
     /**
      * 专栏标题
@@ -41,6 +46,10 @@ public class RecommendColumnVo extends BaseEntity {
      */
     private int articleCount;
     /**
+     * 专栏总字数
+     */
+    private int totalWords;
+    /**
      * 点赞数
      */
     private int likeCount;
@@ -60,4 +69,17 @@ public class RecommendColumnVo extends BaseEntity {
      * 是否收藏
      */
     private boolean ifCollect;
+    /**
+     * 首页自定义内容
+     */
+    private Long homeContentId;
+    private String homeContent;
+    /**
+     * 收藏标签分类
+     */
+    private Set<Long> tags;
+    /**
+     * 收藏id
+     */
+    private Long collectId;
 }

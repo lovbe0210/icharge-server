@@ -2,12 +2,15 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.config.ServiceProperties;
+import com.lovbe.icharge.common.dao.CommonDao;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -19,21 +22,22 @@ import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.DirNodeVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.dao.ArticleDao;
 import com.lovbe.icharge.dao.ColumnDao;
 import com.lovbe.icharge.dao.ContentDao;
 import com.lovbe.icharge.dao.CreateRecordDao;
-import com.lovbe.icharge.entity.dto.ColumnDTO;
-import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
-import com.lovbe.icharge.entity.dto.CreateColumnDTO;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.common.model.dto.CreateRecordDo;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -67,6 +71,12 @@ public class ColumnServiceImpl implements ColumnService {
     private ArticleService articleService;
     @Resource
     private ServiceProperties serviceProperties;
+    @Value("${spring.kafka.topics.action-column-content}")
+    private String columnContentTopic;
+    @Value("${spring.application.name}")
+    private String appName;
+    @Resource
+    private CommonDao commonDao;
 
     @Override
     public ColumnVo createColumn(CreateColumnDTO data, long userId) {
@@ -200,7 +210,7 @@ public class ColumnServiceImpl implements ColumnService {
     public void deleteColumnInfo(ColumnDTO columnDTO, long userId) {
         ColumnDo columnDo = columnDao.selectById(columnDTO.getUid());
         checkColumnStatus(userId, columnDo);
-        columnDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        columnDo.setStatus(CommonStatusEnum.DELETE.getStatus()).setUpdateTime(new Date());
         columnDao.updateById(columnDo);
         // 删除es中的专栏数据
         commonService.deleteElasticsearchColumn(Arrays.asList(String.valueOf(columnDTO.getUid())));
@@ -212,7 +222,7 @@ public class ColumnServiceImpl implements ColumnService {
             return;
         }
         ArticleDo articleDo = new ArticleDo();
-        articleDo.setStatus(CommonStatusEnum.DELETE.getStatus());
+        articleDo.setStatus(CommonStatusEnum.DELETE.getStatus()).setUpdateTime(new Date());
         articleDao.update(articleDo, new LambdaQueryWrapper<ArticleDo>()
                 .eq(ArticleDo::getColumnId, columnDo.getUid()));
         // 同步删除es中的文章数据
@@ -391,6 +401,132 @@ public class ColumnServiceImpl implements ColumnService {
             BeanUtil.copyProperties(articleDo, articleVO);
             return articleVO;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateContent(BaseRequest<ContentDTO> contentEntity, Long userId) {
+        ContentDTO contentDTO = contentEntity.getData();
+        ColumnDo columnDo = columnDao.selectById(contentDTO.getTargetId());
+        checkColumnStatus(userId, columnDo);
+        // 如果清空内容直接删除原有content
+        if (contentDTO.getContent() == null || !StringUtils.hasText(contentDTO.getContent().toString())) {
+            columnDo.setHomeContentId(null).setHomeContentStatus(0);
+            columnDao.updateById(columnDo);
+            return;
+        }
+        ContentDo contentDo = new ContentDo();
+        Long uid = contentDTO.getUid();
+        Date updateTime = new Date();
+        if (uid == null) {
+            uid = YitIdHelper.nextId();
+            contentDo.setCreateTime(updateTime);
+        }
+        contentDo.setUid(uid).setUpdateTime(updateTime);
+        contentDo.setContent(JSONUtil.toJsonStr(contentDTO.getContent()));
+        contentDao.insertOrUpdate(contentDo);
+        // 发送内容审核消息
+        ContentPublishDTO publishDTO = new ContentPublishDTO(columnDo.getUid(), SysConstant.TARGET_TYPE_COLUMN, uid, updateTime);
+        commonService.sendMessage(appName, columnContentTopic, publishDTO);
+        columnDo.setHomeContentId(uid)
+                .setHomeContentStatus(SysConstant.PUBLISH_WAIT)
+                .setUpdateTime(updateTime);
+        columnDao.updateById(columnDo);
+    }
+
+    @Override
+    public void handlerPublishAction(List<ContentPublishDTO> collect) {
+        List<Long> contentIdList = collect.stream()
+                .map(ContentPublishDTO::getContentId)
+                .collect(Collectors.toList());
+        List<ContentDo> contentList = contentDao.selectBatchIds(contentIdList);
+        Map<Long, ContentDo> contentMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(contentList)) {
+            contentMap.putAll(contentList.stream().collect(Collectors.toMap(ContentDo::getUid, Function.identity())));
+        }
+        for (ContentPublishDTO publishDTO : collect) {
+            // 获取内容进行审核
+            ColumnDo columnDo = columnDao.selectById(publishDTO.getTargetId());
+            if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
+                continue;
+            }
+            ContentDo contentDo = contentMap.get(publishDTO.getContentId());
+            if (contentDo == null || !StringUtils.hasLength(contentDo.getContent())) {
+                continue;
+            }
+            try {
+                // 对内容进行解析，获取纯文本内容
+                JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
+                String textValue = CommonUtils.getContentTextValue(parseObj);
+                if (log.isDebugEnabled()) {
+                    log.debug("[专栏主页内容审核] --- textValue: {}", textValue);
+                }
+                UpdateWrapper<ColumnDo> updateWrapper = new UpdateWrapper<ColumnDo>()
+                        .eq("uid", publishDTO.getTargetId())
+                        .eq("home_content_id", publishDTO.getContentId())
+                        .and(wr -> wr.exists("SELECT * FROM c_content WHERE uid = " +
+                                publishDTO.getContentId() +
+                                " AND update_time = \"" +
+                                DateUtil.format(publishDTO.getPublishTime(), "yyyy-MM-dd HH:mm:ss.SSS") +
+                                "\" AND status = 'A'"));
+                // 发送专栏主页内容审核请求
+                AIAuditResultDTO resultDto = commonService.sendAuditChat(SysConstant.TARGET_TYPE_ESSAY, textValue);
+                if (resultDto == null) {
+                    log.error("[随笔内容审核] --- 大模型审核结果为空，请在日志中查看详细错误");
+                    // TODO 对于审核异常的需要放入死信队列手动审核
+                    continue;
+                }
+                // 结果解析ok
+                if (resultDto != null && resultDto.isResult()) {
+                    log.info("[专栏主页内容审核] --- 大模型审核通过");
+                    updateWrapper.set("home_content_status", SysConstant.PUBLISH_SUCCESS);
+                } else {
+                    List<String> reasonList = resultDto.getReason();
+                    log.warn("[专栏主页内容审核] --- kimi审核失败, reason: {}", reasonList);
+                    updateWrapper.set("home_content_status", SysConstant.PUBLISH_FAILED);
+                    // 记录审核失败通知
+                    String noticeContent = "专栏主页更新失败，公开发布内容需符合本站创作内容约定";
+                    if (!CollectionUtils.isEmpty(reasonList)) {
+                        StringBuilder tmp = new StringBuilder();
+                        for (int i = 0; i < reasonList.size(); i++) {
+                            String reason = reasonList.get(i);
+                            if (reason != null && reason.contains("reason")) {
+                                try {
+                                    JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
+                                    tmp.append("\"" + entries.getStr("content") + "\"");
+                                    tmp.append(entries.getStr("reason"));
+                                }catch (Exception e) {
+                                    log.error("");
+                                }
+                            } else if (reason != null) {
+                                tmp.append(reason);
+                            }
+                            if (i != reasonList.size() - 1) {
+                                tmp.append(";");
+                            }
+                        }
+                        if (tmp.length() > 0) {
+                            noticeContent = tmp.toString();
+                        }
+                    }
+                    SocialNoticeDo noticeDo = new SocialNoticeDo()
+                            .setTargetId(publishDTO.getTargetId())
+                            .setUserId(columnDo.getUserId())
+                            .setNoticeType(SysConstant.NOTICE_AUDIT_COLUMN)
+                            .setActionUserId(0L)
+                            .setNoticeContent(noticeContent);
+                    noticeDo.setUid(YitIdHelper.nextId());
+                    commonDao.insertAuditNotice(noticeDo);
+                }
+                // 这里更新需要保证时间id都相同
+                int update = columnDao.update(updateWrapper);
+                if (update == 0) {
+                    log.info("[专栏主页内容审核] --- 专栏状态更新失败，主页内容已发生更新，columnId: {}", columnDo.getUid());
+                }
+            } catch (Exception e) {
+                log.error("[专栏主页内容审核] --- 正文内容解析失败，contentId: {}, errorInfo: {}", publishDTO.getContentId(), e.toString());
+            }
+        }
     }
 
     private static void checkColumnStatus(long userId, ColumnDo columnDo) {

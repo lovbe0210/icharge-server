@@ -114,6 +114,8 @@ public class SysConstant {
     public static final int NOTICE_FOLLOW = 4;
     public static final int NOTICE_AUDIT_ARTICLE = 5;
     public static final int NOTICE_AUDIT_EASSAY = 6;
+    public static final int NOTICE_AUDIT_COLUMN = 7;
+    public static final int NOTICE_AUDIT_DOMAIN = 8;
     public static final int NOTICE_SYSTEM = 0;
 
     /**

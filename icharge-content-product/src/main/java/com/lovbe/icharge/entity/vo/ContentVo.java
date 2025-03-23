@@ -1,6 +1,5 @@
 package com.lovbe.icharge.entity.vo;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +24,5 @@ public class ContentVo {
     /**
      * 文档所属用户id
      */
-    @NotNull(message = "文档id不得为空")
-    private Long articleId;
+    private Long targetId;
 }

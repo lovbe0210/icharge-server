@@ -31,8 +31,8 @@ public class ContentDTO {
      */
     private String coverUrl;
     /**
-     * 文档所属用户id
+     * 文档或专栏id
      */
-    @NotNull(message = "文档id不得为空")
-    private Long articleId;
+    @NotNull(message = "文档或专栏id不得为空")
+    private Long targetId;
 }

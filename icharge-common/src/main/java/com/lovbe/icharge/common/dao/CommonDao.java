@@ -3,6 +3,7 @@ package com.lovbe.icharge.common.dao;
 import com.lovbe.icharge.common.model.dto.CacheUserDo;
 import com.lovbe.icharge.common.model.dto.EncourageLogDo;
 import com.lovbe.icharge.common.model.dto.MenuDTO;
+import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -83,4 +84,11 @@ public interface CommonDao {
              </script>
             """)
     void insertEncourageLog(@Param("encourageLogList") List<EncourageLogDo> encourageLogList);
+
+    @Insert(value = """
+                    INSERT INTO s_notices (uid, user_id, notice_type, target_id, action_user_id, notice_content) 
+                    VALUES (#{noticeDo.uid}, #{noticeDo.userId}, #{noticeDo.noticeType}, 
+                            #{noticeDo.targetId}, 0, #{noticeDo.noticeContent})
+                    """)
+    void insertAuditNotice(@Param("noticeDo") SocialNoticeDo noticeDo);
 }

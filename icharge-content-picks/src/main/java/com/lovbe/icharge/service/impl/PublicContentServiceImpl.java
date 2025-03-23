@@ -14,10 +14,7 @@ import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.*;
-import com.lovbe.icharge.common.model.vo.DirNodeVo;
-import com.lovbe.icharge.common.model.vo.PublicArticleVo;
-import com.lovbe.icharge.common.model.vo.RamblyJotVo;
-import com.lovbe.icharge.common.model.vo.RelationshipVo;
+import com.lovbe.icharge.common.model.vo.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
@@ -138,6 +135,54 @@ public class PublicContentServiceImpl implements PublicContentService {
         }
         articleVo.setContent(contentDo.getContent());
         return articleVo;
+    }
+
+    @Override
+    public RecommendColumnVo getColumnInfo(String uri, Long userId) {
+        // 如果userId和专栏所在userId相同，则使用最新的contentId，否则不展示自定义内容
+        ColumnDo columnDo = publicContentDao.selectColumnInfo(uri);
+        if (columnDo == null) {
+            throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_EXIST);
+        }
+        int isPublic = columnDo.getIsPublic();
+        Long authorId = columnDo.getUserId();
+        if (!Objects.equals(authorId, userId) && isPublic == 0) {
+            throw new ServiceException(ServiceErrorCodes.COLUMN_NOT_PUBLIC);
+        }
+        RecommendColumnVo columnVo = new RecommendColumnVo();
+        BeanUtil.copyProperties(columnDo, columnVo);
+        // 计算专栏统计信息
+        List<ArticleDo> articleList = columnDo.getArticleList();
+        if (CollectionUtils.isEmpty(articleList)) {
+            columnVo.setArticleCount(0).setTotalWords(0);
+        } else {
+            int sum = articleList.stream().mapToInt(ArticleDo::getWordsNum).sum();
+            columnVo.setArticleCount(articleList.size()).setTotalWords(sum);
+        }
+        // 专栏自定义内容
+        Long contentId = columnDo.getHomeContentId();
+        Integer contentStatus = columnDo.getHomeContentStatus();
+        if (contentId != null && (contentStatus == SysConstant.PUBLISH_SUCCESS || Objects.equals(userId, authorId))) {
+            ContentDo contentDo = publicContentDao.selectContent(contentId);
+            if (contentDo != null) {
+                columnVo.setHomeContentId(contentId);
+                columnVo.setHomeContent(contentDo.getContent());
+            }
+        } else {
+            columnVo.setHomeContentId(null);
+        }
+
+        // 查询收藏情况
+        if (userId == null) {
+            return columnVo;
+        }
+        CollectDo collectDo = collectDao.selectOne(new LambdaQueryWrapper<CollectDo>()
+                .eq(CollectDo::getUserId, userId)
+                .eq(CollectDo::getTargetId, columnDo.getUid()));
+        if (collectDo != null) {
+            columnVo.setTags(collectDo.getTags()).setCollectId(collectDo.getUid());
+        }
+        return columnVo;
     }
 
     @Override
@@ -681,6 +726,7 @@ public class PublicContentServiceImpl implements PublicContentService {
             return List.of();
         }
         List<PublicArticleVo> collect = articleList.stream()
+                .filter(article -> Objects.equals(article.getStatus(), CommonStatusEnum.NORMAL.getStatus()))
                 .map(article -> {
                     PublicArticleVo articleVo = new PublicArticleVo();
                     BeanUtil.copyProperties(article, articleVo);

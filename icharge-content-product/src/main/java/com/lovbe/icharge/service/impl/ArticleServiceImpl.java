@@ -203,7 +203,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Transactional(rollbackFor = Exception.class)
     public Map updateContent(BaseRequest<ContentDTO> contentEntity, long userId) {
         ContentDTO contentDTO = contentEntity.getData();
-        ArticleDo articleDo = articleDao.selectById(contentDTO.getArticleId());
+        ArticleDo articleDo = articleDao.selectById(contentDTO.getTargetId());
         checkArticleStatus(userId, articleDo);
         ContentDo contentDo = new ContentDo();
         Long uid = contentDTO.getUid();
@@ -332,7 +332,7 @@ public class ArticleServiceImpl implements ArticleService {
         // 判断状态：只有在文档内容更新时才能二次发布
         Integer publishStatus = articleDo.getPublishStatus();
         if (publishStatus == null || publishStatus != 0) {
-            throw new ServiceException(ServiceErrorCodes.ARTICLE_REPEAT_PUBLISH_FAILED);
+            return;
         }
         articleDo.setPublishStatus(1);
         articleDao.updateById(articleDo);

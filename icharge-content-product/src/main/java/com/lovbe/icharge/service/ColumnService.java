@@ -2,11 +2,10 @@ package com.lovbe.icharge.service;
 
 import cn.hutool.json.JSONArray;
 import com.lovbe.icharge.common.model.base.BaseRequest;
-import com.lovbe.icharge.entity.dto.ColumnDTO;
-import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
-import com.lovbe.icharge.entity.dto.CreateColumnDTO;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
+import com.lovbe.icharge.entity.vo.ContentVo;
 
 import java.util.List;
 
@@ -101,4 +100,21 @@ public interface ColumnService {
      * @date 2024/11/12 23:25
      */
     List<ArticleVo> getColumnArticleList(Long columnId, long userId);
+
+    /**
+     * @description: 专栏首页自定义内容更新
+     * @param: contentEntity
+     * @param: userId
+     * @author: lovbe0210
+     * @date: 2025/3/22 11:19
+     */
+    void updateContent(BaseRequest<ContentDTO> contentEntity, Long userId);
+
+    /**
+     * @description: 专栏首页自定义内容审核
+     * @param: collect
+     * @author: lovbe0210
+     * @date: 2025/3/22 11:49
+     */
+    void handlerPublishAction(List<ContentPublishDTO> collect);
 }

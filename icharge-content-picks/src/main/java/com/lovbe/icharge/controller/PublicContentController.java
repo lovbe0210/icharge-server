@@ -56,6 +56,12 @@ public class PublicContentController {
         return ResponseBean.ok(contentService.getArticleInfo(uri, userId));
     }
 
+    @GetMapping("/column/{uri}")
+    public ResponseBean<RecommendColumnVo> getColumnInfo(@PathVariable("uri") String uri,
+                                                      @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
+        return ResponseBean.ok(contentService.getColumnInfo(uri, userId));
+    }
+
     /**
      * description: 通过id批量获取文章列表
      *
@@ -225,7 +231,7 @@ public class PublicContentController {
      * @author: Lvhl
      * @date: 2024/9/16 11:56
      */
-    @GetMapping("/column/featured")
+    @PostMapping("/column/featured")
     public ResponseBean getFeaturedColumn() {
         List<RecommendColumnVo> featuredArticle = contentService.getFeaturedColumn();
         return ResponseBean.ok(featuredArticle);

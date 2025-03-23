@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.dao.CommonDao;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.GlobalErrorCodes;
@@ -28,6 +29,7 @@ import com.lovbe.icharge.service.RamblyJotService;
 import com.lovbe.icharge.service.feign.IndividuationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +64,8 @@ public class RamblyJotserviceImpl implements RamblyJotService {
     private String publishEssayTopic;
     @Value("${spring.application.name}")
     private String appName;
+    @Resource
+    private CommonDao commonDao;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -234,7 +238,7 @@ public class RamblyJotserviceImpl implements RamblyJotService {
                             .setActionUserId(0L)
                             .setNoticeContent(noticeContent);
                     noticeDo.setUid(YitIdHelper.nextId());
-                    ramblyJotDao.insertAuditNotice(noticeDo);
+                    commonDao.insertAuditNotice(noticeDo);
                 }
                 ramblyJotDao.update(updateWrapper);
             } catch (Exception e) {

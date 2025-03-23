@@ -6,10 +6,7 @@ import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
-import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
-import com.lovbe.icharge.entity.dto.ColumnDTO;
-import com.lovbe.icharge.entity.dto.ColumnOperateDTO;
-import com.lovbe.icharge.entity.dto.CreateColumnDTO;
+import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
 import com.lovbe.icharge.service.ArticleService;
@@ -193,6 +190,20 @@ public class ColumnController {
                                                    @RequestHeader(SysConstant.USERID) long userId) {
         Long dirContentId = columnService.updateColumnDir(request.getData(), userId);
         return ResponseBean.ok(dirContentId);
+    }
+
+    /**
+     * @description: 专栏首页自定义内容更新
+     * @param: String
+     * @return: ResponseBean
+     * @author: lovbe0210
+     * @date: 2024/12/14 23:38
+     */
+    @PostMapping("/column/content/update")
+    public ResponseBean updateDomainContent(@RequestHeader(SysConstant.USERID)Long userId,
+                                            @RequestBody @Valid BaseRequest<ContentDTO> contentEntity) {
+        columnService.updateContent(contentEntity, userId);
+        return ResponseBean.ok();
     }
 
     /**
