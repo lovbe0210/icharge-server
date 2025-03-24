@@ -86,8 +86,9 @@ public class UserController {
      * @date: 2024/12/14 23:38
      */
     @GetMapping("/dmcontent/{contentId}")
-    public ResponseBean getDomainContent(@PathVariable("contentId") Long contentId) {
-        return ResponseBean.ok(userService.getDomainContent(contentId));
+    public ResponseBean getDomainContent(@RequestHeader(value = SysConstant.USERID, required = false)Long userId,
+                                         @PathVariable("contentId") Long contentId) {
+        return ResponseBean.ok(userService.getDomainContent(contentId, userId));
     }
 
     /**

@@ -3,6 +3,7 @@ package com.lovbe.icharge.service;
 import cn.hutool.db.Page;
 import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
+import com.lovbe.icharge.common.model.dto.ContentPublishDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
@@ -12,6 +13,7 @@ import com.lovbe.icharge.entity.vo.EncourageLogVo;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import me.zhyd.oauth.request.AuthRequest;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -90,7 +92,7 @@ public interface UserService {
      * @author: lovbe0210
      * @date: 2025/2/5 17:59
      */
-    Object getDomainContent(Long contentId);
+    Object getDomainContent(Long contentId, Long userId);
 
     /**
      * @description: 个人主页内容删除
@@ -142,4 +144,12 @@ public interface UserService {
      * @date: 2025/3/20 15:31
      */
     PageBean<EncourageLogVo> getEncourageLog(RequestListDTO data, Long userId);
+
+    /**
+     * @description: 处理个人主页内容修改消息消费
+     * @param: collect
+     * @author: lovbe0210
+     * @date: 2025/3/24 16:54
+     */
+    void handlerPublishAction(List<ContentPublishDTO> collect);
 }

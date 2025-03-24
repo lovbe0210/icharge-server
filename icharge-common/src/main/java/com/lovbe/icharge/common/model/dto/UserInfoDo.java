@@ -60,7 +60,7 @@ public class UserInfoDo extends BaseEntity {
     /**
      * 自定义内容审核状态 专栏首页内容审核状态 0未提交 2失败 3成功
      */
-    private Integer homeContentStatus;
+    private Integer contentStatus;
     /**
      * 成长值
      */

@@ -31,7 +31,6 @@ import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.common.model.dto.CreateRecordDo;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
-import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.ColumnService;
 import com.lovbe.icharge.service.feign.StorageService;

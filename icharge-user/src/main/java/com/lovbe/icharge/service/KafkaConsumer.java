@@ -4,8 +4,8 @@ import cn.hutool.json.JSONUtil;
 import com.lovbe.icharge.common.config.KafkaProperties;
 import com.lovbe.icharge.common.factory.KafkaConsumeFactory;
 import com.lovbe.icharge.common.model.base.KafkaMessage;
-import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.model.dto.ContentPublishDTO;
+import com.lovbe.icharge.common.util.JsonUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -27,72 +27,19 @@ import java.util.stream.Collectors;
 @Component
 public class KafkaConsumer {
     @Resource
-    private ArticleService articleService;
-    @Resource
-    private ColumnService columnService;
-    @Resource
-    private RamblyJotService ramblyJotService;
+    private UserService userService;
     @Resource
     private KafkaProperties kafkaProperties;
 
-    /**
-     * @description: 文章发布消息处理 系统启动后每5分钟消费一次
-     * @author: lovbe0210
-     * @date: 2025/2/11 21:25
-     */
-    @Scheduled(fixedDelay = 5 * 60 * 1000, initialDelay = 10 * 1000)
-    public void scheduledListenArticlePublish() {
-        List<ConsumerRecord> consumerRecords = KafkaConsumeFactory.pollMessage("article-publish",
-                kafkaProperties.getArticlePublishTopic(), kafkaProperties.getBatchPoll());
-        if (CollectionUtils.isEmpty(consumerRecords)) {
-            return;
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("received msgSize: " + consumerRecords.size());
-        }
-        try {
-            List<ContentPublishDTO> collect = getContentPublishDTOS(consumerRecords);
-            if (collect == null) return;
-            articleService.handlerPublishAction(collect);
-        } catch (Exception e) {
-            log.error("[文章发布消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
-        }
-    }
 
     /**
-     * 随笔内容发布消息消费
+     * 个人主页内容更新消息消费
      *
      * @param consumerRecords
      * @param ack
      */
-    @KafkaListener(topics = "${spring.kafka.topics.action-essay-publish}",
-            containerFactory = "kafkaListenerContainerFactory", groupId = "essay-publish")
-    public void listenEssayPublish(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
-        if (consumerRecords.isEmpty()) {
-            return;
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("received msgSize: " + consumerRecords.size());
-        }
-        try {
-            List<ContentPublishDTO> collect = getContentPublishDTOS(consumerRecords);
-            if (collect == null) return;
-            ramblyJotService.handlerPublishAction(collect);
-        } catch (Exception e) {
-            log.error("[随笔发布消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
-        } finally {
-            ack.acknowledge();
-        }
-    }
-
-    /**
-     * 专栏主页内容更新消息消费
-     *
-     * @param consumerRecords
-     * @param ack
-     */
-    @KafkaListener(topics = "${spring.kafka.topics.action-column-content}",
-            containerFactory = "kafkaListenerContainerFactory", groupId = "column-content")
+    @KafkaListener(topics = "${spring.kafka.topics.action-domain-content}",
+            containerFactory = "kafkaListenerContainerFactory", groupId = "domain-content")
     public void listenColumnContent(List<ConsumerRecord> consumerRecords, Acknowledgment ack) {
         if (consumerRecords.isEmpty()) {
             return;
@@ -103,9 +50,9 @@ public class KafkaConsumer {
         try {
             List<ContentPublishDTO> collect = getContentPublishDTOS(consumerRecords);
             if (collect == null) return;
-            columnService.handlerPublishAction(collect);
+            userService.handlerPublishAction(collect);
         } catch (Exception e) {
-            log.error("[专栏主页更新消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
+            log.error("[个人主页更新消息消费] --- 消息消费失败, errorInfo: {}", e.toString());
         } finally {
             ack.acknowledge();
         }

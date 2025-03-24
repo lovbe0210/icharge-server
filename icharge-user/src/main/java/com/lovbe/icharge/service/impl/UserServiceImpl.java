@@ -1,12 +1,15 @@
 package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.db.Page;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.github.yitter.idgen.YitIdHelper;
+import com.lovbe.icharge.common.dao.CommonDao;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.EncorageBehaviorEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
@@ -36,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.zhyd.oauth.config.AuthConfig;
 import me.zhyd.oauth.request.AuthQqRequest;
 import me.zhyd.oauth.request.AuthRequest;
+import org.apache.catalina.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -43,6 +48,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -60,11 +66,18 @@ public class UserServiceImpl implements UserService {
     @Resource
     private UserMapper userMapper;
     @Resource
+    private CommonDao commonDao;
+    @Resource
     private CommonService commonService;
     @Resource
     private ServiceProperties properties;
     @Resource
     private EncourageLogMapper encourageLogMapper;
+    @Value("${spring.kafka.topics.action-domain-content}")
+    private String columnContentTopic;
+    @Value("${spring.application.name}")
+    private String appName;
+
 
 
     @Override
@@ -232,18 +245,36 @@ public class UserServiceImpl implements UserService {
         }
         if (contentUpdateDTO.getContentId() == null) {
             contentUpdateDTO.setContentId(YitIdHelper.nextId());
-            userMapper.update(new UpdateWrapper<UserInfoDo>()
-                    .eq("uid", userId)
-                    .set("content_id", contentUpdateDTO.getContentId()));
         }
+        contentUpdateDTO.setUpdateTime(new Date());
+        userMapper.update(new UpdateWrapper<UserInfoDo>()
+                .eq("uid", userId)
+                .set("content_status", SysConstant.PUBLISH_WAIT)
+                .set("content_id", contentUpdateDTO.getContentId()));
         contentUpdateDTO.setContent(JsonUtils.toJsonString(contentUpdateDTO.getContent()));
         userMapper.updateDomainContent(contentUpdateDTO);
+        // 发送审核消息
+        ContentPublishDTO publishDTO = new ContentPublishDTO(userId,
+                SysConstant.TARGET_TYPE_AUTHOR,
+                contentUpdateDTO.getContentId(),
+                contentUpdateDTO.getUpdateTime());
+        commonService.sendMessage(appName, columnContentTopic, publishDTO);
+        // 清除缓存
         String cacheUserKey = RedisKeyConstant.getCacheUserKey(userId);
         RedisUtil.del(cacheUserKey);
     }
 
     @Override
-    public Object getDomainContent(Long contentId) {
+    public Object getDomainContent(Long contentId, Long userId) {
+        UserInfoDo userInfoDo = userMapper.selectOne(new LambdaQueryWrapper<UserInfoDo>()
+                .eq(UserInfoDo::getStatus, CommonStatusEnum.NORMAL.getStatus())
+                .eq(UserInfoDo::getContentId, contentId));
+        if (userInfoDo == null || !CommonStatusEnum.isNormal(userInfoDo.getStatus())) {
+            throw new ServiceException(ServiceErrorCodes.USER_NOT_EXIST);
+        }
+        if (!Objects.equals(userInfoDo.getContentStatus(), SysConstant.PUBLISH_SUCCESS) && !Objects.equals(userId, userInfoDo.getUid())) {
+            return null;
+        }
         Object content = userMapper.getDomainContent(contentId);
         return content;
     }
@@ -341,6 +372,105 @@ public class UserServiceImpl implements UserService {
                 })
                 .collect(Collectors.toList());
         return new PageBean<>(collect.size() == data.getLimit(), Math.toIntExact(count), collect);
+    }
+
+    @Override
+    public void handlerPublishAction(List<ContentPublishDTO> collect) {
+        List<Long> contentIdList = collect.stream()
+                .map(ContentPublishDTO::getContentId)
+                .collect(Collectors.toList());
+        List<ContentDo> contentList = userMapper.selectDomainContentList(contentIdList);
+        Map<Long, ContentDo> contentMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(contentList)) {
+            contentMap.putAll(contentList.stream().collect(Collectors.toMap(ContentDo::getUid, Function.identity())));
+        }
+        for (ContentPublishDTO publishDTO : collect) {
+            // 获取内容进行审核
+            UserInfoDo userInfo = userMapper.selectById(publishDTO.getTargetId());
+            if (userInfo == null || !CommonStatusEnum.isNormal(userInfo.getStatus())) {
+                continue;
+            }
+            ContentDo contentDo = contentMap.get(publishDTO.getContentId());
+            if (contentDo == null || !StringUtils.hasLength(contentDo.getContent())) {
+                continue;
+            }
+            try {
+                // 对内容进行解析，获取纯文本内容
+                JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
+                String textValue = CommonUtils.getContentTextValue(parseObj);
+                if (log.isDebugEnabled()) {
+                    log.debug("[个人主页内容审核] --- textValue: {}", textValue);
+                }
+                UpdateWrapper<UserInfoDo> updateWrapper = new UpdateWrapper<UserInfoDo>()
+                        .eq("uid", publishDTO.getTargetId())
+                        .eq("content_id", publishDTO.getContentId())
+                        .and(wr -> wr.exists("SELECT * FROM c_content WHERE uid = " +
+                                publishDTO.getContentId() +
+                                " AND update_time = \"" +
+                                DateUtil.format(publishDTO.getPublishTime(), "yyyy-MM-dd HH:mm:ss.SSS") +
+                                "\" AND status = 'A'"));
+                // 发送个人主页内容审核请求
+                AIAuditResultDTO resultDto = commonService.sendAuditChat(SysConstant.TARGET_TYPE_ESSAY, textValue);
+                if (resultDto == null) {
+                    log.error("[个人主页内容审核] --- 大模型审核结果为空，请在日志中查看详细错误");
+                    // TODO 对于审核异常的需要放入死信队列手动审核
+                    continue;
+                }
+                // 结果解析ok
+                if (resultDto != null && resultDto.isResult()) {
+                    log.info("[个人主页内容审核] --- 大模型审核通过");
+                    updateWrapper.set("content_status", SysConstant.PUBLISH_SUCCESS);
+                } else {
+                    List<String> reasonList = resultDto.getReason();
+                    log.warn("[个人主页内容审核] --- kimi审核失败, reason: {}", reasonList);
+                    updateWrapper.set("content_status", SysConstant.PUBLISH_FAILED);
+                    // 记录审核失败通知
+                    String noticeContent = "个人主页更新失败，公开发布内容需符合本站创作内容约定";
+                    if (!CollectionUtils.isEmpty(reasonList)) {
+                        StringBuilder tmp = new StringBuilder();
+                        for (int i = 0; i < reasonList.size(); i++) {
+                            String reason = reasonList.get(i);
+                            if (reason != null && reason.contains("reason")) {
+                                try {
+                                    JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
+                                    tmp.append("\"" + entries.getStr("content") + "\"");
+                                    tmp.append(entries.getStr("reason"));
+                                }catch (Exception e) {
+                                    log.error("");
+                                }
+                            } else if (reason != null) {
+                                tmp.append(reason);
+                            }
+                            if (i != reasonList.size() - 1) {
+                                tmp.append(";");
+                            }
+                        }
+                        if (tmp.length() > 0) {
+                            noticeContent = tmp.toString();
+                        }
+                    }
+                    SocialNoticeDo noticeDo = new SocialNoticeDo()
+                            .setTargetId(publishDTO.getTargetId())
+                            .setUserId(userInfo.getUid())
+                            .setNoticeType(SysConstant.NOTICE_AUDIT_DOMAIN)
+                            .setActionUserId(0L)
+                            .setNoticeContent(noticeContent);
+                    noticeDo.setUid(YitIdHelper.nextId());
+                    commonDao.insertAuditNotice(noticeDo);
+                }
+                // 这里更新需要保证时间id都相同
+                int update = userMapper.update(updateWrapper);
+                if (update == 0) {
+                    log.info("[个人主页内容审核] --- 专栏状态更新失败，主页内容已发生更新，userId: {}", userInfo.getUid());
+                } else {
+                    // 修改成功，删除缓存
+                    String cacheUserKey = RedisKeyConstant.getCacheUserKey(userInfo.getUid());
+                    RedisUtil.del(cacheUserKey);
+                }
+            } catch (Exception e) {
+                log.error("[个人主页内容审核] --- 正文内容解析失败，contentId: {}, errorInfo: {}", publishDTO.getContentId(), e.toString());
+            }
+        }
     }
 
     /**

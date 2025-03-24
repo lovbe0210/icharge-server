@@ -2,10 +2,10 @@ package com.lovbe.icharge.service;
 
 import cn.hutool.json.JSONArray;
 import com.lovbe.icharge.common.model.base.BaseRequest;
+import com.lovbe.icharge.common.model.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.dto.*;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ColumnVo;
-import com.lovbe.icharge.entity.vo.ContentVo;
 
 import java.util.List;
 

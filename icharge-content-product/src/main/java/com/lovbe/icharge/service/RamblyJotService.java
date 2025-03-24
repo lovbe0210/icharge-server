@@ -1,6 +1,6 @@
 package com.lovbe.icharge.service;
 
-import com.lovbe.icharge.entity.dto.ContentPublishDTO;
+import com.lovbe.icharge.common.model.dto.ContentPublishDTO;
 import com.lovbe.icharge.entity.dto.RamblyJotDTO;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
 

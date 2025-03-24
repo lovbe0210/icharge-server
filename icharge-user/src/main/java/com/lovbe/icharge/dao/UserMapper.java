@@ -1,11 +1,14 @@
 package com.lovbe.icharge.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import org.apache.ibatis.annotations.*;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -24,9 +27,11 @@ public interface UserMapper extends BaseMapper<UserInfoDo> {
      * @date: 2025/2/5 18:01
      */
     @Insert(value = """
-                    INSERT INTO c_content(uid, content) VALUES (#{contentUpdateDTO.contentId}, #{contentUpdateDTO.content})
+                    INSERT INTO c_content(uid, content, update_time) 
+                    VALUES (#{contentUpdateDTO.contentId}, #{contentUpdateDTO.content}, #{contentUpdateDTO.updateTime})
                     ON DUPLICATE KEY UPDATE
-                    content = #{contentUpdateDTO.content};
+                    content = #{contentUpdateDTO.content},
+                    update_time = #{contentUpdateDTO.updateTime};
                     """)
     void updateDomainContent(@Param("contentUpdateDTO") DomainContentUpdateDTO contentUpdateDTO);
 
@@ -74,4 +79,23 @@ public interface UserMapper extends BaseMapper<UserInfoDo> {
                     	AND sis.`status` = 'A'
                     """)
     TargetStatisticDo selectStatisticInfo(@Param("userId") Long userId);
+
+    /**
+     * @description: 获取个人主页内容
+     * @param: contentIdList
+     * @return: java.util.List<com.lovbe.icharge.common.model.dto.ContentDo>
+     * @author: lovbe0210
+     * @date: 2025/3/24 17:00
+     */
+    @Select(value = """
+                    <script>
+                        SELECT * 
+                        FROM c_content
+                        WHERE status = 'A'
+                        AND uid IN <foreach collection="contentIdList" item="contentId" open="(" close=")" separator=",">
+                                       #{contentId}
+                                   </foreach> 
+                    </script>
+                    """)
+    List<ContentDo> selectDomainContentList(@Param("contentIdList") List<Long> contentIdList);
 }

@@ -943,6 +943,7 @@ public class PublicContentServiceImpl implements PublicContentService {
                             .peek(article -> {
                                 DirNodeVo dirNode = new DirNodeVo()
                                         .setUid(article.getUid())
+                                        .setUri(article.getUri())
                                         .setType(1)
                                         .setTitle(article.getTitle())
                                         .setSummary(article.getSummary())
@@ -952,8 +953,6 @@ public class PublicContentServiceImpl implements PublicContentService {
                             })
                             .collect(Collectors.toList());
                 }
-
-                // 更新目录到数据库
                 return parseArray;
             } catch (Exception e) {
                 log.error("[获取专栏目录] --- 目录json解析异常，错误数据：{}", content);

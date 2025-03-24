@@ -297,14 +297,22 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
     @Override
     public PageBean<SystemNoticeVo> getSystemNotice(SocialNoticeReqDTO data, Long userId) {
         Long count = socialNoticeDao.selectCount(new LambdaQueryWrapper<SocialNoticeDo>()
-                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM, SysConstant.NOTICE_AUDIT_ARTICLE, SysConstant.NOTICE_AUDIT_EASSAY)
+                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM,
+                        SysConstant.NOTICE_AUDIT_ARTICLE,
+                        SysConstant.NOTICE_AUDIT_EASSAY,
+                        SysConstant.NOTICE_AUDIT_COLUMN,
+                        SysConstant.NOTICE_AUDIT_DOMAIN)
                 .eq(SocialNoticeDo::getUserId, userId)
                 .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus()));
         if (count == null || count == 0) {
             return new PageBean<>(false, List.of());
         }
         List<SocialNoticeDo> noticeDoList = socialNoticeDao.selectList(new LambdaQueryWrapper<SocialNoticeDo>()
-                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM, SysConstant.NOTICE_AUDIT_ARTICLE, SysConstant.NOTICE_AUDIT_EASSAY)
+                .in(SocialNoticeDo::getNoticeType, SysConstant.NOTICE_SYSTEM,
+                        SysConstant.NOTICE_AUDIT_ARTICLE,
+                        SysConstant.NOTICE_AUDIT_EASSAY,
+                        SysConstant.NOTICE_AUDIT_COLUMN,
+                        SysConstant.NOTICE_AUDIT_DOMAIN)
                 .eq(SocialNoticeDo::getUserId, userId)
                 .eq(data.getReadStatus() != null, SocialNoticeDo::getReadStatus, data.getReadStatus())
                 .orderByDesc(SocialNoticeDo::getCreateTime)
@@ -313,18 +321,22 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
             return new PageBean<>(false, List.of());
         }
         List<Long> articleIds = new ArrayList<>();
+        List<Long> columnIds = new ArrayList<>();
         List<Long> essayIds = new ArrayList<>();
         noticeDoList.stream()
                 .peek(record -> {
                     int noticeType = record.getNoticeType();
                     if (noticeType == SysConstant.NOTICE_AUDIT_ARTICLE || noticeType == SysConstant.NOTICE_SYSTEM) {
                         articleIds.add(record.getTargetId());
+                    } else if (noticeType == SysConstant.NOTICE_AUDIT_COLUMN) {
+                        columnIds.add(record.getTargetId());
                     } else if (noticeType == SysConstant.NOTICE_AUDIT_EASSAY) {
                         essayIds.add(record.getTargetId());
                     }
                 })
                 .collect(Collectors.toList());
         Map<Long, PublicArticleVo> articleMap = new HashMap<>();
+        Map<Long, PublicArticleVo> columnMap = new HashMap<>();
         Map<Long, RamblyJotVo> essayMap = new HashMap<>();
         // 系统通知分为两类，系统活动和升级为一类，另一类为文章随笔审核失败说明
         BaseRequest<Collection<Long>> baseRequest = new BaseRequest<>(articleIds);
