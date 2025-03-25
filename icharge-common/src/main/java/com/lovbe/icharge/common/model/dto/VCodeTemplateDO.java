@@ -21,11 +21,6 @@ import java.util.List;
 public class VCodeTemplateDO extends BaseEntity {
     // ========= 模板相关字段 =========
     /**
-     * 启用状态
-     * status
-     * 枚举 {@link CommonStatusEnum}
-     */
-    /**
      * 模板编码，保证唯一
      *
      * 枚举 {@link CodeSceneEnum}

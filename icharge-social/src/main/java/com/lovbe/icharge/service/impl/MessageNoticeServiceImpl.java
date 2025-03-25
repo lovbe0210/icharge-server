@@ -10,6 +10,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.SocialNoticeDo;
 import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.NoticeConfigDao;
 import com.lovbe.icharge.dao.ReplyCommentDao;
@@ -336,7 +337,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                 })
                 .collect(Collectors.toList());
         Map<Long, PublicArticleVo> articleMap = new HashMap<>();
-        Map<Long, PublicArticleVo> columnMap = new HashMap<>();
+        Map<Long, RecommendColumnVo> columnMap = new HashMap<>();
         Map<Long, RamblyJotVo> essayMap = new HashMap<>();
         // 系统通知分为两类，系统活动和升级为一类，另一类为文章随笔审核失败说明
         BaseRequest<Collection<Long>> baseRequest = new BaseRequest<>(articleIds);
@@ -345,6 +346,14 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
             if (articleList.isResult() && !CollectionUtils.isEmpty(articleList.getData())) {
                 articleMap.putAll(articleList.getData().stream()
                         .collect(Collectors.toMap(PublicArticleVo::getUid, Function.identity(), (a, b) -> b)));
+            }
+        }
+        if (columnIds.size() > 0) {
+            baseRequest = new BaseRequest<>(columnIds);
+            ResponseBean<List<RecommendColumnVo>> columnList = cpsService.getColumnListByIds(baseRequest, userId);
+            if (columnList.isResult() && !CollectionUtils.isEmpty(columnList.getData())) {
+                columnMap.putAll(columnList.getData().stream()
+                        .collect(Collectors.toMap(RecommendColumnVo::getUid, Function.identity(), (a, b) -> b)));
             }
         }
         if (essayIds.size() > 0) {
@@ -357,41 +366,7 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
         }
         List<Long> systemNoticeIds = new ArrayList<>();
         List<SystemNoticeVo> collect = noticeDoList.stream()
-                .map(record -> {
-                    SystemNoticeVo noticeVo = new SystemNoticeVo();
-                    BeanUtil.copyProperties(record, noticeVo);
-                    int noticeType = record.getNoticeType();
-                    noticeVo.setTargetType(noticeType == SysConstant.NOTICE_AUDIT_EASSAY ? 3 : 1);
-                    // 系统通知、文章审核失败
-                    if (noticeType == SysConstant.NOTICE_SYSTEM || noticeType == SysConstant.NOTICE_AUDIT_ARTICLE) {
-                        PublicArticleVo articleVo = articleMap.get(record.getTargetId());
-                        if (articleVo == null) {
-                            return null;
-                        }
-                        systemNoticeIds.add(record.getUid());
-                        if (noticeType == SysConstant.NOTICE_SYSTEM) {
-                            noticeVo.setContent(articleVo.getTitle());
-                            noticeVo.setLabel(articleVo.getSummary());
-                        } else {
-                            String content = "文章 " + articleVo.getTitle() + " 发布失败，" + record.getNoticeContent();
-                            noticeVo.setContent(content);
-                            noticeVo.setLabel("前往查看");
-                        }
-                        noticeVo.setArticleInfo(articleVo);
-                    } else {
-                        // 随笔审核失败
-                        RamblyJotVo ramblyJotVo = essayMap.get(record.getTargetId());
-                        if (ramblyJotVo == null) {
-                            return null;
-                        }
-                        systemNoticeIds.add(record.getUid());
-                        String content = "随笔 " + ramblyJotVo.getTitle() + " 发布失败，" + record.getNoticeContent();
-                        noticeVo.setContent(content);
-                        noticeVo.setLabel("前往查看");
-                        noticeVo.setRamblyJot(ramblyJotVo);
-                    }
-                    return noticeVo;
-                })
+                .map(record -> getSystemNoticeVo(record, articleMap, systemNoticeIds, columnMap, essayMap))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (systemNoticeIds.size() > 0) {
@@ -399,6 +374,72 @@ public class MessageNoticeServiceImpl implements MessageNoticeService {
                     .in(SysConstant.ES_FILED_UID, systemNoticeIds)
                     .set("read_status", 1));
         }
-        return new PageBean<>(true, collect);
+        return new PageBean<>(noticeDoList.size() == data.getLimit(), collect);
+    }
+
+    /**
+     * @description: 获取通知消息组装出参
+     * @param: record
+     * @param: articleMap
+     * @param: systemNoticeIds
+     * @param: columnMap
+     * @param: essayMap
+     * @return: com.lovbe.icharge.entity.vo.SystemNoticeVo
+     * @author: lovbe0210
+     * @date: 2025/3/25 11:49
+     */
+    private static SystemNoticeVo getSystemNoticeVo(SocialNoticeDo record, Map<Long, PublicArticleVo> articleMap, List<Long> systemNoticeIds, Map<Long, RecommendColumnVo> columnMap, Map<Long, RamblyJotVo> essayMap) {
+        SystemNoticeVo noticeVo = new SystemNoticeVo();
+        BeanUtil.copyProperties(record, noticeVo);
+        int noticeType = record.getNoticeType();
+        noticeVo.setTargetType(noticeType == SysConstant.NOTICE_AUDIT_EASSAY ? 3 :
+                               noticeType == SysConstant.NOTICE_AUDIT_COLUMN ? 2 :
+                               noticeType == SysConstant.NOTICE_AUDIT_DOMAIN ? 0 : 1);
+        // 系统通知、文章审核失败
+        if (noticeType == SysConstant.NOTICE_SYSTEM || noticeType == SysConstant.NOTICE_AUDIT_ARTICLE) {
+            PublicArticleVo articleVo = articleMap.get(record.getTargetId());
+            if (articleVo == null) {
+                return null;
+            }
+            systemNoticeIds.add(record.getUid());
+            if (noticeType == SysConstant.NOTICE_SYSTEM) {
+                noticeVo.setContent(articleVo.getTitle());
+                noticeVo.setLabel(articleVo.getSummary());
+            } else {
+                String content = "文章 " + articleVo.getTitle() + " 发布失败，" + record.getNoticeContent();
+                noticeVo.setContent(content);
+                noticeVo.setLabel("前往查看");
+            }
+            noticeVo.setArticleInfo(articleVo);
+        } else if (noticeType == SysConstant.NOTICE_AUDIT_COLUMN) {
+            // 专栏首页内容审核失败
+            RecommendColumnVo columnVo = columnMap.get(record.getTargetId());
+            if (columnVo == null) {
+                return null;
+            }
+            systemNoticeIds.add(record.getUid());
+            String content = "专栏 " + columnVo.getTitle() + " 主页内容更新失败，" + record.getNoticeContent();
+            noticeVo.setContent(content);
+            noticeVo.setLabel("前往查看");
+            noticeVo.setColumnInfo(columnVo);
+        } else if (noticeType == SysConstant.NOTICE_AUDIT_DOMAIN) {
+            // 个人主页内容审核失败
+            systemNoticeIds.add(record.getUid());
+            String content = "个人主页内容更新失败，" + record.getNoticeContent();
+            noticeVo.setContent(content);
+            noticeVo.setLabel("前往查看");
+        } else if (noticeType == SysConstant.NOTICE_AUDIT_EASSAY) {
+            // 随笔审核失败
+            RamblyJotVo ramblyJotVo = essayMap.get(record.getTargetId());
+            if (ramblyJotVo == null) {
+                return null;
+            }
+            systemNoticeIds.add(record.getUid());
+            String content = "随笔 " + ramblyJotVo.getTitle() + " 发布失败，" + record.getNoticeContent();
+            noticeVo.setContent(content);
+            noticeVo.setLabel("前往查看");
+            noticeVo.setRamblyJot(ramblyJotVo);
+        }
+        return noticeVo;
     }
 }

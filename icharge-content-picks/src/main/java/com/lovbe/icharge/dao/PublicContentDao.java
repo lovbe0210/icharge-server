@@ -6,7 +6,7 @@ import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.CreateRecordVo;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
-import com.lovbe.icharge.entity.vo.RecommendColumnVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.RouterInfoVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -244,7 +244,7 @@ public interface PublicContentDao{
     /**
      * @description: 获取个人主页公开专栏
      * @param: data
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.RecommendColumnVo>
+     * @return: java.util.List<com.lovbe.icharge.common.model.vo.RecommendColumnVo>
      * @author: lovbe0210
      * @date: 2025/2/6 16:47
      */

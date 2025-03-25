@@ -846,6 +846,27 @@ public class PublicContentServiceImpl implements PublicContentService {
         return new PageBean<>(true, collect);
     }
 
+    @Override
+    public List<RecommendColumnVo> getColumnListByIds(List<Long> data, Long userId) {
+        if (CollectionUtils.isEmpty(data)) {
+            return List.of();
+        }
+        List<ColumnDo> columnList = publicContentDao.selectColumnList(data);
+        if (CollectionUtils.isEmpty(columnList)) {
+            return List.of();
+        }
+        List<RecommendColumnVo> collect = columnList.stream()
+                .filter(column -> Objects.equals(column.getStatus(), CommonStatusEnum.NORMAL.getStatus()))
+                .map(column -> {
+                    RecommendColumnVo columnVo = new RecommendColumnVo();
+                    BeanUtil.copyProperties(column, columnVo);
+                    columnVo.setUserInfo(commonService.getCacheUser(column.getUserId()));
+                    return columnVo;
+                })
+                .collect(Collectors.toList());
+        return collect;
+    }
+
 
     /**
      * @description: 获取排行榜文章

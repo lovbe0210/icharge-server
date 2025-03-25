@@ -3,6 +3,7 @@ package com.lovbe.icharge.service.impl;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.*;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.PublicContentDao;

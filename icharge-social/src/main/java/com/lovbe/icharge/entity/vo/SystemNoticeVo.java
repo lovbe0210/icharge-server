@@ -3,6 +3,7 @@ package com.lovbe.icharge.entity.vo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import lombok.Data;
 
 import java.util.Date;
@@ -20,7 +21,7 @@ public class SystemNoticeVo {
      */
     private Long targetId;
     /**
-     * 通知类型 1文章 2专栏 3随笔
+     * 通知类型 0个人主页 1文章 2专栏 3随笔
      */
     private int targetType;
     /**
@@ -43,6 +44,10 @@ public class SystemNoticeVo {
      * 随笔信息
      */
     private RamblyJotVo ramblyJot;
+    /**
+     * 专栏信息
+     */
+    private RecommendColumnVo columnInfo;
     /**
      * 是否已读
      */

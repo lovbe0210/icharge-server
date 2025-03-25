@@ -7,7 +7,7 @@
             COUNT(IF(notice_type = 1 OR notice_type = 2, 1, NULL)) commentCount,
             COUNT(IF(notice_type = 3, 1, NULL)) likeCount,
             COUNT(IF(notice_type = 4, 1, NULL)) newFollowCount,
-            COUNT(IF(notice_type = 0 OR notice_type = 5 OR notice_type = 6, 1, NULL)) systemMsgCount
+            COUNT(IF(notice_type = 0 OR notice_type = 5 OR notice_type = 6 OR notice_type = 7 OR notice_type = 8, 1, NULL)) systemMsgCount
         FROM s_notices
         WHERE user_id = #{userId}
           AND read_status = 0

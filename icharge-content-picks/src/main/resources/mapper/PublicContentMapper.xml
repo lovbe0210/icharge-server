@@ -445,7 +445,7 @@
         <result property="collectCount" column="collect_count"/>
     </resultMap>
 
-    <resultMap id="recommendColumnVoMap" type="com.lovbe.icharge.entity.vo.RecommendColumnVo">
+    <resultMap id="recommendColumnVoMap" type="com.lovbe.icharge.common.model.vo.RecommendColumnVo">
         <id property="uid" column="uid"/>
         <result property="title" column="title"/>
         <result property="uri" column="uri"/>

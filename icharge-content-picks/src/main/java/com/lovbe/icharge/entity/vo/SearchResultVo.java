@@ -1,5 +1,6 @@
 package com.lovbe.icharge.entity.vo;
 
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

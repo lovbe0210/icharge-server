@@ -5,6 +5,9 @@ import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.vo.BindingCodeReqVo;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
+import com.lovbe.icharge.entity.dto.CodeLogDo;
+
+import java.util.List;
 
 /**
  * @description: 验证码相关接口
@@ -50,4 +53,12 @@ public interface SimpleCodeService {
      * @date: 2025/1/30 15:46
      */
     void sendBandingCode(BindingCodeReqVo data, Long userId);
+
+    /**
+     * @description: 异步发送验证码
+     * @param: collect
+     * @author: lovbe0210
+     * @date: 2025/3/25 22:01
+     */
+    void handlerSendVerifyCode(List<CodeLogDo> collect);
 }

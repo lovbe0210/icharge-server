@@ -20,7 +20,7 @@ public class SocialNoticeDo extends BaseEntity {
      */
     private Long userId;
     /**
-     * 通知类型 1评论 2回复 3点赞 4新增关注 5文章审核结果 6随笔审核结果 0系统消息
+     * 通知类型 1评论 2回复 3点赞 4新增关注 5文章审核结果 6随笔审核结果 7专栏首页审核结果 8个人主页自定义内容审核结果 0系统消息
      */
     private int noticeType;
     /**

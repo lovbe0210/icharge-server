@@ -5,7 +5,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.entity.vo.FeaturedArticleVo;
-import com.lovbe.icharge.entity.vo.RecommendColumnVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.SearchResultVo;
 import com.lovbe.icharge.service.PublicSearchService;
 import jakarta.annotation.Resource;

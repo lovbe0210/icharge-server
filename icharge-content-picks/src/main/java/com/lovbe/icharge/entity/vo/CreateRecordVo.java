@@ -2,11 +2,11 @@ package com.lovbe.icharge.entity.vo;
 
 import com.lovbe.icharge.common.model.dto.RamblyJotDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * @Author: lovbe0210

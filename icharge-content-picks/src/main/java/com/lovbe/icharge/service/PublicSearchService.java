@@ -1,6 +1,7 @@
 package com.lovbe.icharge.service;
 
 
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.entity.dto.GlobalSearchDTO;
 import com.lovbe.icharge.entity.vo.*;
@@ -47,7 +48,7 @@ public interface PublicSearchService {
      * @description: 全局搜索专栏
      * @param: data
      * @param: userId
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.RecommendColumnVo>
+     * @return: java.util.List<com.lovbe.icharge.common.model.vo.RecommendColumnVo>
      * @author: lovbe0210
      * @date: 2025/1/19 21:48
      */

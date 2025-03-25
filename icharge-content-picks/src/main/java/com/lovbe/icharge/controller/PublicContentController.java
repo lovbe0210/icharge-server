@@ -8,6 +8,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 import com.lovbe.icharge.service.PublicContentService;
@@ -60,6 +61,20 @@ public class PublicContentController {
     public ResponseBean<RecommendColumnVo> getColumnInfo(@PathVariable("uri") String uri,
                                                       @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
         return ResponseBean.ok(contentService.getColumnInfo(uri, userId));
+    }
+
+    /**
+     * description: 通过id批量获取专栏列表
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/column/ids")
+    public ResponseBean<List<RecommendColumnVo>> getColumnListByIds(@RequestBody BaseRequest<List<Long>> baseRequest,
+                                                                   @RequestHeader(value = SysConstant.USERID, required = false) Long userId) {
+        return ResponseBean.ok(contentService.getColumnListByIds(baseRequest.getData(), userId));
     }
 
     /**

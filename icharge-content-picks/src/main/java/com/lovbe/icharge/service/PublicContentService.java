@@ -6,6 +6,7 @@ import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import com.lovbe.icharge.entity.dto.RecommendRequestDTO;
 import com.lovbe.icharge.entity.vo.*;
 
@@ -32,7 +33,7 @@ public interface PublicContentService {
      * @description: 获取专栏信息用于阅读
      * @param: uri
      * @param: userId
-     * @return: com.lovbe.icharge.entity.vo.RecommendColumnVo
+     * @return: com.lovbe.icharge.common.model.vo.RecommendColumnVo
      * @author: lovbe0210
      * @date: 2025/3/21 16:12
      */
@@ -179,7 +180,7 @@ public interface PublicContentService {
     /**
      * @description: 获取用户主页公开专栏
      * @param: data
-     * @return: java.util.List<com.lovbe.icharge.entity.vo.RecommendColumnVo>
+     * @return: java.util.List<com.lovbe.icharge.common.model.vo.RecommendColumnVo>
      * @author: lovbe0210
      * @date: 2025/2/6 16:44
      */
@@ -214,4 +215,6 @@ public interface PublicContentService {
      * @date: 2025/3/13 0:07
      */
     PageBean<CreateRecordVo> getCreateRecord(RecommendRequestDTO data, Long userId);
+
+    List<RecommendColumnVo> getColumnListByIds(List<Long> data, Long userId);
 }

@@ -1,12 +1,16 @@
 package com.lovbe.icharge.entity.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @Author: Lvhl
  * @Date: 2024/9/16 11:36
  * @Description: 验证码发送结果
  */
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class SimpleSendResultDTO {
     /**
@@ -23,4 +27,8 @@ public class SimpleSendResultDTO {
      * 其他说明
      */
     private String mark;
+
+    public SimpleSendResultDTO(boolean result) {
+        this.result = result;
+    }
 }

@@ -51,4 +51,56 @@ public class ServiceProperties {
     private int level4Exp;
     private int level5Exp;
     private int level6Exp;
+
+    // =================== 邮箱参数 =======================
+    /**
+     * 系统邮箱地址
+     */
+    private String serverEmail;
+    /**
+     * 邮箱服务用户名
+     */
+    private String emailUsername;
+    /**
+     * 邮箱服务密码
+     */
+    private String emailPassword;
+    /**
+     * 邮箱服务器host
+     */
+    private String emailHost;
+    /**
+     * 邮箱服务器port
+     */
+    private Integer emailPort;
+    /**
+     * 是否开启 SSL
+     */
+    private Boolean sslEnable;
+    /**
+     * 是否开启 STARTTLS
+     */
+    private Boolean starttlsEnable;
+
+    // =================== 短信参数 =======================
+    /**
+     * 短信发送请求地址
+     */
+    private String smsUrl;
+    /**
+     * 短信服务请求方式
+     */
+    private String smsRequestMethod;
+    /**
+     * 短信服务商生成的AppCode
+     */
+    private String smsAppcode;
+    /**
+     * 短信签名id
+     */
+    private String smsSignId;
+    /**
+     * 短信模板id
+     */
+    private String templateId;
 }

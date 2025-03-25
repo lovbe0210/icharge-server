@@ -6,6 +6,7 @@ import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.FileUploadDTO;
 import com.lovbe.icharge.common.model.vo.PublicArticleVo;
 import com.lovbe.icharge.common.model.vo.RamblyJotVo;
+import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,7 @@ public interface ContentPickService {
      */
     @PostMapping("/api/cps/ramblyjot/ids")
     ResponseBean<List<RamblyJotVo>> getRamblyjotListByIds(@RequestBody BaseRequest<Collection<Long>> baseRequest,
-                                                    @RequestHeader(value = SysConstant.USERID) Long userId);
+                                                          @RequestHeader(value = SysConstant.USERID) Long userId);
 
     /**
      * description: 通过id批量获取文章列表
@@ -40,5 +41,17 @@ public interface ContentPickService {
      */
     @PostMapping("/api/cps/article/ids")
     ResponseBean<List<PublicArticleVo>> getArticleListByIds(@RequestBody BaseRequest<Collection<Long>> baseRequest,
-                                                                  @RequestHeader(value = SysConstant.USERID) Long userId);
+                                                            @RequestHeader(value = SysConstant.USERID) Long userId);
+
+    /**
+     * description: 通过id批量获取专栏列表
+     *
+     * @param userId
+     * @return ResponseBean<ArticleVO>
+     * @author: Lvhl
+     * @date: 2024/9/16 11:56
+     */
+    @PostMapping("/api/cps/column/ids")
+    ResponseBean<List<RecommendColumnVo>> getColumnListByIds(@RequestBody BaseRequest<Collection<Long>> baseRequest,
+                                                             @RequestHeader(value = SysConstant.USERID) Long userId);
 }
