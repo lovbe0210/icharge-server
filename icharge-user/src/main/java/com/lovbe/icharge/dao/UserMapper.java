@@ -71,12 +71,13 @@ public interface UserMapper extends BaseMapper<UserInfoDo> {
                     	IFNULL(sis.fans_count,0) fansCount,
                     	(SELECT COUNT(*) FROM c_article WHERE `status` = 'A' AND user_id = #{userId}) articleCount,
                     	(SELECT COUNT(*) FROM c_column WHERE `status` = 'A' AND user_id = #{userId}) columnCount
-                    FROM `s_interaction_statistic` sis
+                    FROM p_user pu
+                    LEFT JOIN `s_interaction_statistic` sis ON pu.uid = sis.uid
                     LEFT JOIN p_growth_stats pgs ON pgs.user_id = #{userId}
                     	AND pgs.`status` = 'A'
                     	AND pgs.range_type = 1
-                    WHERE sis.uid = #{userId}
-                    	AND sis.`status` = 'A'
+                    WHERE pu.uid = #{userId}
+                    	AND pu.`status` = 'A'
                     """)
     TargetStatisticDo selectStatisticInfo(@Param("userId") Long userId);
 
