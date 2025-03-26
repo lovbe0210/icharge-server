@@ -5,6 +5,7 @@ import com.lovbe.icharge.common.model.base.KafkaMessage;
 import com.lovbe.icharge.common.model.dto.ContentPublishDTO;
 import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.entity.dto.CodeLogDo;
+import com.lovbe.icharge.entity.dto.CodeSendDTO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -73,7 +74,7 @@ public class KafkaConsumer {
             log.debug("received msgSize: " + consumerRecords.size());
         }
         try {
-            List<CodeLogDo> collect = getVerifyCodeDTOS(consumerRecords);
+            List<CodeSendDTO> collect = getVerifyCodeDTOS(consumerRecords);
             if (collect == null) return;
             simpleCodeService.handlerSendVerifyCode(collect);
         } catch (Exception e) {
@@ -83,8 +84,8 @@ public class KafkaConsumer {
         }
     }
 
-    private List<CodeLogDo> getVerifyCodeDTOS(List<ConsumerRecord> consumerRecords) {
-        List<CodeLogDo> collect = consumerRecords.parallelStream()
+    private List<CodeSendDTO> getVerifyCodeDTOS(List<ConsumerRecord> consumerRecords) {
+        List<CodeSendDTO> collect = consumerRecords.parallelStream()
                 .map(consumerRecord -> {
                     String data = String.valueOf(consumerRecord.value());
                     KafkaMessage kafkaMsg = JsonUtils.parseObject(data, KafkaMessage.class);
@@ -96,11 +97,14 @@ public class KafkaConsumer {
                         log.error("消息丢弃: {}, 原因: 消息体内容为空", data);
                         return null;
                     }
-                    CodeLogDo codeLogDO = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), CodeLogDo.class);
+                    CodeSendDTO codeLogDO = JsonUtils.parseObject(JSONUtil.toJsonStr(msgData), CodeSendDTO.class);
                     // 参数校验
-                    if (codeLogDO.getSceneCode() == null ||
+                    if (codeLogDO.getUid() == null ||
+                            codeLogDO.getScene() == null ||
                             codeLogDO.getTitle() == null ||
-                            codeLogDO.getContent() == null ||
+                            codeLogDO.getTemplateContent() == null ||
+                            codeLogDO.getTemplateId() == null ||
+                            CollectionUtils.isEmpty(codeLogDO.getTemplateParam()) ||
                             (codeLogDO.getMobile() == null &&
                             codeLogDO.getEmail() == null)) {
                         log.error("消息丢弃: {}, 原因: 消息体缺少非空参数", data);

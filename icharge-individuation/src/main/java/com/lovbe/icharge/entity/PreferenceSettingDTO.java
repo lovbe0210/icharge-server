@@ -70,5 +70,18 @@ public class PreferenceSettingDTO {
      */
     private Object musicPlay;
 
+    /**
+     * 个人主页是否展示创作指数
+     */
+    @Min(value = 0, message = "设置项状态错误")
+    @Max(value = 1, message = "设置项状态错误")
+    private Integer domainHotmap;
+    /**
+     * 个人主页是否展示公开专栏
+     */
+    @Min(value = 0, message = "设置项状态错误")
+    @Max(value = 1, message = "设置项状态错误")
+    private Integer domainColumn;
+
 
 }

@@ -65,7 +65,9 @@ public class PreferenceServiceImpl implements PreferenceService {
                                     "ramblyJotEditorBackgroundColor":"#F2F3F5",
                                     "modalBackgroundColor":"#FFFFFF"
                                 }
-                                """);
+                                """)
+                .setDomainHotmap(1)
+                .setDomainColumn(1);
         settingVo.setUid(userId);
         preferenceSettingDao.insert(settingVo);
     }
@@ -106,6 +108,12 @@ public class PreferenceServiceImpl implements PreferenceService {
         }
         if (!Objects.isNull(data.getMusicPlay())) {
             settingVo.setMusicPlay(JsonUtils.toJsonString(data.getMusicPlay()));
+        }
+        if (data.getDomainHotmap() != null) {
+            settingVo.setDomainHotmap(data.getDomainHotmap());
+        }
+        if (data.getDomainColumn() != null) {
+            settingVo.setDomainColumn(data.getDomainColumn());
         }
         preferenceSettingDao.updateById(settingVo);
     }

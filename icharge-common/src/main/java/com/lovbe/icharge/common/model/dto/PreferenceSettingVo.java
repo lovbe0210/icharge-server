@@ -54,4 +54,12 @@ public class PreferenceSettingVo extends BaseEntity {
      * 音乐播放相关（json）
      */
     private String musicPlay;
+    /**
+     * 个人主页是否展示创作指数
+     */
+    private int domainHotmap;
+    /**
+     * 个人主页是否展示公开专栏
+     */
+    private int domainColumn;
 }

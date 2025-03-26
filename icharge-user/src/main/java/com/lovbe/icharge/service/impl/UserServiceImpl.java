@@ -30,9 +30,11 @@ import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
 import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.dao.UserMapper;
 import com.lovbe.icharge.entity.vo.EncourageLogVo;
+import com.lovbe.icharge.entity.vo.UserInfoVo;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import com.lovbe.icharge.service.AccountService;
 import com.lovbe.icharge.service.UserService;
+import com.lovbe.icharge.service.feign.IndividuationService;
 import com.lovbe.icharge.service.feign.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +71,8 @@ public class UserServiceImpl implements UserService {
     private CommonDao commonDao;
     @Resource
     private CommonService commonService;
+    @Resource
+    private IndividuationService individuationService;
     @Resource
     private ServiceProperties properties;
     @Resource
@@ -179,7 +183,16 @@ public class UserServiceImpl implements UserService {
         if (!CommonStatusEnum.NORMAL.getStatus().equals(userInfoDo.getStatus())) {
             throw new ServiceException(ServiceErrorCodes.USER_DISABLED);
         }
-        return userInfoDo;
+        UserInfoVo userInfoVo = new UserInfoVo();
+        BeanUtil.copyProperties(userInfoDo, userInfoVo);
+        // 获取个人主页显示设置
+        ResponseBean<PreferenceSettingVo> preferenceSetting = individuationService.getPreferenceSetting(userInfoDo.getUid());
+        if (preferenceSetting != null && preferenceSetting.isResult()) {
+            PreferenceSettingVo settingVo = preferenceSetting.getData();
+            userInfoVo.setDomainColumn(settingVo.getDomainColumn())
+                    .setDomainHotmap(settingVo.getDomainHotmap());
+        }
+        return userInfoVo;
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.lovbe.icharge.common.model.vo.BindingCodeReqVo;
 import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.entity.dto.CodeLogDo;
+import com.lovbe.icharge.entity.dto.CodeSendDTO;
 
 import java.util.List;
 
@@ -60,5 +61,5 @@ public interface SimpleCodeService {
      * @author: lovbe0210
      * @date: 2025/3/25 22:01
      */
-    void handlerSendVerifyCode(List<CodeLogDo> collect);
+    void handlerSendVerifyCode(List<CodeSendDTO> collect);
 }

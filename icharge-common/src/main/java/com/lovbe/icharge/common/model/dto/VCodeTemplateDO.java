@@ -49,4 +49,8 @@ public class VCodeTemplateDO extends BaseEntity {
      * 备注
      */
     private String remark;
+    /**
+     * api发送短信验证码模板
+     */
+    private String apiTemplateId;
 }

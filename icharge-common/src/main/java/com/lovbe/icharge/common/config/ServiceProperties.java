@@ -52,6 +52,11 @@ public class ServiceProperties {
     private int level5Exp;
     private int level6Exp;
 
+    /**
+     * 验证码有效时间
+     */
+    private int minutes = 10;
+
     // =================== 邮箱参数 =======================
     /**
      * 系统邮箱地址

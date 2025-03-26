@@ -199,6 +199,7 @@ public class AccountServiceImpl implements AccountService {
                 accountDo.setEmail(encryString);
             }
             case EMAIL_UPDATE_PASSWORD -> accountDo.setPassword(cryptPasswordEncoder.encode(decodedStr));
+            case MOBILE_UPDATE_PASSWORD -> accountDo.setPassword(cryptPasswordEncoder.encode(decodedStr));
             case UPDATE_DOMAIN -> {
                 updateUserDomain(userId, decodedStr);
                 return;

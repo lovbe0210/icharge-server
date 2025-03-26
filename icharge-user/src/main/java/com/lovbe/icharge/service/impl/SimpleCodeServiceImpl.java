@@ -4,6 +4,8 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
 import com.lovbe.icharge.common.config.ServiceProperties;
@@ -21,17 +23,20 @@ import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
 import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
+import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.dao.CodeLogMapper;
 import com.lovbe.icharge.entity.dto.CodeLogDo;
+import com.lovbe.icharge.entity.dto.CodeSendDTO;
 import com.lovbe.icharge.entity.dto.SimpleSendResultDTO;
 import com.lovbe.icharge.dao.AccountMapper;
 import com.lovbe.icharge.dao.SimpleCodeMapper;
 import com.lovbe.icharge.service.SimpleCodeService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -41,6 +46,14 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -66,6 +79,12 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
     @Resource
     private ServiceProperties properties;
 
+    private final HttpClient httpClient;
+
+    public SimpleCodeServiceImpl() {
+        this.httpClient = HttpClient.newHttpClient();
+    }
+
     @Override
     public void sendSmsCode(SmsCodeReqVo reqVo, Long userId) {
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
@@ -79,7 +98,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         String code = canCreateCode(codeReqDTO);
         codeReqDTO.setCode(code);
         // 发送短信验证码
-        sendSimpleCode(codeReqDTO);
+        createSendLog(codeReqDTO);
     }
 
     @Override
@@ -96,7 +115,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         String code = canCreateCode(codeReqDTO);
         codeReqDTO.setCode(code);
         // 发送短信验证码
-        sendSimpleCode(codeReqDTO);
+        createSendLog(codeReqDTO);
     }
 
     @Override
@@ -175,64 +194,41 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         String code = canCreateCode(codeReqDTO);
         codeReqDTO.setCode(code);
         // 发送短信验证码
-        sendSimpleCode(codeReqDTO);
-
+        createSendLog(codeReqDTO);
     }
 
     @Override
-    public void handlerSendVerifyCode(List<CodeLogDo> collect) {
+    public void handlerSendVerifyCode(List<CodeSendDTO> collect) {
         // 通过mq异步发送验证码
-        for (CodeLogDo codeLogDO : collect) {
+        ArrayList<CodeLogDo> list = new ArrayList<>();
+        for (CodeSendDTO codeLogDto : collect) {
             SimpleSendResultDTO sendResult;
-            if (StringUtils.hasText(codeLogDO.getEmail())) {
-                sendResult = requestSendEmail(codeLogDO);
+            if (StringUtils.hasText(codeLogDto.getEmail())) {
+                sendResult = requestSendEmail(codeLogDto);
             } else {
-                sendResult = requestSendMobile(codeLogDO);
+                sendResult = requestSendMobile(codeLogDto);
             }
+            CodeLogDo logDo = new CodeLogDo();
+            logDo.setUid(codeLogDto.getUid());
             if (sendResult.isResult()) {
-                codeLogDO.setSendStatus(3);
+                logDo.setSendStatus(3);
             } else {
-                codeLogDO.setSendStatus(2);
+                logDo.setSendStatus(2);
             }
-            codeLogDO.setSendTime(new Date()).setUpdateTime(codeLogDO.getSendTime());
+            logDo.setSendTime(new Date()).setUpdateTime(logDo.getSendTime());
+            list.add(logDo);
         }
-        codeLogMapper.updateById(collect);
-    }
-
-    private SimpleSendResultDTO requestSendMobile(CodeLogDo codeLogDO) {
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Authorization", "APPCODE " + properties.getSmsAppcode());
-        Map<String, String> querys = new HashMap<String, String>();
-        querys.put("mobile", "mobile");
-//        querys.put("param", "**code**:" + codeLogDO.get + ",**minute**:5");
-        return null;
-    }
-
-    private SimpleSendResultDTO requestSendEmail(CodeLogDo codeLogDO) {
-        String from = "IT充电站 <" + properties.getServerEmail() + ">";
-        MailAccount mailAccount = new MailAccount().setFrom(from).setAuth(true)
-                .setUser(properties.getEmailUsername()).setPass(properties.getEmailPassword())
-                .setAuth(true)
-                .setHost(properties.getEmailHost()).setPort(properties.getEmailPort())
-                .setSslEnable(properties.getSslEnable()).setStarttlsEnable(properties.getStarttlsEnable());
-        try {
-            MailUtil.send(mailAccount, codeLogDO.getEmail(), codeLogDO.getTitle(), codeLogDO.getContent(), true);
-            return new SimpleSendResultDTO(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error("[发送邮箱验证码] --- sendId: {}, errorInfo: {}", codeLogDO.getUid(), e.toString());
-            return new SimpleSendResultDTO(false, codeLogDO.getUid(), e.toString());
-        }
+        codeLogMapper.updateById(list);
     }
 
     /**
-     * @description: 发送验证码
+     * @description: 创建验证码发送日志
      * @param: SimpleCodeReqDTO
      * @return: Long
      * @author: lovbe0210
      * @date: 2024/9/14 13:34
      */
-    public void sendSimpleCode(SimpleCodeReqDTO codeReqDTO) {
+    public void createSendLog(SimpleCodeReqDTO codeReqDTO) {
         // 校验短信模板是否合法
         VCodeTemplateDO template = validateSmsTemplate(CodeSceneEnum.getCodeByScene(codeReqDTO.getScene()));
 
@@ -240,7 +236,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         Map<String, Object> templateParams = buildTemplateParams(template, codeReqDTO);
 
         // 发送 MQ 消息，异步执行发送短信
-        SimpleSendResultDTO sendResult = sendSmsSendMessage(codeReqDTO, template, templateParams);
+        SimpleSendResultDTO sendResult = sendVerifyCodeMessage(codeReqDTO, template, templateParams);
         String logDesc = "";
         if (sendResult.isResult()) {
             logDesc = "验证码发送成功";
@@ -250,7 +246,67 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         recordVerifyCodeLog(codeReqDTO.getUserId(), codeReqDTO.getEmail(), logDesc);
     }
 
-    private SimpleSendResultDTO sendSmsSendMessage(SimpleCodeReqDTO codeReqDTO, VCodeTemplateDO template, Map<String, Object> templateParams) {
+    private SimpleSendResultDTO requestSendMobile(CodeSendDTO codeSendDTO) {
+        Map<String, Object> querys = new HashMap<>();
+        querys.put("mobile", codeSendDTO.getMobile());
+        Map<String, Object> param = codeSendDTO.getTemplateParam();
+        if (!CollectionUtils.isEmpty(param)) {
+            String joinParam = param.entrySet().stream()
+                    .map(entry -> "**" + entry.getKey() + "**:" + entry.getValue())
+                    .collect(Collectors.joining(","));
+            querys.put("param", joinParam);
+        }
+        querys.put("smsSignId", properties.getSmsSignId());
+        querys.put("templateId", codeSendDTO.getTemplateId());
+        String queryStr = querys.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining("&"));
+        // 构建请求
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(properties.getSmsUrl() + "?" + queryStr))
+                .timeout(Duration.ofSeconds(10))
+                .header("Authorization", "APPCODE " + properties.getSmsAppcode())
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        try {
+            // 发起请求
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.body();
+            JSONObject bodyParse = JsonUtils.parseObject(body, JSONObject.class);
+            if (bodyParse == null) {
+                return new SimpleSendResultDTO(false, codeSendDTO.getUid(), "发送请求失败，return null， status: " + response.statusCode());
+            }
+            Integer code = bodyParse.getInteger("code");
+            if (code == 0) {
+                return new SimpleSendResultDTO(true, codeSendDTO.getUid(), null);
+            } else {
+                return new SimpleSendResultDTO(false, codeSendDTO.getUid(), "msg：" + bodyParse.getString("msg") + ", code: " + code);
+            }
+        } catch (Exception e) {
+            log.error("[发送短信验证码] --- 短信发送失败， errorInfo: {}", e.toString());
+            return new SimpleSendResultDTO(false, codeSendDTO.getUid(), e.toString());
+        }
+    }
+
+    private SimpleSendResultDTO requestSendEmail(CodeSendDTO codeSendDTO) {
+        String from = "IT充电站 <" + properties.getServerEmail() + ">";
+        MailAccount mailAccount = new MailAccount().setFrom(from).setAuth(true)
+                .setUser(properties.getEmailUsername()).setPass(properties.getEmailPassword())
+                .setAuth(true)
+                .setHost(properties.getEmailHost()).setPort(properties.getEmailPort())
+                .setSslEnable(properties.getSslEnable()).setStarttlsEnable(properties.getStarttlsEnable());
+        try {
+            String content = formatTemplateContent(codeSendDTO.getTemplateContent(), codeSendDTO.getTemplateParam());
+            MailUtil.send(mailAccount, codeSendDTO.getEmail(), codeSendDTO.getTitle(), content, true);
+            return new SimpleSendResultDTO(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("[发送邮箱验证码] --- sendId: {}, errorInfo: {}", codeSendDTO.getUid(), e.toString());
+            return new SimpleSendResultDTO(false, codeSendDTO.getUid(), e.toString());
+        }
+    }
+
+    private SimpleSendResultDTO sendVerifyCodeMessage(SimpleCodeReqDTO codeReqDTO, VCodeTemplateDO template, Map<String, Object> templateParams) {
         CodeSceneEnum codeByScene = CodeSceneEnum.getCodeByScene(codeReqDTO.getScene());
         String content = formatTemplateContent(template.getContent(), templateParams);
         // 创建发送日志
@@ -268,11 +324,22 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 .setUpdateTime(codeLogDO.getCreateTime());
         codeLogMapper.insert(codeLogDO);
         // 通过消息异步发送
-        commonService.sendMessage(appName, sendCodeTopic, codeLogDO);
+        CodeSendDTO sendDTO = new CodeSendDTO()
+                .setUid(codeLogDO.getUid())
+                .setScene(codeReqDTO.getScene())
+                .setEmail(codeReqDTO.getEmail())
+                .setMobile(codeReqDTO.getMobile())
+                .setTitle(template.getName())
+                .setTemplateContent(template.getContent())
+                .setTemplateParam(templateParams)
+                .setTemplateId(template.getApiTemplateId());
+        commonService.sendMessage(appName, sendCodeTopic, sendDTO);
         return new SimpleSendResultDTO(true);
     }
 
     private String formatTemplateContent(String content, Map<String, Object> templateParams) {
+        content = content.replace("**code**", "{code}")
+                .replace("**minute**", "{minute}");
         return StrUtil.format(content, templateParams);
     }
 
@@ -394,6 +461,8 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 paramMap.put(param, codeReqDTO.getMobile());
             } else if (Objects.equals(param, "email")) {
                 paramMap.put(param, codeReqDTO.getEmail());
+            } else if (Objects.equals(param, "minute")) {
+                paramMap.put(param, properties.getMinutes());
             }
 
         });
