@@ -69,8 +69,8 @@ public interface UserMapper extends BaseMapper<UserInfoDo> {
                     SELECT
                     	IFNULL(sis.follow_count,0) followCount,
                     	IFNULL(sis.fans_count,0) fansCount,
-                    	IFNULL(pgs.article_total,0) articleCount,
-                    	IFNULL(pgs.column_total,0) columnCount
+                    	(SELECT COUNT(*) FROM c_article WHERE `status` = 'A' AND user_id = #{userId}) articleCount,
+                    	(SELECT COUNT(*) FROM c_column WHERE `status` = 'A' AND user_id = #{userId}) columnCount
                     FROM `s_interaction_statistic` sis
                     LEFT JOIN p_growth_stats pgs ON pgs.user_id = #{userId}
                     	AND pgs.`status` = 'A'

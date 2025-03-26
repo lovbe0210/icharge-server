@@ -93,12 +93,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void createAccount(AccountDo account) {
-        if (StringUtils.hasLength(account.getEmail())) {
-            account.setEmail(CommonUtils.encryptStr(account.getEmail()));
-        }
-        if (StringUtils.hasLength(account.getMobile())) {
-            account.setMobile(CommonUtils.encryptStr(account.getMobile()));
-        }
         accountMapper.insert(account);
     }
 
