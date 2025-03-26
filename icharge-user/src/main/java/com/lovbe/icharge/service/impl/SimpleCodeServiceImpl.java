@@ -214,6 +214,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 logDo.setSendStatus(3);
             } else {
                 logDo.setSendStatus(2);
+                log.error("[发送短信验证码] --- 短信发送失败， errorInfo: {}", sendResult.getMark());
             }
             logDo.setSendTime(new Date()).setUpdateTime(logDo.getSendTime());
             list.add(logDo);
