@@ -363,7 +363,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 String code = RandomUtil.randomNumbers(6);
 
                 // TODO 如果1小时内的发送次数小于3，则不做限制
-                if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2000000000) {
+                if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2) {
                     // 先将历史验证码置为已使用
                     if (!CollectionUtils.isEmpty(codeExpireMap)) {
                         codeExpireMap.forEach((key, value) -> {
