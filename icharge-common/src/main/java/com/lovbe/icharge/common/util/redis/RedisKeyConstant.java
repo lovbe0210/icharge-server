@@ -50,35 +50,6 @@ public abstract class RedisKeyConstant {
      */
     public static final String STORAGE = "storage:";
 
-
-    /**
-     * @description 获取验证码
-     * @param[1] scene
-     * @param[2] examId
-     * @param[3] type
-     * @return String
-     * @author lovbe0210
-     * @date 2024/8/15 21:20
-     */
-    public static String getVerifyCode(Integer scene, String mobile, String email) {
-        String sub = CodeSceneEnum.sceneIsMobile(scene) ? ("mobile:" + mobile) : ("email:" + email);
-        return BASE_PROJECT + AUTH + sub;
-    }
-
-    /**
-     * @description 发送验证码的时间标记
-     * @param[1] scene
-     * @param[2] mobile
-     * @param[3] email
-     * @return String
-     * @author lovbe0210
-     * @date 2024/8/15 21:42
-     */
-    public static String getSendCodeFlag(CodeSceneEnum scene, String mobile, String email) {
-        String sub = CodeSceneEnum.sceneIsMobile(scene) ? mobile : email;
-        return BASE_PROJECT + AUTH + "send-code:" + sub;
-    }
-
     /**
      * @description 获取验证码验证次数
      * @param[1] scene
@@ -89,7 +60,7 @@ public abstract class RedisKeyConstant {
      * @date 2024/8/15 21:43
      */
     public static String getVerifyCountKey(String payload) {
-        return BASE_PROJECT + AUTH + "verify-count:" + payload;
+        return BASE_PROJECT + USER + "verify-count:" + payload;
     }
 
 
@@ -123,18 +94,29 @@ public abstract class RedisKeyConstant {
      * @date: 2024/8/18 14:23
      */
     public static String getCodeControlKey(String payload) {
-        return BASE_PROJECT + AUTH + "code-control:" + payload;
+        return BASE_PROJECT + USER + "code-control:" + payload;
     }
 
     /**
-     * @description: 获取验证码发送频率验证
+     * @description: 获取验证码发送频率控制（uniqueId， ip）
+     * @param: String
+     * @return: String
+     * @author: lovbe0210
+     * @date: 2024/8/18 14:23
+     */
+    public static String getCodeFrequencyLimitKey(String scene, String payload) {
+        return BASE_PROJECT + USER + "code-frequency:" + scene + ":" + payload;
+    }
+
+    /**
+     * @description: 获取验证码发送锁
      * @param: String
      * @return: String
      * @author: lovbe0210
      * @date: 2024/8/18 14:23
      */
     public static String getCodeLockKey(String payload) {
-        return BASE_PROJECT + AUTH + "code-lock:" + payload;
+        return BASE_PROJECT + USER + "code-lock:" + payload;
     }
 
     /**

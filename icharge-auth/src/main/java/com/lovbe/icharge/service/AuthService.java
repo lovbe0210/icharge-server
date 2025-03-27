@@ -50,22 +50,6 @@ public interface AuthService {
     AuthLoginUser emailLogin(BaseRequest<AuthEmailLoginReqVo> reqVo);
 
     /**
-     * @description 发送短信验证码
-     * @param[1] reqVo
-     * @author lovbe0210
-     * @date 2024/9/26 23:36
-     */
-    void sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo);
-
-    /**
-     * @description 发送邮箱验证码
-     * @param[1] reqVo
-     * @author lovbe0210
-     * @date 2024/9/26 23:38
-     */
-    void sendEmailCode(BaseRequest<EmailCodeReqVo> reqVo);
-
-    /**
      * @description 退出登录
      * @param[1] data
      * @author lovbe0210

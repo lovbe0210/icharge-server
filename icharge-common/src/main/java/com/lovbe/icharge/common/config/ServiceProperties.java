@@ -43,6 +43,10 @@ public class ServiceProperties {
      */
     private int coverUploadLimit = 20;
     /**
+     * 验证码发送滚动每小时5条后开始限制
+     */
+    private int verifyCodeLimit = 5;
+    /**
      * 经验等级
      */
     private int level1Exp;

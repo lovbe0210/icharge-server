@@ -1,10 +1,11 @@
 package com.lovbe.icharge.service.impl;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
-import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.yitter.idgen.YitIdHelper;
@@ -58,6 +59,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.lovbe.icharge.common.util.CommonUtils.bitwiseInvert;
+
 @Slf4j
 @Service
 @Valid
@@ -90,6 +93,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
                 .setMobile(reqVo.getMobile())
                 .setScene(reqVo.getScene())
+                .setSign(reqVo.getSign())
                 .setUserId(userId)
                 .setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
@@ -107,6 +111,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
                 .setEmail(reqVo.getEmail())
                 .setScene(reqVo.getScene().getScene())
+                .setSign(reqVo.getSign())
                 .setUserId(userId)
                 .setUsedIp(ServletUtils.getClientIP());
         // 判断使用场景是否合法
@@ -181,6 +186,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         }
         SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
                 .setUserId(userId)
+                .setSign(data.getSign())
                 .setScene(data.getScene().getScene());
         if (CodeSceneEnum.sceneIsMobile(data.getScene())) {
             codeReqDTO.setMobile(CommonUtils.decryptStr(accountDo.getMobile()));
@@ -360,10 +366,14 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
         RLock lock = redissonClient.getLock(RedisKeyConstant.getCodeLockKey(payload));
         try {
             if (lock.tryLock(5, -1, TimeUnit.SECONDS)) {
+                // 先验证uniqueId和ip地址不受限制
+                String bitwised = bitwiseInvert(codeReqDTO.getSign());
+                String decodedStr = Base64.decodeStr(bitwised);
+                JSONObject parseObj = JsonUtils.parseObject(decodedStr, JSONObject.class);
+                String uniqueId = parseObj.getString(SysConstant.UNIQUE_ID);
+                CommonUtils.checkVerifyCodeFrequencyLimit(uniqueId, properties.getVerifyCodeLimit());
                 Map<Object, Object> codeExpireMap = RedisUtil.hgetMap(codeControlKey);
                 String code = RandomUtil.randomNumbers(6);
-
-                // TODO 如果1小时内的发送次数小于3，则不做限制
                 if (CollectionUtils.isEmpty(codeExpireMap) || codeExpireMap.size() <= 2) {
                     // 先将历史验证码置为已使用
                     if (!CollectionUtils.isEmpty(codeExpireMap)) {
@@ -389,7 +399,7 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 String[] split = ((String) recentExpireValue).split(SysConstant.SEPARATOR);
                 int multiple = Integer.valueOf(split[2]);
                 // 这里需要减去之前加的过期时间10分钟
-                long canSendTime = Long.valueOf(split[0]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000 - RedisKeyConstant.EXPIRE_10_MIN * 1000;
+                long canSendTime = Long.valueOf(split[1]) + (multiple + 1) * RedisKeyConstant.EXPIRE_30_MIN * 1000 - RedisKeyConstant.EXPIRE_10_MIN * 1000;
                 if (System.currentTimeMillis() <= canSendTime) {
                     recordVerifyCodeLog(codeReqDTO.getUserId(), payload, GlobalErrorCodes.TOO_MANY_REQUESTS.getMsg());
                     throw new ServiceException(GlobalErrorCodes.TOO_MANY_REQUESTS);
@@ -400,11 +410,11 @@ public class SimpleCodeServiceImpl implements SimpleCodeService {
                 return code;
             }
             throw new ServiceException("获取锁超时，payload: " + payload);
-        } catch (InterruptedException e) {
-            log.error("[创建验证码] --- 获取锁或验证码数据解析异常，errorInfo: {}", e.toString());
-            throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
         } catch (ServiceException e) {
             throw e;
+        } catch (Exception e) {
+            log.error("[创建验证码] --- 获取锁或验证码数据解析异常，errorInfo: {}", e.toString());
+            throw new ServiceException(ServiceErrorCodes.SIMPLE_CODE_SEND_FAILED);
         } finally {
             try {
                 lock.unlock();

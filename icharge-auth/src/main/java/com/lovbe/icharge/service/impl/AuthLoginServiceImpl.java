@@ -15,8 +15,6 @@ import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.SimpleCodeReqDTO;
 import com.lovbe.icharge.common.model.entity.LoginUser;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
-import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
-import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
@@ -124,38 +122,6 @@ public class AuthLoginServiceImpl implements AuthService {
         ResponseBean<LoginUser> userInfoResp = userService.getLoginUserByPayload(new BaseRequest<>(authUserDTO));
         // 创建 Token 令牌，记录登录日志
         return getAuthLoginRespVo(userInfoResp, data.getEmail(), data.getPassword(), LoginLogTypeEnum.LOGIN_EMAIL_PASSWORD);
-    }
-
-    @Override
-    public void sendSmsCode(BaseRequest<SmsCodeReqVo> reqVo) {
-        SmsCodeReqVo data = reqVo.getData();
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
-                .setMobile(data.getMobile())
-                .setScene(data.getScene())
-                .setSign(data.getSign());
-        ResponseBean responseBean = userService.sendSmsCode(new BaseRequest<>(codeReqDTO));
-        if (!responseBean.isResult()) {
-            int code = responseBean.getCode();
-            if (code == 400) {
-                throw new ServiceException(responseBean.getMessage());
-            }
-        }
-    }
-
-    @Override
-    public void sendEmailCode(BaseRequest<EmailCodeReqVo> reqVo) {
-        EmailCodeReqVo data = reqVo.getData();
-        SimpleCodeReqDTO codeReqDTO = new SimpleCodeReqDTO()
-                .setEmail(data.getEmail())
-                .setScene(data.getScene().getScene())
-                .setSign(data.getSign());
-        ResponseBean responseBean = userService.sendEmailCode(new BaseRequest<>(codeReqDTO));
-        if (!responseBean.isResult()) {
-            int code = responseBean.getCode();
-            if (code == 400) {
-                throw new ServiceException(responseBean.getMessage());
-            }
-        }
     }
 
     @Override

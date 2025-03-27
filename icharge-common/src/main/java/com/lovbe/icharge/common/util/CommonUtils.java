@@ -7,6 +7,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.GlobalErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
@@ -127,6 +128,47 @@ public class CommonUtils {
                 if (limit == null) {
                     RedisUtil.expire(uploadLockKey, SysConstant.HOUR_1);
                 }
+            }
+        }
+    }
+
+    /**
+     * @description: 验证码频率限制
+     * @param: uniqueId
+     * @param: userId
+     * @param: limitTimes
+     * @author: lovbe0210
+     * @date: 2025/3/11 21:29
+     */
+    public static void checkVerifyCodeFrequencyLimit(String uniqueId, int limitTimes) {
+        // 唯一id频率校验
+        String frequencyLimitKey = RedisKeyConstant.getCodeFrequencyLimitKey("uniqueId", uniqueId);
+        Object limit = RedisUtil.get(frequencyLimitKey);
+        checkLimit(limitTimes, frequencyLimitKey, limit);
+
+        // ip地址限制，如果为空没办法限制
+        String clientIP = ServletUtils.getClientIP();
+        if (clientIP == null) {
+            return;
+        }
+        frequencyLimitKey = RedisKeyConstant.getCodeFrequencyLimitKey("ip", clientIP);
+        limit = RedisUtil.get(frequencyLimitKey);
+        checkLimit(limitTimes, frequencyLimitKey, limit);
+    }
+
+    private static void checkLimit(int limitTimes, String frequencyLimitKey, Object limit) {
+        if (limit == null || (Integer) limit < limitTimes) {
+            RedisUtil.incr(frequencyLimitKey, 1);
+            RedisUtil.expire(frequencyLimitKey, SysConstant.HOUR_1);
+        } else {
+            // 判断剩余时间，大于30分钟的多余量就限制发送
+            Long expire = RedisUtil.getExpire(frequencyLimitKey);
+            if (expire != null && expire > SysConstant.MINUTE_30) {
+                throw new ServiceException(GlobalErrorCodes.TOO_MANY_REQUESTS);
+            } else if (limit != null) {
+                // 续租过期时间
+                int i1 = 1 << ((Integer) limit - limitTimes);
+                RedisUtil.expire(frequencyLimitKey, (i1 + 1) * RedisKeyConstant.EXPIRE_30_MIN);
             }
         }
     }

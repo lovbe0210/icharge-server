@@ -84,6 +84,7 @@ public class SysConstant {
     public static final long DAY_30 = 60 * 60 * 24 * 30;
     public static final long DAY_1 = 60 * 60 * 24;
     public static final long HOUR_1 = 60 * 60;
+    public static final long MINUTE_30 = 30 * 60;
 
     public static final String NORMAL_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 

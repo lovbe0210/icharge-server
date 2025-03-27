@@ -73,20 +73,6 @@ public class AuthController {
     }
 
     /**
-     * description: 发送短信验证码
-     * @author: Lvhl
-     * @date: 2024/8/2 17:49
-     * @param reqVo
-     * @return ResponseBean
-     */
-    @PostMapping("/mobile/code")
-    public ResponseBean sendSmsCode(@RequestBody BaseRequest<SmsCodeReqVo> reqVo) {
-        Assert.notNull(reqVo.getData(), GlobalErrorCodes.BAD_REQUEST.getMsg());
-        authService.sendSmsCode(reqVo);
-        return ResponseBean.ok();
-    }
-
-    /**
      * description: 邮箱验证码登录
      * @author: Lvhl
      * @date: 2024/8/2 17:49
@@ -114,19 +100,6 @@ public class AuthController {
         AuthLoginUser loginUser = authService.emailLogin(reqVo);
         ServletUtils.setLoginCookie(domain, response, loginUser);
         return ResponseBean.ok(loginUser);
-    }
-
-    /**
-     * description: 发送邮箱验证码
-     * @author: Lvhl
-     * @date: 2024/8/2 17:49
-     * @param reqVo
-     * @return ResponseBean
-     */
-    @PostMapping("/email/code")
-    public ResponseBean sendEmailCode(@RequestBody @Valid BaseRequest<EmailCodeReqVo> reqVo) {
-        authService.sendEmailCode(reqVo);
-        return ResponseBean.ok();
     }
 
     /**
