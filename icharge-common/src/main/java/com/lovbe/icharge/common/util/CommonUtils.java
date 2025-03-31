@@ -108,7 +108,7 @@ public class CommonUtils {
         // 唯一id频率校验
         String uploadLockKey = RedisKeyConstant.getUploadLockKey(scene, uniqueId);
         Object limit = RedisUtil.get(uploadLockKey);
-        if (limit != null &&  (Integer) limit > limitTimes) {
+        if (limit != null &&  (Integer) limit >= limitTimes) {
             throw new ServiceException(ServiceErrorCodes.FILE_UPLOAD_LIMIT);
         } else {
             RedisUtil.incr(uploadLockKey, 1);
@@ -121,7 +121,7 @@ public class CommonUtils {
         if (clientIP != null) {
             uploadLockKey = RedisKeyConstant.getUploadLockKey(scene, clientIP);
             limit = RedisUtil.get(uploadLockKey);
-            if (limit != null &&  (Integer) limit > limitTimes) {
+            if (limit != null &&  (Integer) limit >= limitTimes) {
                 throw new ServiceException(ServiceErrorCodes.FILE_UPLOAD_LIMIT);
             } else {
                 RedisUtil.incr(uploadLockKey, 1);

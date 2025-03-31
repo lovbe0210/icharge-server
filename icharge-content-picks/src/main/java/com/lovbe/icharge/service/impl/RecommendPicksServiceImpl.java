@@ -76,8 +76,13 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                 continue;
             }
             Set<ZSetOperations.TypedTuple<Object>> tupleList = statisticList.stream()
+                    // 统计这里需要过滤一些系统文章
+                    .filter(statistic -> !properties.getFilterArticleIds().contains(statistic.getUid()))
                     .map(statistic -> getRankTypedTuple(statistic, now))
                     .collect(Collectors.toSet());
+            if (CollectionUtils.isEmpty(tupleList)) {
+                continue;
+            }
             RedisUtil.zSetTuple(rankSetKey, tupleList);
         }
         // 获取前30名文章设置入选精选
@@ -126,8 +131,12 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                 continue;
             }
             Set<ZSetOperations.TypedTuple<Object>> tupleList = statisticList.stream()
+                    .filter(statistic -> !properties.getFilterColumnIds().contains(statistic.getUid()))
                     .map(statistic -> getRankTypedTuple(statistic, now))
                     .collect(Collectors.toSet());
+            if (CollectionUtils.isEmpty(tupleList)) {
+                continue;
+            }
             RedisUtil.zSetTuple(rankSetKey, tupleList);
         }
     }
@@ -210,8 +219,13 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                 continue;
             }
             Set<ZSetOperations.TypedTuple<Object>> tupleList = statisticList.stream()
+                    // 过滤系统白名单用户
+                    .filter(statistic -> !properties.getFilterUserIds().contains(statistic.getUid()))
                     .map(statistic -> getRankTypedTuple(statistic, now))
                     .collect(Collectors.toSet());
+            if (CollectionUtils.isEmpty(tupleList)) {
+                return;
+            }
             RedisUtil.zSetTuple(rankSetKey, tupleList);
         }
     }
@@ -239,6 +253,8 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
             // 从elasticsearch中获取所有标签然后进行人物画像
             MultiGetRequest multiGetRequest = new MultiGetRequest();
             Set<Long> targetIdSet = historyList.stream()
+                    // 过滤系统指定文章
+                    .filter(history -> !properties.getFilterArticleIds().contains(history.getTargetId()))
                     .peek(history -> {
                         MultiGetRequest.Item item = new MultiGetRequest.Item(SysConstant.ES_INDEX_ARTICLE,
                                 String.valueOf(history.getTargetId()))
@@ -247,6 +263,9 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                     })
                     .map(BrowseHistoryDo::getTargetId)
                     .collect(Collectors.toSet());
+            if  (CollectionUtils.isEmpty(multiGetRequest.getItems())) {
+                return;
+            }
             MultiGetResponse multiGetResponse = highLevelClient.mget(multiGetRequest, RequestOptions.DEFAULT);
             for (MultiGetItemResponse itemResponse : multiGetResponse) {
                 if (!itemResponse.isFailed() && itemResponse.getResponse().isExists()) {

@@ -3,6 +3,9 @@ package com.lovbe.icharge.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @Author: lovbe0210
  * @Date: 2024/12/29 11:02
@@ -79,4 +82,10 @@ public class ContentPicksConfigProperties {
      * 用户统计数更新批量数
      */
     private Integer userStatisticBatchSize = 20;
+    /**
+     * 过滤展示或统计的文章、专栏和用户id
+     */
+    private Set<Long> filterArticleIds = new HashSet<>();
+    private Set<Long> filterUserIds = new HashSet<>();
+    private Set<Long> filterColumnIds = new HashSet<>();
 }

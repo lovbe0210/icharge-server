@@ -21,6 +21,7 @@ import com.lovbe.icharge.common.util.JsonUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
+import com.lovbe.icharge.config.ContentPicksConfigProperties;
 import com.lovbe.icharge.dao.BrowseHistoryDao;
 import com.lovbe.icharge.dao.CollectDao;
 import com.lovbe.icharge.dao.PublicContentDao;
@@ -78,6 +79,8 @@ public class PublicContentServiceImpl implements PublicContentService {
     private RestHighLevelClient highLevelClient;
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private ContentPicksConfigProperties properties;
     // 文档，专栏，随笔，阅读
     @Value("${spring.kafka.topics.user-action-browse}")
     private String browseActionTopic;
@@ -1049,6 +1052,8 @@ public class PublicContentServiceImpl implements PublicContentService {
         String userLikedSet = RedisKeyConstant.getUserLikesSet(userId);
         Set<Object> likeSet = RedisUtil.zsGetSet(userLikedSet, 0, -1);
         Map<Long, FeaturedArticleVo> articleMap = articleList.stream()
+                // 过滤指定uri文章
+                .filter(articleVo -> !properties.getFilterArticleIds().contains(articleVo.getUid()))
                 .collect(Collectors.toMap(FeaturedArticleVo::getUid, Function.identity()));
         List<FeaturedArticleVo> recommendArticles = articleIds.stream()
                 .map(articleId -> articleMap.get(articleId))

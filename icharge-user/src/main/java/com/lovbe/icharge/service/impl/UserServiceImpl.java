@@ -197,9 +197,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUserInfo(Long userId, UpdateUserDTO userDTO) {
-        // 频率限制
-        CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId),
-                SysConstant.FILE_SCENE_AVATAR, properties.getUploadLimit());
         // 业务参数校验
         UserInfoDo userInfo = new UserInfoDo();
         userInfo.setUpdateTime(new Date());
@@ -211,6 +208,9 @@ public class UserServiceImpl implements UserService {
         BeanUtil.copyProperties(userDTO, userInfo);
         MultipartFile avatarFile = userDTO.getAvatarFile();
         if (avatarFile != null) {
+            // 频率限制
+            CommonUtils.checkUploadFrequencyLimit(String.valueOf(userId),
+                    SysConstant.FILE_SCENE_AVATAR, properties.getUploadLimit());
             ResponseBean<String> upload = storageService.upload(new FileUploadDTO(avatarFile, SysConstant.FILE_SCENE_AVATAR, String.valueOf(userId)));
             if (!upload.isResult()) {
                 log.error("[更新用户信息] --- 头像上传失败，errorInfo: {}", upload.getMessage());

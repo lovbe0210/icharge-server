@@ -4,6 +4,7 @@ import com.lovbe.icharge.common.enums.CommonStatusEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.model.vo.RecommendColumnVo;
+import com.lovbe.icharge.config.ContentPicksConfigProperties;
 import com.lovbe.icharge.entity.vo.SearchUserVo;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.dao.PublicContentDao;
@@ -45,6 +46,8 @@ public class PublicSearchServiceImpl implements PublicSearchService {
     private CommonService commonService;
     @Resource
     private RestHighLevelClient highLevelClient;
+    @Resource
+    private ContentPicksConfigProperties properties;
 
     @Override
     public SearchResultVo getGlobalSearchResult(GlobalSearchDTO data, Long userId) {
@@ -100,6 +103,10 @@ public class PublicSearchServiceImpl implements PublicSearchService {
             } else if (searchHits != null && searchHits.getHits().length != 0) {
                 // 构造搜索数据
                 List<SearchUserVo> userList = Arrays.stream(searchHits.getHits())
+                        .filter(hit -> {
+                            Long userId = Long.valueOf(hit.getId());
+                            return !properties.getFilterUserIds().contains(userId);
+                        })
                         .map(hit -> {
                             UserInfoDo userInfo = commonService.getCacheUser(Long.valueOf(hit.getId()));
                             SearchUserVo userVo = new SearchUserVo();
@@ -179,6 +186,10 @@ public class PublicSearchServiceImpl implements PublicSearchService {
             } else if (searchHits != null && searchHits.getHits().length != 0) {
                 // 构造搜索数据
                 Map<Long, RecommendColumnVo> columnMap = Arrays.stream(searchHits.getHits())
+                        .filter(hit -> {
+                            Long columnId = Long.valueOf(hit.getId());
+                            return !properties.getFilterColumnIds().contains(columnId);
+                        })
                         .map(hit -> {
                             RecommendColumnVo columnVo = new RecommendColumnVo();
                             columnVo.setUid(Long.valueOf(hit.getId()));
@@ -276,6 +287,11 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                 // 构造搜索数据
                 List<Long> articleIds = new ArrayList<>();
                 Map<Long, FeaturedArticleVo> articleMap = Arrays.stream(searchHits.getHits())
+                        .filter(hit -> {
+                            // 过滤指定文章id
+                            Long articleId = Long.valueOf(hit.getId());
+                            return !properties.getFilterArticleIds().contains(articleId);
+                        })
                         .map(hit -> {
                             FeaturedArticleVo articleVo = new FeaturedArticleVo();
                             articleVo.setUid(Long.valueOf(hit.getId()));
@@ -374,6 +390,10 @@ public class PublicSearchServiceImpl implements PublicSearchService {
                 return List.of();
             }
             return Arrays.stream(searchHits.getHits())
+                    .filter(hit -> {
+                        Long uid = Long.valueOf(hit.getId());
+                        return !properties.getFilterArticleIds().contains(uid);
+                    })
                     .map(hit -> {
                         Long uid = Long.valueOf(hit.getId());
                         FeaturedArticleVo articleVo = articleMap.get(uid);
