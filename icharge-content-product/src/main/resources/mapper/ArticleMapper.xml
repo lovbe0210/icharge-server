@@ -26,7 +26,7 @@
         UPDATE c_article set
             publish_status = #{publishStatus}
             <if test="publishStatus == 3">
-                , published_content_id = #{publishDTO.contentId}
+                , published_content_id = #{publishContentId}
                 , publish_time = CASE WHEN publish_time IS NULL THEN NOW() ELSE publish_time END
             </if>
         WHERE uid = #{publishDTO.targetId}
@@ -223,7 +223,7 @@
             SUM(ce.words_num) creationWords,
             COUNT(*) updateContents,
             COUNT(*) essayTotal,
-            SUM(IFNULL(sis.like_count,0)) contentLikes
+            SUM(IFNULL(sis.like_count,0)) harvestLikes
         FROM c_essay ce
         LEFT JOIN s_interaction_statistic sis ON ce.uid = sis.uid
         WHERE ce.`status` = 'A'
@@ -238,7 +238,7 @@
             SUM(IF(ce.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR), ce.words_num, 0)) creationWords,
             SUM(IF(ce.update_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ,1,0)) updateContents,
             SUM(IF(ce.create_time >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) ,1,0)) essayTotal,
-            SUM(IFNULL(sis.like_count,0)) contentLikes
+            SUM(IFNULL(sis.like_count,0)) harvestLikes
         FROM c_essay ce
         LEFT JOIN s_interaction_statistic sis ON ce.uid = sis.uid
         WHERE ce.`status` = 'A'

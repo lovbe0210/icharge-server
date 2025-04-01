@@ -19,6 +19,7 @@ import com.lovbe.icharge.common.model.dto.*;
 import com.lovbe.icharge.common.service.CommonService;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
+import com.lovbe.icharge.common.util.SpringContextUtils;
 import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.dao.ArticleDao;
@@ -31,6 +32,7 @@ import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
 import com.lovbe.icharge.service.feign.IndividuationService;
 import com.lovbe.icharge.service.feign.StorageService;
+import groovy.lang.Lazy;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -125,9 +127,8 @@ public class ArticleServiceImpl implements ArticleService {
             return articleVO;
         }
         ColumnDo columnDo = columnDao.selectById(articleDo.getColumnId());
-        if (columnDo == null || !CommonStatusEnum.isNormal(columnDo.getStatus())) {
-            articleVO.setColumnId(null);
-        } else {
+        if (columnDo != null && CommonStatusEnum.isNormal(columnDo.getStatus())) {
+            articleVO.setColumnUri(columnDo.getUri());
             articleVO.setColumnName(columnDo.getTitle());
         }
         return articleVO;
@@ -182,7 +183,7 @@ public class ArticleServiceImpl implements ArticleService {
             if (articleDTO.getSecondCategory() != null) {
                 esEntity.setSecondCategory(articleDTO.getSecondCategory());
             } else {
-              esEntity.setSecondCategory("");
+                esEntity.setSecondCategory("");
             }
         }
         List<Map> userTags = articleDo.getTags();
@@ -404,7 +405,7 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
 
-   @Override
+    @Override
     public void batchPublish(List<ArticleDo> articleList) {
         List<Long> contentIs = new ArrayList<>();
         List<ArticleDo> collect = articleList.stream()
@@ -545,113 +546,127 @@ public class ArticleServiceImpl implements ArticleService {
                 continue;
             }
             try {
-                // 对内容进行解析，获取纯文本内容
-                JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
-                String textValue = CommonUtils.getContentTextValue(parseObj);
-                if (log.isDebugEnabled()) {
-                    log.debug("[文章内容审核] --- textValue: {}", textValue);
-                }
-                // 发送文章内容审核请求
-                AIAuditResultDTO resultDto = commonService.sendAuditChat(SysConstant.TARGET_TYPE_ARTICLE, textValue);
-                if (resultDto == null) {
-                    log.error("[文章内容审核] --- 大模型审核结果为空，请在日志中查看详细错误");
-                    // TODO 对于审核异常的需要放入死信队列手动审核
-                    continue;
-                }
-                // 获取文章title、category等其他搜索字段
-                ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
-                // 结果解析ok
-                if (resultDto != null && resultDto.isResult()) {
-                    log.info("[文章内容审核] --- 大模型审核通过");
-                    // 根据发布时间contentId更新发布状态
-                    int update = articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_SUCCESS);
-                    // 说明自上次发布后再无修改
-                    if (update != 0) {
-                        // 文章信息录入Elasticsearch
-                        ArticleEsEntity articleEsEntity = new ArticleEsEntity()
-                                .setUid(publishDTO.getTargetId())
-                                .setContent(textValue);
-                        if (articleDo != null) {
-                            articleEsEntity.setTitle(articleDo.getTitle())
-                                    .setSummary(articleDo.getSummary())
-                                    .setIsPublic(articleDo.getIsPublic())
-                                    .setFirstCategory(articleDo.getFirstCategory())
-                                    .setSecondCategory(articleDo.getSecondCategory());
-                            List<Map> tags = articleDo.getTags();
-                            if (!CollectionUtils.isEmpty(tags)) {
-                                StringBuilder tagStr = new StringBuilder();
-                                for (Map tag : tags) {
-                                    if (tagStr.length() > 0) {
-                                        tagStr.append(",");
-                                    }
-                                    tagStr.append(tag.get(SysConstant.TAG_FIELD_CONTENT));
-                                }
-                                articleEsEntity.setUserTags(tagStr.toString());
-                            }
-                        }
-                        List<String> tags = resultDto.getTags();
-                        if (!CollectionUtils.isEmpty(tags)) {
-                            articleEsEntity.setCategory(tags.get(0) + (tags.size() > 1 ? ("," + tags.get(1)) : ""));
-                            if (tags.size() > 2) {
-                                List<String> subList = tags.subList(2, tags.size());
-                                articleEsEntity.setTags(StringUtils.collectionToDelimitedString(subList, ","));
-                            }
-                        }
-                        // 审核通过，更新elasticsearch
-                        commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
-                        // 审核通过，更新创作记录
-                        CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ARTICLE, articleDo.getUserId());
-                        recordDo.setUid(articleDo.getUid())
-                                .setStatus(CommonStatusEnum.NORMAL.getStatus())
-                                .setCreateTime(new Date())
-                                .setUpdateTime(recordDo.getCreateTime());
-                        createRecordDao.insertOrUpdate(recordDo);
-                        if (articleDo.getPublishTime() == null) {
-                            // 发布成功，如果是该篇文章首次发布，增加激励电池
-                            commonService.saveEncourageLog(articleDo.getUserId(), articleDo.getUid(), articleDo.getTitle(), EncorageBehaviorEnum.BEHAVIOR_PUBLISH);
-                        }
-                    }
-                } else if (resultDto != null && !resultDto.isResult()) {
-                    List<String> reasonList = resultDto.getReason();
-                    log.info("[文章内容审核] --- 大模型审核失败, reason: {}", reasonList);
-                    articleDao.updateByPublishContent(publishDTO, SysConstant.PUBLISH_FAILED);
-                    // 记录审核失败通知
-                    String noticeContent = "文章发布失败，公开发布内容需符合本站创作内容约定";
-                    if (!CollectionUtils.isEmpty(reasonList)) {
-                        StringBuilder tmp = new StringBuilder();
-                        for (int i = 0; i < reasonList.size(); i++) {
-                            String reason = reasonList.get(i);
-                            if (reason != null && reason.contains("reason")) {
-                                try {
-                                    JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
-                                    tmp.append("\"" + entries.getStr("content") + "\"");
-                                    tmp.append(entries.getStr("reason"));
-                                }catch (Exception e) {
-                                    log.error("");
-                                }
-                            } else if (reason != null) {
-                                tmp.append(reason);
-                            }
-                            if (i != reasonList.size() - 1) {
-                                tmp.append(";");
-                            }
-                        }
-                        if (tmp.length() > 0) {
-                            noticeContent = tmp.toString();
-                        }
-                    }
-                    SocialNoticeDo noticeDo = new SocialNoticeDo()
-                            .setTargetId(publishDTO.getTargetId())
-                            .setUserId(articleDo.getUserId())
-                            .setNoticeType(SysConstant.NOTICE_AUDIT_ARTICLE)
-                            .setActionUserId(0L)
-                            .setNoticeContent(noticeContent);
-                    noticeDo.setUid(YitIdHelper.nextId());
-                    articleDao.insertAuditNotice(noticeDo);
-                }
+                ArticleService articleService = SpringContextUtils.getBean(ArticleService.class);
+                articleService.updateArticlePublishStatus(publishDTO, contentDo);
             } catch (Exception e) {
                 log.error("[文章内容审核] --- 正文内容解析失败，contentId: {}, errorInfo: {}", publishDTO.getContentId(), e.toString());
             }
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateArticlePublishStatus(ContentPublishDTO publishDTO, ContentDo contentDo) {
+        // 对内容进行解析，获取纯文本内容
+        JSONObject parseObj = JSONUtil.parseObj(contentDo.getContent());
+        String textValue = CommonUtils.getContentTextValue(parseObj);
+        if (log.isDebugEnabled()) {
+            log.debug("[文章内容审核] --- textValue: {}", textValue);
+        }
+        // 发送文章内容审核请求
+        AIAuditResultDTO resultDto = commonService.sendAuditChat(SysConstant.TARGET_TYPE_ARTICLE, textValue);
+        if (resultDto == null) {
+            log.error("[文章内容审核] --- 大模型审核结果为空，请在日志中查看详细错误");
+            // TODO 对于审核异常的需要放入死信队列手动审核
+            return;
+        }
+        // 获取文章title、category等其他搜索字段
+        ArticleDo articleDo = articleDao.selectById(publishDTO.getTargetId());
+        // 结果解析ok
+        if (resultDto != null && resultDto.isResult()) {
+            log.info("[文章内容审核] --- 大模型审核通过");
+            // 根据发布时间contentId更新发布状态
+            long publishContentId = YitIdHelper.nextId();
+            int update = articleDao.updateByPublishContent(publishDTO, publishContentId, SysConstant.PUBLISH_SUCCESS);
+            // 说明自上次发布后再无修改
+            if (update != 0) {
+                // 入库成功，需要将已发布内容进行存档
+                contentDo.setUid(publishContentId);
+                contentDao.insert(contentDo);
+                // 如果之前有已发布的内容，删除原存档版本
+                Long publishedContentId = articleDo.getPublishedContentId();
+                Long latestContentId = articleDo.getLatestContentId();
+                if (publishedContentId != null && !Objects.equals(publishedContentId, latestContentId)) {
+                    contentDao.deleteById(publishedContentId);
+                }
+                // 文章信息录入Elasticsearch
+                ArticleEsEntity articleEsEntity = new ArticleEsEntity()
+                        .setUid(publishDTO.getTargetId())
+                        .setContent(textValue);
+                articleEsEntity.setTitle(articleDo.getTitle())
+                        .setSummary(articleDo.getSummary())
+                        .setIsPublic(articleDo.getIsPublic())
+                        .setFirstCategory(articleDo.getFirstCategory())
+                        .setSecondCategory(articleDo.getSecondCategory());
+                List<Map> userTags = articleDo.getTags();
+                if (!CollectionUtils.isEmpty(userTags)) {
+                    StringBuilder tagStr = new StringBuilder();
+                    for (Map tag : userTags) {
+                        if (tagStr.length() > 0) {
+                            tagStr.append(",");
+                        }
+                        tagStr.append(tag.get(SysConstant.TAG_FIELD_CONTENT));
+                    }
+                    articleEsEntity.setUserTags(tagStr.toString());
+                }
+                List<String> tags = resultDto.getTags();
+                if (!CollectionUtils.isEmpty(tags)) {
+                    articleEsEntity.setCategory(tags.get(0) + (tags.size() > 1 ? ("," + tags.get(1)) : ""));
+                    if (tags.size() > 2) {
+                        List<String> subList = tags.subList(2, tags.size());
+                        articleEsEntity.setTags(StringUtils.collectionToDelimitedString(subList, ","));
+                    }
+                }
+                commonService.updateElasticsearchArticle(Arrays.asList(articleEsEntity));
+                // 审核通过，更新创作记录
+                CreateRecordDo recordDo = new CreateRecordDo(SysConstant.TARGET_TYPE_ARTICLE, articleDo.getUserId());
+                recordDo.setUid(articleDo.getUid())
+                        .setStatus(CommonStatusEnum.NORMAL.getStatus())
+                        .setCreateTime(new Date())
+                        .setUpdateTime(recordDo.getCreateTime());
+                createRecordDao.insertOrUpdate(recordDo);
+                if (articleDo.getPublishTime() == null) {
+                    // 发布成功，如果是该篇文章首次发布，增加激励电池
+                    commonService.saveEncourageLog(articleDo.getUserId(), articleDo.getUid(), articleDo.getTitle(), EncorageBehaviorEnum.BEHAVIOR_PUBLISH);
+                }
+            }
+        } else if (resultDto != null && !resultDto.isResult()) {
+            List<String> reasonList = resultDto.getReason();
+            log.info("[文章内容审核] --- 大模型审核失败, reason: {}", reasonList);
+            articleDao.updateByPublishContent(publishDTO, null, SysConstant.PUBLISH_FAILED);
+            // 记录审核失败通知
+            String noticeContent = "文章发布失败，公开发布内容需符合本站创作内容约定";
+            if (!CollectionUtils.isEmpty(reasonList)) {
+                StringBuilder tmp = new StringBuilder();
+                for (int i = 0; i < reasonList.size(); i++) {
+                    String reason = reasonList.get(i);
+                    if (reason != null && reason.contains("reason")) {
+                        try {
+                            JSONObject entries = JsonUtils.parseObject(reason, JSONObject.class);
+                            tmp.append("\"" + entries.getStr("content") + "\"");
+                            tmp.append(entries.getStr("reason"));
+                        } catch (Exception e) {
+                            log.error("");
+                        }
+                    } else if (reason != null) {
+                        tmp.append(reason);
+                    }
+                    if (i != reasonList.size() - 1) {
+                        tmp.append(";");
+                    }
+                }
+                if (tmp.length() > 0) {
+                    noticeContent = tmp.toString();
+                }
+            }
+            SocialNoticeDo noticeDo = new SocialNoticeDo()
+                    .setTargetId(publishDTO.getTargetId())
+                    .setUserId(articleDo.getUserId())
+                    .setNoticeType(SysConstant.NOTICE_AUDIT_ARTICLE)
+                    .setActionUserId(0L)
+                    .setNoticeContent(noticeContent);
+            noticeDo.setUid(YitIdHelper.nextId());
+            articleDao.insertAuditNotice(noticeDo);
         }
     }
 

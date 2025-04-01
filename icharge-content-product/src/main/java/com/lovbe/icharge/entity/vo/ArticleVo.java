@@ -37,9 +37,9 @@ public class ArticleVo extends BaseEntity {
      */
     private Integer wordsNum = 0;
     /**
-     * 所属专栏
+     * 所属专栏uri
      */
-    private Long columnId;
+    private String columnUri;
     /**
      * 专栏名称
      */

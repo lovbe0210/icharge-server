@@ -2,6 +2,7 @@ package com.lovbe.icharge.service;
 
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.dto.ArticleDo;
+import com.lovbe.icharge.common.model.dto.ContentDo;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
@@ -130,4 +131,11 @@ public interface ArticleService {
      * @param collect
      */
     void handlerPublishAction(List<ContentPublishDTO> collect);
+
+    /**
+     * 文章审核状态更新
+     * @param publishDTO
+     * @param contentDo
+     */
+    void updateArticlePublishStatus(ContentPublishDTO publishDTO, ContentDo contentDo);
 }

@@ -95,7 +95,7 @@ public class RecommendPicksServiceImpl implements RecommendPicksService {
                 .collect(Collectors.toList());
         contentDao.updateArticleFeature(articleIds);
         // 查询还未获得精选激励的文章添加电池激励
-        List<PublicArticleVo> articleVoList = contentDao.selectNoEncourageList(articleIds, EncorageBehaviorEnum.BEHAVIOR_LIKED.getBehaviorType());
+        List<PublicArticleVo> articleVoList = contentDao.selectNoEncourageList(articleIds, EncorageBehaviorEnum.BEHAVIOR_FEATURE.getBehaviorType());
         if (CollectionUtils.isEmpty(articleVoList)) {
             return;
         }

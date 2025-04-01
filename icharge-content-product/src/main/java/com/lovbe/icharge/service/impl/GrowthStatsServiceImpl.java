@@ -1,6 +1,5 @@
 package com.lovbe.icharge.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.db.Page;
@@ -21,7 +20,6 @@ import com.lovbe.icharge.dao.CreationIndexDao;
 import com.lovbe.icharge.dao.GrowthStatsDao;
 import com.lovbe.icharge.entity.dto.CreationIndexDo;
 import com.lovbe.icharge.entity.dto.GrowthStatsDo;
-import com.lovbe.icharge.entity.vo.ColumnVo;
 import com.lovbe.icharge.entity.vo.StateDayLabelVo;
 import com.lovbe.icharge.entity.vo.StateMonthLabelVo;
 import com.lovbe.icharge.service.GrowthStatsService;
@@ -114,6 +112,7 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
                         if (aDo != null) {
                             aDo.setUpdateContents(statisticDo.getUpdateContents() + aDo.getUpdateContents())
                                     .setCreationWords(statisticDo.getCreationWords() + aDo.getCreationWords())
+                                    .setHarvestLikes(statisticDo.getHarvestLikes() + aDo.getHarvestLikes())
                                     .setEssayTotal(statisticDo.getEssayTotal());
                         } else {
                             statisticMap.put(statisticDo.getUserId() + "_" + statisticDo.getRangeType(), statisticDo);
@@ -247,6 +246,12 @@ public class GrowthStatsServiceImpl implements GrowthStatsService {
                     statsDo.setMostWordsTitle(articleDo.getTitle())
                             .setMostWords(articleDo.getWordsNum());
                 }
+            }
+        } else if (statsDo != null && statsDo.getMostWordsArticleId() != null) {
+            ArticleDo articleDo = articleDao.selectById(statsDo.getMostWordsArticleId());
+            if (articleDo != null) {
+                statsDo.setMostWordsTitle(articleDo.getTitle())
+                        .setMostWords(articleDo.getWordsNum());
             }
         }
         return statsDo;

@@ -315,6 +315,9 @@ public class CommonServiceImpl implements CommonService {
 
     @Override
     public void saveEncourageLog(List<EncourageLogDo> encourageLogList) {
+        if (CollectionUtils.isEmpty(encourageLogList)) {
+            return;
+        }
         commonDao.insertEncourageLog(encourageLogList);
     }
 
