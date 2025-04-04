@@ -44,6 +44,7 @@ public interface ServiceErrorCodes {
     ErrorCode FILE_UPLOAD_LIMIT = new ErrorCode(400, "文件服务器繁忙，请稍后再试");
     ErrorCode FILE_OUT_SIZE_5 = new ErrorCode(400, "文件上传失败，请选择小于5MB的文件进行上传。");
     ErrorCode FILE_OUT_SIZE_10 = new ErrorCode(400, "文件上传失败，请选择小于10MB的文件进行上传。");
+    ErrorCode FILE_OUT_SIZE_50 = new ErrorCode(400, "文件上传失败，请选择小于50MB的文件进行上传。");
     ErrorCode FILE_OUT_SIZE_100 = new ErrorCode(400, "文件上传失败，请选择小于100MB的文件进行上传。");
     ErrorCode FILE_PATH_ERROR = new ErrorCode(400, "文件地址保存失败，请稍后再试。");
 

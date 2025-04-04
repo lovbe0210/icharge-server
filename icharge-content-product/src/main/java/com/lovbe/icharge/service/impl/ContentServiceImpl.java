@@ -57,8 +57,8 @@ public class ContentServiceImpl implements ContentService {
             response = HttpRequest.get(uploadDTO.getUrl()).execute();
             String contentLength = response.header("Content-Length");
             long fileSize = (contentLength != null) ? Long.parseLong(contentLength) : -1;
-            if (fileSize > SysConstant.SIZE_100MB) {
-                throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_100);
+            if (fileSize > SysConstant.SIZE_50MB) {
+                throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_50);
             }
             ResponseBean<String> responseBean = storageService.upload(new UrlUploadDTO(uploadDTO.getUrl(),
                     SysConstant.FILE_SCENE_content, String.valueOf(userId)));

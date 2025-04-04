@@ -133,8 +133,8 @@ public class ChatMessageController {
         if (file == null) {
             throw new ServiceException(ServiceErrorCodes.FILE_IS_NULL);
         }
-        if (file.getSize() > SysConstant.SIZE_10MB) {
-            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        if (file.getSize() > SysConstant.SIZE_5MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_5);
         }
         String path = chatMessageService.uploadChatFile(uploadDTO, userId);
         return ResponseBean.ok(path);

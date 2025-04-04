@@ -99,8 +99,8 @@ public class ContentSocialController {
     public ResponseBean replyComment(@Validated ReplyCommentDTO replyCommentDTO,
                                      @RequestHeader(SysConstant.USERID) Long userId) {
         MultipartFile contentImg = replyCommentDTO.getContentImgFile();
-        if (contentImg != null && contentImg.getSize() > SysConstant.SIZE_10MB) {
-            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
+        if (contentImg != null && contentImg.getSize() > SysConstant.SIZE_5MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_5);
         }
         ReplyCommentVo replyCommentVo = socialService.replyComment(replyCommentDTO, userId);
         return ResponseBean.ok(replyCommentVo);

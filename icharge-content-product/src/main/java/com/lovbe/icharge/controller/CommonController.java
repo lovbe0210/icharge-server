@@ -54,8 +54,8 @@ public class CommonController {
         if (attachFile == null) {
             throw new ServiceException(ServiceErrorCodes.FILE_IS_NULL);
         }
-        if (attachFile.getSize() > SysConstant.SIZE_100MB) {
-            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_100);
+        if (attachFile.getSize() > SysConstant.SIZE_50MB) {
+            throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_50);
         }
         String path = contentService.uploadContentFile(uploadDTO, userId);
         return ResponseBean.ok(path);

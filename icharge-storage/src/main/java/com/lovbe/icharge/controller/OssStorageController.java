@@ -2,6 +2,7 @@ package com.lovbe.icharge.controller;
 
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.net.URLDecoder;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import com.github.yitter.idgen.YitIdHelper;
@@ -18,6 +19,7 @@ import com.lovbe.icharge.service.OssStorageService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +43,10 @@ public class OssStorageController {
     public ResponseBean upload(@Validated FileUploadDTO fileUploadDTO) {
         OssStorageService storageService = OssStorageFactory.getStorageService();
         String originalFilename = fileUploadDTO.getFile().getOriginalFilename();
+        if (StringUtils.hasText(originalFilename)) {
+            originalFilename = StrUtil.trim(originalFilename);
+            originalFilename = StrUtil.cleanBlank(originalFilename).replaceAll("\\s+", "");
+        }
         String path = fileUploadDTO.getPathFlag() + "/" + fileUploadDTO.getPathPrefix() + "/" + YitIdHelper.nextId() + SysConstant.SEPARATOR + originalFilename;
         try {
             String upload = storageService.upload(fileUploadDTO.getFile().getInputStream(), path);
@@ -60,11 +66,6 @@ public class OssStorageController {
             // 获取 HTTP 响应头信息
             response = HttpRequest.get(uploadDTO.getUrl()).execute();
             inputStream = response.bodyStream();
-            String contentLength = response.header("Content-Length");
-            long fileSize = (contentLength != null) ? Long.parseLong(contentLength) : -1;
-            if (fileSize > SysConstant.SIZE_10MB) {
-                throw new ServiceException(ServiceErrorCodes.FILE_OUT_SIZE_10);
-            }
             // 获取文件名
             String fileName = extractFileName(response);
             String path = uploadDTO.getPathFlag() + "/" + uploadDTO.getPathPrefix() + "/" +
