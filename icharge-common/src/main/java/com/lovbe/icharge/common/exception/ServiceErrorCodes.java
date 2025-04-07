@@ -60,6 +60,7 @@ public interface ServiceErrorCodes {
     ErrorCode ARTICLE_REPEAT_PUBLISH_FAILED = new ErrorCode(400, "最新内容已发布，无需再次发布");
     ErrorCode ARTICLE_PUBLISH_FAILED = new ErrorCode(400, "请先将阅读权限设置为互联网可访问再进行发布");
     ErrorCode ARTICLE_PUBLISH_FAILED2 = new ErrorCode(400, "发布失败，请检查文章状态是否正确");
+    ErrorCode LATEX_2_SVG_FAILED = new ErrorCode(400, "公式转换失败，请稍后再试");
 
     //========== 内容推荐精选 ==========
     ErrorCode REPEAT_FAVORITE_TAG = new ErrorCode(400, "已存在相同名称的收藏分组");

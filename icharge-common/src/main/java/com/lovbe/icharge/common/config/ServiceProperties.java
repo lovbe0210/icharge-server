@@ -112,4 +112,8 @@ public class ServiceProperties {
      * 短信模板id
      */
     private String templateId;
+    /**
+     * latex转换接口地址
+     */
+    private String latexUrl;
 }

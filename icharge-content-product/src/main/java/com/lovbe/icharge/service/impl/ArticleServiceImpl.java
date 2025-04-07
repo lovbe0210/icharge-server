@@ -2,6 +2,9 @@ package com.lovbe.icharge.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.net.URLEncodeUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -41,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.function.Function;
@@ -667,6 +671,24 @@ public class ArticleServiceImpl implements ArticleService {
                     .setNoticeContent(noticeContent);
             noticeDo.setUid(YitIdHelper.nextId());
             articleDao.insertAuditNotice(noticeDo);
+        }
+    }
+
+    @Override
+    public String latex2Img(ContentLatexDTO contentEntity) {
+        String latexUrl = serviceProperties.getLatexUrl();
+        String encode = URLEncodeUtil.encode(contentEntity.getContent());
+        try {
+            HttpResponse execute = HttpRequest.get(latexUrl + "?" + encode).execute();
+            int status = execute.getStatus();
+            if (status == 200) {
+                byte[] bytes = execute.bodyBytes();
+                return "data:image/svg+xml;base64," + Base64.getEncoder().encodeToString(bytes);
+            }
+            log.error("[公式转换svg] --- 转换失败，status: {}", status);
+            return null;
+        } catch (Exception e) {
+            throw new ServiceException(ServiceErrorCodes.LATEX_2_SVG_FAILED);
         }
     }
 

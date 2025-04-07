@@ -1,6 +1,7 @@
 package com.lovbe.icharge.controller;
 
 import com.lovbe.icharge.common.enums.SysConstant;
+import com.lovbe.icharge.common.exception.ErrorCode;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
 import com.lovbe.icharge.common.model.base.BaseRequest;
@@ -9,6 +10,7 @@ import com.lovbe.icharge.common.model.dto.RequestListDTO;
 import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
+import com.lovbe.icharge.entity.dto.ContentLatexDTO;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 import com.lovbe.icharge.service.ArticleService;
@@ -118,6 +120,23 @@ public class ArticleController {
                                                  @RequestHeader(SysConstant.USERID) long userId) {
         Map content = articleService.updateContent(contentEntity, userId);
         return ResponseBean.ok(content);
+    }
+
+    /**
+     * @description: 数学公式转svg
+     * @param: contentEntity
+     * @param: userId
+     * @return: com.lovbe.icharge.common.model.base.ResponseBean<com.lovbe.icharge.entity.vo.ArticleVo>
+     * @author: lovbe0210
+     * @date: 2025/4/5 0:42
+     */
+    @PostMapping("/content/math")
+    public ResponseBean<ArticleVo> latex2Svg(@RequestBody @Valid ContentLatexDTO contentLatex,
+                                             @RequestHeader(SysConstant.USERID) long userId) {
+        String svgBase64 = articleService.latex2Img(contentLatex);
+        return svgBase64 == null ?
+                ResponseBean.error(ServiceErrorCodes.LATEX_2_SVG_FAILED.getCode(), ServiceErrorCodes.LATEX_2_SVG_FAILED.getMsg())
+                : ResponseBean.ok(svgBase64);
     }
 
     /**

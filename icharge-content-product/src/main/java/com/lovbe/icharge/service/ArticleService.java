@@ -8,6 +8,7 @@ import com.lovbe.icharge.entity.dto.ArticleDTO;
 import com.lovbe.icharge.entity.dto.ArticleOperateDTO;
 import com.lovbe.icharge.entity.dto.ContentDTO;
 import com.lovbe.icharge.common.model.dto.ContentPublishDTO;
+import com.lovbe.icharge.entity.dto.ContentLatexDTO;
 import com.lovbe.icharge.entity.vo.ArticleVo;
 import com.lovbe.icharge.entity.vo.ContentVo;
 
@@ -138,4 +139,13 @@ public interface ArticleService {
      * @param contentDo
      */
     void updateArticlePublishStatus(ContentPublishDTO publishDTO, ContentDo contentDo);
+
+    /**
+     * @description: latex公式转svg
+     * @param: contentEntity
+     * @return: java.lang.String
+     * @author: lovbe0210
+     * @date: 2025/4/5 1:05
+     */
+    String latex2Img(ContentLatexDTO contentEntity);
 }
