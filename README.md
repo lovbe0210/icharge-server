@@ -1,6 +1,9 @@
-<img align="center" src="充电.png"/>
+<div align="center">
+    <img align="center" src="充电.png"/>
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">IT充电站</h1>
 <h4 align="center">基于 Vue/iView UI 和 Spring Boot/Spring Cloud & Alibaba 前后端分离的分布式微服务架构</h4>
+</div>
+
 
 
 ## 平台简介
