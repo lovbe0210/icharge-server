@@ -1,8 +1,6 @@
 package com.lovbe.icharge.controller;
 
 import cn.hutool.db.Page;
-import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
-import com.lovbe.icharge.common.enums.CodeSceneEnum;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.exception.ServiceException;
@@ -11,10 +9,11 @@ import com.lovbe.icharge.common.model.base.PageBean;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.dto.AuthUserDTO;
 import com.lovbe.icharge.common.model.dto.RequestListDTO;
-import com.lovbe.icharge.common.model.dto.TargetStatisticDo;
 import com.lovbe.icharge.common.model.dto.UserInfoDo;
 import com.lovbe.icharge.common.model.entity.LoginUser;
-import com.lovbe.icharge.entity.dto.*;
+import com.lovbe.icharge.entity.dto.DomainContentUpdateDTO;
+import com.lovbe.icharge.entity.dto.OAuthLoginDTO;
+import com.lovbe.icharge.entity.dto.UpdateUserDTO;
 import com.lovbe.icharge.entity.vo.UserStatisticVo;
 import com.lovbe.icharge.service.UserService;
 import jakarta.annotation.Resource;
@@ -23,14 +22,12 @@ import jakarta.validation.Valid;
 import me.zhyd.oauth.model.AuthCallback;
 import me.zhyd.oauth.request.AuthRequest;
 import me.zhyd.oauth.utils.AuthStateUtils;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @description: 用户信息相关控制层
@@ -85,7 +82,7 @@ public class UserController {
      * @author: lovbe0210
      * @date: 2024/12/14 23:38
      */
-    @GetMapping("/dmcontent/{contentId}")
+    @GetMapping("/domain/content/get/{contentId}")
     public ResponseBean getDomainContent(@RequestHeader(value = SysConstant.USERID, required = false)Long userId,
                                          @PathVariable("contentId") Long contentId) {
         return ResponseBean.ok(userService.getDomainContent(contentId, userId));
@@ -98,7 +95,7 @@ public class UserController {
      * @author: lovbe0210
      * @date: 2024/12/14 23:38
      */
-    @PostMapping("/dmcontent/update")
+    @PostMapping("/domain/content/update")
     public ResponseBean updateDomainContent(@RequestHeader(SysConstant.USERID)Long userId,
                                             @RequestBody @Valid BaseRequest<DomainContentUpdateDTO> contentUpdateRequest) {
         DomainContentUpdateDTO data = contentUpdateRequest.getData();
@@ -108,13 +105,13 @@ public class UserController {
     }
 
     /**
-     * @description: 获取个人主页内容
+     * @description: 删除个人主页内容
      * @param: String
      * @return: ResponseBean
      * @author: lovbe0210
      * @date: 2024/12/14 23:38
      */
-    @PostMapping("/dmcontent/delete")
+    @PostMapping("/domain/content/delete")
     public ResponseBean deleteDomainContent(@RequestHeader(SysConstant.USERID)Long userId,
                                             @RequestBody @Valid BaseRequest<DomainContentUpdateDTO> contentUpdateRequest) {
         DomainContentUpdateDTO data = contentUpdateRequest.getData();
