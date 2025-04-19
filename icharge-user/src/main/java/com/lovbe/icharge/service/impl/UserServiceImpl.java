@@ -494,6 +494,7 @@ public class UserServiceImpl implements UserService {
      * @date 2024/11/17 22:01
      */
     public String createDomain(Long userId) {
+        commonService.initDomainCache();
         String domainKey = RedisKeyConstant.getDomainKey();
         String domain = IdUtil.nanoId(6);
         boolean hsetted = !properties.getDomainFilter().contains(domain) && RedisUtil.hsetIfAbsent(domainKey, domain, userId);

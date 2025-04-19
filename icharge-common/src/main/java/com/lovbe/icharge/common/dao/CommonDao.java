@@ -42,6 +42,17 @@ public interface CommonDao {
     List<String> selectAllUri();
 
     /**
+     * @description: 获取所有domain
+     * @return: java.util.List<java.lang.String>
+     * @author: lovbe0210
+     * @date: 2025/3/19 19:40
+     */
+    @Select(value = """
+            SELECT Distinct domain FROM p_user WHERE status = 'A'
+            """)
+    List<String> selectAllDomain();
+
+    /**
      * @description: 获取菜单列表
      * @return: java.util.List<com.lovbe.icharge.common.model.dto.MenuDTO>
      * @author: lovbe0210

@@ -116,4 +116,18 @@ public interface CommonService {
      */
     void saveEncourageLog(Long userId, Long targetId, String title, EncorageBehaviorEnum encorageBehaviorEnum);
     void saveEncourageLog(List<EncourageLogDo> encourageLogList);
+
+    /**
+     * @description: 校验redis中beautiful是否初始化
+     * @author: lovbe0210
+     * @date: 2025/4/19 10:21
+     */
+    void initBeautifulIdCache();
+
+    /**
+     * @description: 校验redis中domain是否初始化
+     * @author: lovbe0210
+     * @date: 2025/4/19 10:24
+     */
+    void initDomainCache();
 }

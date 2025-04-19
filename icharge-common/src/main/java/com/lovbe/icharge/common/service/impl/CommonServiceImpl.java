@@ -120,21 +120,9 @@ public class CommonServiceImpl implements CommonService {
 
     @Override
     public String getBeautifulId() {
-        String beautifulIdKey = RedisKeyConstant.getBeautifulKey();
+        initBeautifulIdCache();
         String beautifulId = IdUtil.nanoId(6);
-        boolean hasKey = RedisUtil.hasKey(beautifulIdKey);
-        Long expire = RedisUtil.getExpire(beautifulIdKey);
-        // key不存在或者key存续时间小于60s都认为key不存在，获取数据库最新数据
-        if (!hasKey || expire == null || expire < 60) {
-            // 获取数据库中当前user下的所有beautifulId
-            List<String> uriList = commonDao.selectAllUri();
-            if (CollectionUtils.isEmpty(uriList)) {
-                uriList = List.of("lovbe");
-            }
-            RedisUtil.hputAll(beautifulIdKey,
-                    uriList.stream().collect(Collectors.toMap(Function.identity(), Function.identity())));
-            RedisUtil.expire(beautifulIdKey, RedisKeyConstant.EXPIRE_7_DAY);
-        }
+        String beautifulIdKey = RedisKeyConstant.getBeautifulKey();
         boolean hsetted = RedisUtil.hsetIfAbsent(beautifulIdKey, beautifulId, null);
         while (!hsetted) {
             beautifulId = IdUtil.nanoId(6);
@@ -319,6 +307,39 @@ public class CommonServiceImpl implements CommonService {
             return;
         }
         commonDao.insertEncourageLog(encourageLogList);
+    }
+
+    @Override
+    public void initBeautifulIdCache() {
+        String beautifulIdKey = RedisKeyConstant.getBeautifulKey();
+        boolean hasKey = RedisUtil.hasKey(beautifulIdKey);
+        // key不存在，获取数据库最新数据
+        if (!hasKey) {
+            // 获取数据库中当前user下的所有beautifulId
+            List<String> uriList = commonDao.selectAllUri();
+            if (CollectionUtils.isEmpty(uriList)) {
+                uriList = List.of("lovbe");
+            }
+            RedisUtil.hputAll(beautifulIdKey,
+                    uriList.stream().collect(Collectors.toMap(Function.identity(), Function.identity())));
+        }
+    }
+
+    @Override
+    public void initDomainCache() {
+        // 判断domain是否存在
+        String domainKey = RedisKeyConstant.getDomainKey();
+        boolean hasKey = RedisUtil.hasKey(domainKey);
+        // key不存在，获取数据库最新数据
+        if (!hasKey) {
+            // 获取数据库中当前user下的所有beautifulId
+            List<String> domainList = commonDao.selectAllDomain();
+            if (CollectionUtils.isEmpty(domainList)) {
+                domainList = List.of("lovbe");
+            }
+            RedisUtil.hputAll(domainKey,
+                    domainList.stream().collect(Collectors.toMap(Function.identity(), Function.identity())));
+        }
     }
 
     @Override
