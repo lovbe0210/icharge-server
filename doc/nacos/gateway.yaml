@@ -1,0 +1,63 @@
+spring:
+  cloud:
+    # Spring Cloud Gateway 配置项，对应 GatewayProperties 类
+    gateway:
+      #discovery:
+       # locator:
+          #开启从注册中心动态创建路由的功能，利用微服务名进行路由
+        #  enabled: true
+          #开启小写验证，默认feign根据服务名查找都是用的全大写
+         # lowerCaseServiceId: true
+      routes:
+        - id: route_user  
+          uri: lb://user
+          predicates:    
+            - Path=/api/user/**
+        - id: route_auth
+          uri: lb://auth
+          predicates:    
+            - Path=/api/auth/**
+        - id: route_storage
+          uri: lb://storage
+          predicates:    
+            - Path=/api/st/**
+        - id: route_contentProd
+          uri: lb://content-product
+          predicates:    
+            - Path=/api/cpt/**
+        - id: route_contentPicks
+          uri: lb://content-picks
+          predicates:    
+            - Path=/api/cps/**
+        - id: route_social
+          uri: lb://social
+          predicates:    
+            - Path=/api/sl/**
+        - id: route_individuation
+          uri: lb://individuation
+          predicates:    
+            - Path=/api/in/**
+
+
+request: 
+  api: 
+    whiteList: 
+      - /api/auth/**
+      - /api/user/reset/password
+      - /api/user/domain/content/get/*
+      - /api/user/domain/*
+      - /api/user/oauth/*
+      - /api/user/mobile/code
+      - /api/user/email/code
+      - /api/cpt/menu
+      - /api/cpt/creation/index/*
+      - /api/cps/router/*
+      - /api/cps/article/**
+      - /api/cps/column/**
+      - /api/cps/author/**
+      - /api/cps/search/**
+      - /api/cps/ramblyjot/**
+      - /api/sl/target/comments
+      - /api/sl/comment/replies
+      - /api/sl/user/relationship/count/*
+      - /api/in/preference/upload

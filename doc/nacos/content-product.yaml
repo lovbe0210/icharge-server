@@ -1,0 +1,24 @@
+server:
+  servlet:
+    context-path: /api/cpt
+
+spring: 
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+
+  kafka: 
+    produce-enable: true
+    consume-enable: true
+
+  elasticsearch: 
+    enable: true
+
+service: 
+  # 文件上传每小时频率限制
+  upload-limit: 100
+  cover-upload-limit: 20
+  # latex公式转svg
+  latex-url: https://latex.codecogs.com/svg.image
+

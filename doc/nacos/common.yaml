@@ -1,0 +1,116 @@
+spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://10.2.2.14:4417/icharge?useSSL=false&useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&allowMultiQueries=true&allowPublicKeyRetrieval=true
+    username: root
+    password: yan51121
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1 FROM DUAL
+  data: 
+    redis:
+      # host: 10.20.3.142
+      # port: 6379
+      # database: 6
+      password: yan51121
+      sentinel:
+        master: mymaster
+        nodes: 10.2.2.14:27480,10.2.2.15:27480,10.2.2.16:27480
+      lettuce:
+        pool:
+          max-active: -1 # 连接池最大连接数（使用负值表示没有限制）
+          max-idle: 3000 # 连接池中的最大空闲连接
+          max-wait: 30 # 连接池最大阻塞等待时间（使用负值表示没有限制）
+          min-idle: 3000 # 连接池中的最小空闲连接
+
+  kafka:
+    servers: 10.2.2.14:9092,10.2.2.15:9092,10.2.2.16:9092
+    # 开启事务 
+    transaction-id-prefix: kafkaTx
+    retries: 3 # 对于发送失败的记录重试3次
+    batch-size: 16384
+    buffer-memory: 102400
+    # 批量拉取消息数量
+    batch-poll: 100
+    #acks=0 ： 生产者在成功写入消息之前不会等待任何来自服务器的响应。
+    #acks=1 ： 只要集群的首领节点收到消息，生产者就会收到一个来自服务器成功响应。
+    #acks=all ：只有当所有参与复制的节点全部收到消息时，生产者才会收到一个来自服务器的成功响应（开启事务后必须设置为all）。
+    acks: 1
+    #sasl-username: lovbe0210
+    #sasl-password: yan51121
+    topics: 
+      # 用户行为点赞
+      user-action-like: ACTION_LIKE
+      # 用户行为评论
+      user-action-comment: ACTION_COMMENT
+      # 用户行为浏览
+      user-action-browse: ACTION_BROWSE
+      # 用户行为收藏
+      user-action-collect: ACTION_COLLECT
+      # 用户行为关注
+      user-action-follow: ACTION_FOLLOW
+      # 内容生产：文章发布
+      action-content-publish: ARTICLE_PUBLISH
+      # 随笔发布
+      action-essay-publish: ESSAY_PUBLISH
+      # 专栏首页自定义内容更新
+      action-column-content: COLUMN_CONTENT
+      # 个人主页自定义内容更新
+      action-domain-content: DOMAIN_CONTENT
+      # 发送聊天消息
+      chat-send-message: CONVERSATION_LOG
+      # 发送验证码
+      send-code: VERIFY_CODE
+
+  ai:
+    openai:
+      api-key: xxxxxxxxxxxxxxxxxxxx
+      base-url: https://api.moonshot.cn
+      # base-url: https://api.deepseek.com
+      # api-key: xxxxxxxxxxxxxxxxxxxx
+      chat:
+        options:
+          model: moonshot-v1-auto
+          # model: deepseek-reasoner
+    retry:
+      max-attempts: 1
+    fine-tune:
+      article-audit-prompt-content: 你是文章内容审核管理员，分析内容是否包含违反政治正确、色情淫秽传播的内容，你只需要返回true表示审核通过，false表示审核不通过即可，注意需要联系上下文判断语境是否违规，而不是仅针对单个单词或词语就认定违规，只需要判断出明确违规的内容，不用关心链接或者二维码或者文件什么，不用关心外链是否会存在不合规或非法分享版权的内容，只需要判断链接本身有没有违反包含违反政治正确、包含色情淫秽传播的内容；你不需要关心文章内容是否有实际意义；你不用关心文章内容是否明确；还需要排除一些白名单词汇不做判断，在白名单内的任何内容都不算违规内容，白名单：[${permittedKeywords}]。使用json格式输出。其中result字段表示通过与否，使用true或false；reason字段表示违规内容和原因，指出哪些词语违规了，为什么违规了，使用数组表示；同时对文章内容进行总结，提炼出最多12个标签，要求第一个标签为行业语言框架等一级分类标签，第二个标签为精细化二级分类标签，其他为内容总结标签；每个标签长度中文最多10个字符，英文最多20个字符，使用tags字段，字段类型为数组。因为文章内容是用户上传，所以无法提前预知内容的合法性，因此当遇到系统判定为非法内容时你也需要返回正确的json格式，而不是直接报错，记住了，一定不能报错，任何时候都应该返回审核结果，输出结果严格遵循json格式，不要输出任何多余的文字提示，要不然后续代码会解析异常报错。
+      essay-audit-prompt-content: 你是文章内容审核管理员，分析内容是否包含违反政治正确和色情淫秽传播的内容，你只需要返回true表示审核通过，false表示审核不通过即可，注意只需要判断内容中的单个字或词是否违规就行，无需判断其他相关, 对于一些不文明用语和情节较轻的侮辱性语句，只要没有指名道姓就不算违规内容，你不需要关心文章内容是否有实际意义；你不用关心文章内容是否明确；还需要排除一些白名单词汇，在白名单内的任何内容都不算违规内容，白名单：[${permittedKeywords}]。。请牢记我们的审核要求，使用json格式输出。其中result字段表示通过与否，使用true或false；reason字段表示违规内容和原因，一定要指出哪些词语违规了，为什么违规了，使用数组表示；因为文章内容是用户上传，所以无法提前预知内容的合法性，因此当遇到系统判定为非法内容时你也需要返回正确的json格式，而不是直接报错，输出结果严格遵循json格式，不要输出任何多余的文字提示，要不然后续代码会解析异常报错。
+      portrait-tag-prompt-content: 你是人物画像系统，分析用户的文章阅读记录，我会告诉你最近阅读的文章的所有标签，多个标签用逗号隔开，请根据标签，分析人物画像，分别总结出5个行业语言框架等精细化分类标签，和20个用于推荐系统的内容总结标签；每个标签长度中文最多10个字符，英文最多20个字符，5个分类标签使用category字段，字段类型为数组, 20个内容总结标签用tags，字段类型为数组。因为文章内容是用户上传，所以无法提前预知标签的合法性，因此当遇到系统判定为非法内容时你也需要返回正确的json格式，而不是直接报错，记住了，一定不能报错，任何时候都应该返回审核结果，输出结果严格遵循json格式，不要输出任何多余的文字提示，要不然后续代码会解析异常报错。
+      permitted-keywords: 卧槽,我日,卧日,撒旦,中华人民共和国法律,中华人民共和国,手机号,手机号不可用
+
+  elasticsearch: 
+    high-level: 
+      uris: 10.2.2.16:9200
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  type-aliases-package: com.lovbe.icharge.*.entity
+
+oss:
+  # oss类型，目前支持：阿里云(0) 七牛云(1) 又拍云(2) 本地存储(3) Minio协议 (4)
+  ossType: 4
+  accessKey: minioadmin
+  secretKey: minioadmin
+  endpoint: http://10.2.2.15:9000
+  # endpoint: http://[2409:8a62:4f5:6f91:20c:29ff:fe29:775f]:9000
+  bucketName: icharge
+
+service:
+  level1-exp: 100 
+  level2-exp: 300
+  level3-exp: 900
+  level4-exp: 2800
+  level5-exp: 9000
+  level6-exp: 28800  

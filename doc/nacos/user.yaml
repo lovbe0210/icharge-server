@@ -1,0 +1,74 @@
+server:
+  servlet:
+    context-path: /api/user
+
+spring: 
+  servlet:
+    multipart:
+      max-request-size: 10MB
+      max-file-size: 10MB
+
+  elasticsearch: 
+    enable: true
+
+  kafka: 
+    produce-enable: true
+    consume-enable: true
+
+service: 
+  # 三方登录
+  qq-app-id: xxx
+  qq-app-key: xxxxxx
+  qq-redirect-url: https://www.ichargehub.com/api/user/oauth/callback
+  # 文件上传每小时频率限制
+  upload-limit: 20
+  # 验证码发送滚动每小时5条后开始限制
+  verify-code-limit: 5
+  serverEmail: lovbe0210@163.com
+  # 邮箱登录账号
+  emailUsername: lovbe0210@163.com
+  # 授权码
+  emailPassword: xxxxxxxxxxxxxxxxx
+  emailHost: smtp.163.com
+  emailPort: 25
+  sslEnable: false
+  starttlsEnable: false
+  # 短信发送相关参数
+  smsUrl: https://gyytz.market.alicloudapi.com/sms/smsSend
+  smsRequestMethod: POST
+  smsAppcode: xxxxxxxxxxxxxxxxx
+  # 短信签名id
+  smsSignId: xxxxxxxxxxxxxxxxxxx
+
+  # 用户domain过滤，保留一些菜单值和特殊预留
+  domain-filter: 
+    - technet
+    - lang
+    - database
+    - midware
+    - algthm
+    - ramblyJot
+    - search
+    - hot
+    - articles
+    - column
+    - authors
+    - creative
+    - article
+    - seriesColumn
+    - setting
+    - collection
+    - stats
+    - grade
+    - recentview
+    - user
+    - profile
+    - domain
+    - account
+    - relational
+    - preferences
+    - musicplay
+    - editor
+    - follow
+    - recommend
+    - scolumn

@@ -45,7 +45,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(messageHandler(), "/socket")
                 .addInterceptors(handshakeInterceptor())
-                .setAllowedOrigins("http://localhost", "https://www.ichargehub.com");
+                .setAllowedOrigins("https://www.ichargehub.com");
+        // 本地调试用
+//                .setAllowedOrigins("*");
     }
 
     @Bean

@@ -1,0 +1,13 @@
+server:
+  servlet:
+    context-path: /api/st
+
+spring: 
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+  data: 
+    redis: 
+      enable: false
+

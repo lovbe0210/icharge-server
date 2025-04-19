@@ -1,0 +1,17 @@
+server:
+  servlet:
+    context-path: /api/sl
+
+spring: 
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+
+  kafka: 
+    produce-enable: true
+    consume-enable: true
+
+service: 
+  # 文件上传每小时频率限制
+  upload-limit: 30

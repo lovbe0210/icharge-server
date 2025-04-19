@@ -11,7 +11,7 @@
  Target Server Version : 80037
  File Encoding         : 65001
 
- Date: 15/03/2025 00:29:02
+ Date: 20/04/2025 00:20:20
 */
 
 SET NAMES utf8mb4;
@@ -60,6 +60,8 @@ CREATE TABLE `c_column`  (
   `user_id` bigint NOT NULL COMMENT '所属用户id',
   `synopsis` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '专栏简介',
   `cover_url` varchar(125) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '封面地址',
+  `home_content_status` tinyint UNSIGNED NULL DEFAULT 0 COMMENT '专栏首页内容审核状态 0未提交 2失败 3成功',
+  `home_content_id` bigint NULL DEFAULT NULL COMMENT '专栏首页内容id',
   `dir_content_id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '目录json数据id',
   `is_public` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否公开访问 0否1是',
   `enable_comment` tinyint UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否开启评论功能 0否1是',
@@ -111,6 +113,7 @@ CREATE TABLE `c_essay`  (
   `content_id` bigint NOT NULL COMMENT '内容id',
   `preview_content` varchar(300) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '预览内容，用于显示',
   `preview_img` json NULL COMMENT '预览图片，数组字符串,最多三张',
+  `words_num` int UNSIGNED NULL DEFAULT 0 COMMENT '统计字数',
   `is_public` tinyint UNSIGNED NULL DEFAULT 1 COMMENT '是否公开可见',
   `publish_status` tinyint UNSIGNED NOT NULL DEFAULT 1 COMMENT '发布状态 1审核中 2审核失败 3发布成功',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A' COMMENT '状态：A启用D删除',
@@ -156,6 +159,8 @@ CREATE TABLE `i_personalize_config`  (
   `custom_theme` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '自定义主题',
   `flag_content` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'flag内容',
   `music_play` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '音乐播放相关',
+  `domain_hotmap` tinyint UNSIGNED NOT NULL DEFAULT 1 COMMENT '个人主页是否展示创作指数',
+  `domain_column` tinyint UNSIGNED NOT NULL DEFAULT 1 COMMENT '个人主页是否展示公开专栏',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -242,7 +247,7 @@ DROP TABLE IF EXISTS `p_creation_index`;
 CREATE TABLE `p_creation_index`  (
   `uid` bigint NOT NULL COMMENT '每个用户每天的创作指数',
   `user_id` bigint NOT NULL COMMENT '用户id',
-  `creation_score` tinyint NOT NULL COMMENT '创作指数0 不活跃 1活跃',
+  `creation_score` tinyint NOT NULL COMMENT '创作指数不活跃-活跃 0-5级',
   `record_date` date NOT NULL COMMENT '统计日期',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'A',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -260,8 +265,8 @@ CREATE TABLE `p_encorage_log`  (
   `behavior_type` tinyint NOT NULL COMMENT '动作行为类型 1发布文章 2内容获得点赞 3文档获得精选 4内容获得评论 5新增粉丝',
   `target_id` bigint NOT NULL COMMENT '动作对象id，可以是文档id',
   `target_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '动作对象名称，这里只做记录',
-  `encorage_score` tinyint NOT NULL COMMENT '激励分数',
-  `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `encourage_score` tinyint NOT NULL COMMENT '激励分数',
+  `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`uid`) USING BTREE,
@@ -275,20 +280,20 @@ DROP TABLE IF EXISTS `p_growth_stats`;
 CREATE TABLE `p_growth_stats`  (
   `uid` bigint NOT NULL,
   `user_id` bigint NOT NULL COMMENT '用户id',
-  `range_type` tinyint NOT NULL COMMENT '统计时间范围 1近一年 2近30天',
+  `range_type` tinyint NOT NULL COMMENT '统计时间范围 1近一年 0历史',
   `creation_days` int NULL DEFAULT 0 COMMENT '创作天数',
   `creation_words` int NULL DEFAULT 0 COMMENT '创作字数',
   `update_contents` int NULL DEFAULT 0 COMMENT '内容更新',
   `harvest_likes` int NULL DEFAULT 0 COMMENT '收获点赞',
-  `total_words` int NULL DEFAULT 0 COMMENT '创作总字数',
   `article_total` int NULL DEFAULT 0 COMMENT '文章总数',
   `column_total` int NULL DEFAULT 0 COMMENT '专栏总数',
+  `essay_total` int NULL DEFAULT 0 COMMENT '随笔总数',
   `most_words_column_id` bigint NULL DEFAULT NULL COMMENT '字数最多的专栏id',
   `most_words_article_id` bigint NULL DEFAULT NULL COMMENT '字数最多的文章id',
   `public_articles` int NULL DEFAULT 0 COMMENT '公开文档数',
   `article_views` int NULL DEFAULT 0 COMMENT '阅读量',
   `article_features` int NULL DEFAULT 0 COMMENT '文章收录精选次数',
-  `content_likes` int NULL DEFAULT 0 COMMENT '收获点赞量',
+  `content_likes` int NULL DEFAULT 0 COMMENT '公开文章点赞量',
   `content_comments` int NULL DEFAULT 0 COMMENT '收获评论量',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -307,15 +312,14 @@ CREATE TABLE `p_simple_code_template`  (
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '模板名称',
   `content` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '模板内容',
   `params` json NOT NULL COMMENT '参数数组',
-  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
   `api_template_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '短信 API 的模板编号',
-  `channel_id` bigint NOT NULL COMMENT '短信渠道编号',
   `channel_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '短信渠道编码',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'A' COMMENT '开启状态：A正常使用 S已停用 D已删除',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 26 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户模块-验证码模板' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 26 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户模块-验证码模板' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for p_user
@@ -332,6 +336,7 @@ CREATE TABLE `p_user`  (
   `location` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '位置',
   `industry` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '行业',
   `content_id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '主页自定义内容id',
+  `content_status` tinyint UNSIGNED NULL DEFAULT 0 COMMENT '主页自定义内容审核状态 0未审核  2失败 3成功',
   `growth_value` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '成长值',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A' COMMENT '账号状态：A正常使用 S已封禁 D已删除',
   `create_time` datetime NOT NULL,
@@ -339,6 +344,26 @@ CREATE TABLE `p_user`  (
   PRIMARY KEY (`uid`) USING BTREE,
   INDEX `USER_DOMAIN_IDX`(`domain` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户模块-用户信息表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for p_vcode_log
+-- ----------------------------
+DROP TABLE IF EXISTS `p_vcode_log`;
+CREATE TABLE `p_vcode_log`  (
+  `uid` bigint NOT NULL,
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户id',
+  `scene_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '场景code 对应templateCode',
+  `email` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '邮箱地址',
+  `mobile` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '手机号码',
+  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '发送标题',
+  `content` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '发送内容',
+  `send_status` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '发送状态 0待发送 2发送失败 3发送成功',
+  `send_time` datetime NULL DEFAULT NULL COMMENT '发送时间',
+  `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A' COMMENT '数据状态',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`uid`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户模块-验证码发送记录' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for s_chat_logs
@@ -426,6 +451,7 @@ CREATE TABLE `s_interaction_statistic`  (
   `view_count` int UNSIGNED NULL DEFAULT 0 COMMENT '阅读数',
   `follow_count` int UNSIGNED NULL DEFAULT 0 COMMENT '关注数',
   `fans_count` int UNSIGNED NULL DEFAULT 0 COMMENT '粉丝数',
+  `is_feature` int UNSIGNED NULL DEFAULT 0 COMMENT '是否被收录精选 0否1是',
   `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'A',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -1,0 +1,7 @@
+server:
+  servlet:
+    context-path: /api/auth
+
+global: 
+  param: 
+    domain: "ichargehub.com"

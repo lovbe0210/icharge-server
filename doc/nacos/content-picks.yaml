@@ -1,0 +1,66 @@
+server:
+  servlet:
+    context-path: /api/cps
+
+spring: 
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+
+  kafka: 
+    produce-enable: true
+    consume-enable: true
+
+  elasticsearch: 
+    enable: true
+
+# 排行榜算法参数因子
+algorithm: 
+  parameters: 
+    # -------------------- 内容相关 ----------------------
+    # 浏览量所占权重
+    content-view-weight: 0.25
+    # 点赞量权重
+    content-like-weight: 0.35
+    # 收藏所占权重
+    content-collect-weight: 0.25
+    # 评论所占权重
+    content-comment-weight: 0.15
+    # 时间衰减重力因子
+    content-G: 0.5
+    # 文章排行榜计算批量数
+    rank-batch-size: 1000 
+    # 专栏统计数更新批量数
+    column-statistic-batch-size: 30
+
+    # -------------------- 用户相关 ----------------------
+    # 用户等级所占权重
+    user-level-weight: 0.05
+    # 文章量
+    user-articles-weight: 0.1
+    # 专栏量
+    user-columns-weight: 0.05
+    # 文章总浏览量
+    user-view-weight: 0.2
+    # 文章总点赞量
+    user-like-weight: 0.3
+    # 文章总收藏量
+    user-collect-weight: 0.2
+    # 文章总评论量
+    user-comment-weight: 0.1
+    # 时间衰减重力因子
+    user-G: 0.5
+    # 用户统计数更新批量数
+    user-statistic-batch-size: 20
+
+    # 需要过滤的文章uri
+    filter-article-ids: 
+      - 79640579453189
+      - 79641425875205
+      - 79969482060037
+      - 84529172013317
+      - 84529345868037
+    filter-user-ids: 
+      - 79640259592261
+    filter-column-ids: 
