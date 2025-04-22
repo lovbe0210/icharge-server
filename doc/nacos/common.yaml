@@ -7,7 +7,7 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:mysql://10.2.2.14:4417/icharge?useSSL=false&useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&allowMultiQueries=true&allowPublicKeyRetrieval=true
     username: root
-    password: yan51121
+    password: icharge123456
     hikari:
       minimum-idle: 5
       maximum-pool-size: 15
@@ -21,7 +21,7 @@ spring:
       # host: 10.20.3.142
       # port: 6379
       # database: 6
-      password: yan51121
+      password: icharge123456
       sentinel:
         master: mymaster
         nodes: 10.2.2.14:27480,10.2.2.15:27480,10.2.2.16:27480
@@ -46,7 +46,7 @@ spring:
     #acks=all ：只有当所有参与复制的节点全部收到消息时，生产者才会收到一个来自服务器的成功响应（开启事务后必须设置为all）。
     acks: 1
     #sasl-username: lovbe0210
-    #sasl-password: yan51121
+    #sasl-password: icharge123456
     topics: 
       # 用户行为点赞
       user-action-like: ACTION_LIKE
