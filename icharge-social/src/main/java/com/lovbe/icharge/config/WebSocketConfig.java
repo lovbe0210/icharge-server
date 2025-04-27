@@ -1,6 +1,7 @@
 package com.lovbe.icharge.config;
 
 import cn.hutool.core.codec.Base64;
+import com.lovbe.icharge.common.config.ServiceProperties;
 import com.lovbe.icharge.common.enums.SysConstant;
 import com.lovbe.icharge.common.util.CommonUtils;
 import com.lovbe.icharge.common.util.JsonUtils;
@@ -9,6 +10,7 @@ import com.lovbe.icharge.common.util.redis.RedisKeyConstant;
 import com.lovbe.icharge.common.util.redis.RedisUtil;
 import com.lovbe.icharge.entity.dto.WsMessageDTO;
 import com.lovbe.icharge.service.ChatMessageService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,13 +43,15 @@ import java.util.Map;
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
+    @Resource
+    private ServiceProperties serviceProperties;
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+
         registry.addHandler(messageHandler(), "/socket")
                 .addInterceptors(handshakeInterceptor())
-                .setAllowedOrigins("https://www.ichargehub.com");
-        // 本地调试用
-//                .setAllowedOrigins("*");
+                .setAllowedOrigins(serviceProperties.getWsOrigin());
     }
 
     @Bean

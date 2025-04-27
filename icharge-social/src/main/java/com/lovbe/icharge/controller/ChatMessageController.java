@@ -18,6 +18,8 @@ import com.lovbe.icharge.entity.vo.MessageSessionVo;
 import com.lovbe.icharge.service.ChatMessageService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +32,7 @@ import java.util.List;
  */
 @RestController
 public class ChatMessageController {
+    private static final Logger log = LoggerFactory.getLogger(ChatMessageController.class);
     @Resource
     private ChatMessageService chatMessageService;
 

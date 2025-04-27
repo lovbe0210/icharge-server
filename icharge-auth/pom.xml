@@ -66,19 +66,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <Project-Version>${project.version}</Project-Version>
-                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
-                            <CopyRight>lovbe0210</CopyRight>
-                        </manifestEntries>
-                    </archive>
-                    <excludes>
-                        <exclude>*.xml</exclude>
-                        <exclude>*.yml</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -61,6 +61,11 @@ public class ServiceProperties {
      */
     private int minutes = 10;
 
+    /**
+     * websocket校验跨域origin
+     */
+    private String wsOrigin = "*";
+
     // =================== 邮箱参数 =======================
     /**
      * 系统邮箱地址
