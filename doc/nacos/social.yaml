@@ -15,3 +15,5 @@ spring:
 service: 
   # 文件上传每小时频率限制次数
   upload-limit: 30
+  # websocket校验跨域origin,正确配置此值，否则会导致websocket握手失败
+  wsOrigin: https://www.ichargehub.com
