@@ -218,16 +218,7 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                     } else {
                         statisticDo.setCommentCount(statisticDo.getCommentCount() + 1);
                     }
-                    // 创建电池激励
-                    EncourageLogDo encourageLog = new EncourageLogDo()
-                            .setUserId(replyCommentDo.getTargetUserId())
-                            .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_COMMENT.getBehaviorType())
-                            .setTargetId(replyCommentDo.getTargetId())
-                            .setTargetName(replyCommentDo.getContent())
-                            .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_COMMENT.getEncourageScore());
-                    encourageLog.setUid(YitIdHelper.nextId());
-                    encourageLogList.add(encourageLog);
-                    // targetUserId为null不通知,自己给自己评论不通知
+                    // targetUserId为null不通知不激励,自己给自己评论不通知,
                     if (replyCommentDo.getTargetUserId() == null) {
                         return;
                     }
@@ -243,6 +234,19 @@ public class ActionHandlerServiceImpl implements ActionHandlerService {
                             .setCreateTime(new Date())
                             .setUpdateTime(noticeDo.getCreateTime());
                     noticeList.add(noticeDo);
+                    // 创建电池激励
+                    String content = replyCommentDo.getContent();
+                    if (content != null && content.length() > 100) {
+                        content = content.substring(0, 97) + "...";
+                    }
+                    EncourageLogDo encourageLog = new EncourageLogDo()
+                            .setUserId(replyCommentDo.getTargetUserId())
+                            .setBehaviorType(EncorageBehaviorEnum.BEHAVIOR_COMMENT.getBehaviorType())
+                            .setTargetId(replyCommentDo.getTargetId())
+                            .setTargetName(content)
+                            .setEncourageScore(EncorageBehaviorEnum.BEHAVIOR_COMMENT.getEncourageScore());
+                    encourageLog.setUid(YitIdHelper.nextId());
+                    encourageLogList.add(encourageLog);
                 })
                 .filter(replyCommentDo -> replyCommentDo.getParentId() != null)
                 .collect(Collectors.groupingBy(ReplyCommentDo::getParentId))

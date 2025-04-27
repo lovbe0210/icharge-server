@@ -1,36 +1,45 @@
-<assembly>
-    <id>package</id>
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+    <id>jczh-admin-assembly</id>
     <formats>
-        <format>zip</format>
+        <format>dir</format>
+        <format>tar.gz</format>
     </formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
-        <!-- 从目标目录拷贝文件去压缩 -->
         <fileSet>
-            <directory>target</directory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-            <outputDirectory>/</outputDirectory>
-        </fileSet>
-
-        <fileSet>
-            <directory>bin</directory>
-            <outputDirectory>/</outputDirectory>
+            <directory>${basedir}/bin</directory>
+            <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>**/*.sh</include>
             </includes>
             <fileMode>0755</fileMode>
             <lineEnding>unix</lineEnding>
         </fileSet>
-
-        <!-- 从源目录拷贝文件去压缩 -->
         <fileSet>
-            <directory>src/main/resources</directory>
+            <directory>${basedir}/src/main/resources</directory>
+            <outputDirectory>conf</outputDirectory>
             <includes>
-                <include>*.yml</include>
-                <include>log4j2-spring.xml</include>
+                <include>**/*</include>
             </includes>
-            <outputDirectory>/</outputDirectory>
+            <excludes>
+                <exclude>mapper/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <outputDirectory>logs</outputDirectory>
+            <excludes>
+                <exclude>**/*</exclude>
+            </excludes>
         </fileSet>
     </fileSets>
+    <dependencySets>
+        <dependencySet>
+            <!--是否把本项目添加到依赖文件夹下-->
+            <useProjectArtifact>true</useProjectArtifact>
+            <outputDirectory>lib</outputDirectory>
+            <!--将scope为runtime的依赖包打包-->
+            <scope>runtime</scope>
+        </dependencySet>
+    </dependencySets>
 </assembly>

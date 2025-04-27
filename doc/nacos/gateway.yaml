@@ -2,12 +2,6 @@ spring:
   cloud:
     # Spring Cloud Gateway 配置项，对应 GatewayProperties 类
     gateway:
-      #discovery:
-       # locator:
-          #开启从注册中心动态创建路由的功能，利用微服务名进行路由
-        #  enabled: true
-          #开启小写验证，默认feign根据服务名查找都是用的全大写
-         # lowerCaseServiceId: true
       routes:
         - id: route_user  
           uri: lb://user

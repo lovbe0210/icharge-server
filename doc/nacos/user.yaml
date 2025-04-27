@@ -24,9 +24,9 @@ service:
   upload-limit: 20
   # 验证码发送滚动每小时5条后开始限制
   verify-code-limit: 5
-  serverEmail: lovbe0210@163.com
+  serverEmail: xxxx@163.com
   # 邮箱登录账号
-  emailUsername: lovbe0210@163.com
+  emailUsername: xxxx@163.com
   # 授权码
   emailPassword: xxxxxxxxxxxxxxxxx
   emailHost: smtp.163.com
@@ -34,6 +34,7 @@ service:
   sslEnable: false
   starttlsEnable: false
   # 短信发送相关参数
+  # 阿里云市场短信厂商url
   smsUrl: https://gyytz.market.alicloudapi.com/sms/smsSend
   smsRequestMethod: POST
   smsAppcode: xxxxxxxxxxxxxxxxx

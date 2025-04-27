@@ -54,13 +54,14 @@ algorithm:
     # 用户统计数更新批量数
     user-statistic-batch-size: 20
 
-    # 需要过滤的文章uri
+    # 需要过滤的文章uri（帮助文档、关于本站、说明文档等系统文章）
     filter-article-ids: 
       - 79640579453189
       - 79641425875205
       - 79969482060037
       - 84529172013317
       - 84529345868037
+    # 管理员系统用户  
     filter-user-ids: 
       - 79640259592261
     filter-column-ids: 

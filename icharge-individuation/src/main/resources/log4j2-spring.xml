@@ -4,7 +4,7 @@
 <!--monitorInterval：Log4j能够自动检测修改配置 文件和重新配置本身，设置间隔秒数-->
 <Configuration status="WARN" monitorInterval="30">
     <Properties>
-        <Property name="LOG_LEVEL">${sys:log.level:-DEBUG}</Property>
+        <Property name="LOG_LEVEL">${sys:log.level:-ERROR}</Property>
         <Property name="APP_NAME">icharge-web</Property>
         <Property name="LOG_FILE_PATH">${sys:logdir:-./logs}</Property>
         <Property name="PATTERN_FORMAT">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%.15t] [%X{logId}] %c{1.}.%L: %msg%xEx%n</Property>

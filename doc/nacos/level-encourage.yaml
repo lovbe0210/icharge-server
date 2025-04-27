@@ -8,6 +8,6 @@ spring:
       max-request-size: 10MB
       max-file-size: 10MB
 service: 
-  # 文件上传每小时频率限制
+  # 文件上传每小时频率限制次数
   upload-limit: 20
 

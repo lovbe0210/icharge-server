@@ -13,5 +13,5 @@ spring:
     consume-enable: true
 
 service: 
-  # 文件上传每小时频率限制
+  # 文件上传每小时频率限制次数
   upload-limit: 30
