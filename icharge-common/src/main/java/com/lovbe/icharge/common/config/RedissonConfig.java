@@ -1,5 +1,6 @@
 package com.lovbe.icharge.common.config;
 
+import cn.hutool.core.collection.ListUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -59,12 +60,14 @@ public class RedissonConfig {
         } else if (properties.getCluster() != null) {
             // 集群模式
             RedisProperties.Cluster cluster = properties.getCluster();
-
+            config.useClusterServers()
+                    .setPassword(properties.getPassword())
+                    .addNodeAddress(cluster.getNodes() == null ? null : cluster.getNodes().toArray(new String[]{}));
         } else {
             // 单机模式
             config.useSingleServer()
                     // 设置单节点地址
-                    .setAddress(properties.getHost() + ":" + properties.getPort())
+                    .setAddress("redis://" + properties.getHost() + ":" + properties.getPort())
                     // 设置连接的数据库
                     .setDatabase(properties.getDatabase())
                     // 密码
