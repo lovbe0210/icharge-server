@@ -1,13 +1,8 @@
 package com.lovbe.icharge.controller;
 
-import com.lovbe.icharge.common.enums.SysConstant;
-import com.lovbe.icharge.common.exception.GlobalErrorCodes;
-import com.lovbe.icharge.common.exception.ServiceErrorCodes;
 import com.lovbe.icharge.common.model.base.BaseRequest;
 import com.lovbe.icharge.common.model.base.ResponseBean;
 import com.lovbe.icharge.common.model.resp.AuthLoginUser;
-import com.lovbe.icharge.common.model.vo.EmailCodeReqVo;
-import com.lovbe.icharge.common.model.vo.SmsCodeReqVo;
 import com.lovbe.icharge.common.util.servlet.ServletUtils;
 import com.lovbe.icharge.dto.vo.AuthEmailCodeLoginReqVo;
 import com.lovbe.icharge.dto.vo.AuthEmailLoginReqVo;
@@ -15,14 +10,10 @@ import com.lovbe.icharge.dto.vo.AuthMobileLoginReqVo;
 import com.lovbe.icharge.dto.vo.AuthSmsLoginReqVo;
 import com.lovbe.icharge.service.AuthService;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -41,6 +32,8 @@ public class AuthController {
     private AuthService authService;
     @Value("${global.param.domain}")
     private String domain;
+    @Value("${global.param.secure}")
+    private boolean secure;
 
     /**
      * description: 手机验证码登录
@@ -53,7 +46,7 @@ public class AuthController {
     public ResponseBean smsLogin(@RequestBody @Valid BaseRequest<AuthSmsLoginReqVo> reqVo,
                                  HttpServletResponse response) {
         AuthLoginUser loginUser = authService.smsLogin(reqVo);
-        ServletUtils.setLoginCookie(domain, response, loginUser);
+        ServletUtils.setLoginCookie(domain, secure, response, loginUser);
         return ResponseBean.ok(loginUser);
     }
 
@@ -68,7 +61,7 @@ public class AuthController {
     public ResponseBean mobileLogin(@RequestBody @Valid BaseRequest<AuthMobileLoginReqVo> reqVo,
                                     HttpServletResponse response) {
         AuthLoginUser loginUser = authService.mobileLogin(reqVo);
-        ServletUtils.setLoginCookie(domain, response, loginUser);
+        ServletUtils.setLoginCookie(domain, secure, response, loginUser);
         return ResponseBean.ok(loginUser);
     }
 
@@ -83,7 +76,7 @@ public class AuthController {
     public ResponseBean emailCodeLogin(@RequestBody @Valid BaseRequest<AuthEmailCodeLoginReqVo> reqVo,
                                        HttpServletResponse response) {
         AuthLoginUser loginUser = authService.emailCodeLogin(reqVo);
-        ServletUtils.setLoginCookie(domain, response, loginUser);
+        ServletUtils.setLoginCookie(domain, secure, response, loginUser);
         return ResponseBean.ok(loginUser);
     }
 
@@ -98,7 +91,7 @@ public class AuthController {
     public ResponseBean emailLogin(@RequestBody @Valid BaseRequest<AuthEmailLoginReqVo> reqVo,
                                    HttpServletResponse response) {
         AuthLoginUser loginUser = authService.emailLogin(reqVo);
-        ServletUtils.setLoginCookie(domain, response, loginUser);
+        ServletUtils.setLoginCookie(domain, secure, response, loginUser);
         return ResponseBean.ok(loginUser);
     }
 
@@ -125,7 +118,7 @@ public class AuthController {
     @PostMapping("/t/refresh")
     public ResponseBean refreshToken(@RequestHeader("icharge-rt") String rfToken, HttpServletResponse response) {
         AuthLoginUser loginUser = authService.refreshToken(rfToken);
-        ServletUtils.setLoginCookie(domain, response, loginUser);
+        ServletUtils.setLoginCookie(domain, secure, response, loginUser);
         return ResponseBean.ok();
     }
 

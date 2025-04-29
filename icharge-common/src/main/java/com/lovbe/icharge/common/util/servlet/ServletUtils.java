@@ -195,14 +195,10 @@ public class ServletUtils {
      * @author lovbe0210
      * @date 2024/8/16 0:41
      */
-    public static void setLoginCookie(String domain, HttpServletResponse response, AuthLoginUser loginRespVo) {
-        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), domain, "/socket"));
-        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), domain, "/api"));
-        response.addCookie(createCookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()), domain, "/"));
-        // TODO 上线后删除这个localhost
-        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), "localhost", "/socket"));
-        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), "localhost", "/api"));
-        response.addCookie(createCookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()), "localhost", "/"));
+    public static void setLoginCookie(String domain, boolean secure, HttpServletResponse response, AuthLoginUser loginRespVo) {
+        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), domain, secure, "/socket"));
+        response.addCookie(createCookie(SysConstant.ACCESS_TOKEN, loginRespVo.getAcToken(), domain, secure, "/api"));
+        response.addCookie(createCookie(SysConstant.LOGIN_USER_ID, String.valueOf(loginRespVo.getUserId()), domain, secure, "/"));
     }
 
     /**
@@ -215,12 +211,12 @@ public class ServletUtils {
      * @author: lovbe0210
      * @date: 2025/2/20 23:17
      */
-    private static Cookie createCookie(String name, String value, String domain, String path) {
+    private static Cookie createCookie(String name, String value, String domain, boolean secure, String path) {
         Cookie cookie = new Cookie(name, value);
         cookie.setDomain(domain);
         cookie.setPath(path);
         cookie.setMaxAge(60 * 30);
-        cookie.setSecure(true);
+        cookie.setSecure(secure);
         cookie.setHttpOnly(true);
         return cookie;
     }

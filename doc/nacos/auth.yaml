@@ -2,6 +2,9 @@ server:
   servlet:
     context-path: /api/auth
 
-global: 
-  param: 
+global:
+  param:
+    # 设置cookie的域名，不包含http(s)，请正确设置此值，否则可能会导致登陆失败
     domain: "ichargehub.com"
+    # 是否设置cookie只通过https传输
+    secure: true
