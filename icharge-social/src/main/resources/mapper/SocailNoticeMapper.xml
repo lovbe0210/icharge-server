@@ -27,7 +27,7 @@
         FROM s_notices sn
         INNER JOIN s_comment sc ON sn.uid = sc.uid
         WHERE sn.user_id = #{userId}
-          AND sn.notice_type = 1
+          AND (sn.notice_type = 1 OR sn.notice_type = 2)
         ORDER BY sn.create_time DESC
         LIMIT #{data.offset}, #{data.limit}
     </select>
